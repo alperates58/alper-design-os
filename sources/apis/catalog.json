@@ -1,0 +1,102 @@
+{
+  "catalogName": "public-apis-discovery-index",
+  "upstreamRepo": "https://github.com/public-apis/public-apis",
+  "version": "1.0.0",
+  "updatedAt": "2026-10-09T00:00:00Z",
+  "itemCount": 5,
+  "items": [
+    {
+      "id": "api-open-meteo",
+      "name": "Open-Meteo Weather API",
+      "description": "Free weather forecast API for non-commercial and commercial use without API key.",
+      "category": "Weather & Environment",
+      "sourceCatalog": "PUBLIC_APIS",
+      "url": "https://open-meteo.com",
+      "authType": "NONE",
+      "https": true,
+      "cors": "YES",
+      "license": {
+        "type": "CC-BY-4.0",
+        "url": "https://open-meteo.com/en/license",
+        "commercialUseAllowed": true
+      },
+      "tags": ["weather", "forecast", "climate", "telemetry"],
+      "capabilities": ["REST", "JSON", "Historical Data"],
+      "lastVerified": "2026-10-09"
+    },
+    {
+      "id": "api-exchangerate-api",
+      "name": "ExchangeRate-API",
+      "description": "Reliable currency conversion and FX rate data for enterprise and financial applications.",
+      "category": "Finance & Currency",
+      "sourceCatalog": "PUBLIC_APIS",
+      "url": "https://www.exchangerate-api.com",
+      "authType": "API_KEY",
+      "https": true,
+      "cors": "YES",
+      "license": {
+        "type": "Proprietary / Free Tier",
+        "url": "https://www.exchangerate-api.com/terms",
+        "commercialUseAllowed": true
+      },
+      "tags": ["finance", "forex", "currency", "conversion"],
+      "capabilities": ["REST", "JSON"],
+      "lastVerified": "2026-10-09"
+    },
+    {
+      "id": "api-openaq",
+      "name": "OpenAQ Air Quality API",
+      "description": "Global physical air quality data from government monitoring stations.",
+      "category": "Industrial & Environment",
+      "sourceCatalog": "PUBLIC_APIS",
+      "url": "https://openaq.org",
+      "authType": "API_KEY",
+      "https": true,
+      "cors": "YES",
+      "license": {
+        "type": "CC-BY-4.0",
+        "commercialUseAllowed": true
+      },
+      "tags": ["sensors", "telemetry", "air quality", "manufacturing"],
+      "capabilities": ["REST", "JSON", "Real-time"],
+      "lastVerified": "2026-10-09"
+    },
+    {
+      "id": "api-rest-countries",
+      "name": "REST Countries",
+      "description": "Get information about countries via a RESTful API for locale and geographical setups.",
+      "category": "Geocoding & Reference",
+      "sourceCatalog": "PUBLIC_APIS",
+      "url": "https://restcountries.com",
+      "authType": "NONE",
+      "https": true,
+      "cors": "YES",
+      "license": {
+        "type": "Mozilla Public License 2.0",
+        "commercialUseAllowed": true
+      },
+      "tags": ["countries", "locale", "currencies", "languages"],
+      "capabilities": ["REST", "JSON"],
+      "lastVerified": "2026-10-09"
+    },
+    {
+      "id": "api-nominatim",
+      "name": "OpenStreetMap Nominatim",
+      "description": "Search OSM data by name and address (geocoding) and generate addresses for reverse geocoding.",
+      "category": "Geospatial & Logistics",
+      "sourceCatalog": "PUBLIC_APIS",
+      "url": "https://nominatim.org",
+      "authType": "NONE",
+      "https": true,
+      "cors": "YES",
+      "license": {
+        "type": "ODbL",
+        "url": "https://opendatacommons.org/licenses/odbl/",
+        "commercialUseAllowed": true
+      },
+      "tags": ["geocoding", "maps", "logistics", "supply chain"],
+      "capabilities": ["REST", "JSON"],
+      "lastVerified": "2026-10-09"
+    }
+  ]
+}

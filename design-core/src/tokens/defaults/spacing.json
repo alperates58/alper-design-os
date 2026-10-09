@@ -1,0 +1,39 @@
+{
+  "spacing": {
+    "dense-1": {
+      "$value": "2px",
+      "$type": "dimension",
+      "$description": "Tightest micro-spacing for dense grid cell padding"
+    },
+    "dense-2": {
+      "$value": "4px",
+      "$type": "dimension",
+      "$description": "Compact element spacing"
+    },
+    "dense-3": {
+      "$value": "6px",
+      "$type": "dimension",
+      "$description": "Row gutter in dense workbenches"
+    },
+    "base": {
+      "$value": "8px",
+      "$type": "dimension",
+      "$description": "Base 8-point rhythm grid unit"
+    },
+    "lg": {
+      "$value": "12px",
+      "$type": "dimension",
+      "$description": "Toolbar and pane padding"
+    },
+    "xl": {
+      "$value": "16px",
+      "$type": "dimension",
+      "$description": "Container padding"
+    },
+    "2xl": {
+      "$value": "24px",
+      "$type": "dimension",
+      "$description": "Major section separator"
+    }
+  }
+}

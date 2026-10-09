@@ -1,0 +1,60 @@
+{
+  "typography": {
+    "fontFamily": {
+      "sans": {
+        "$value": "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        "$type": "fontFamily",
+        "$description": "Primary user interface typography"
+      },
+      "mono": {
+        "$value": "'JetBrains Mono', 'Fira Code', Consolas, monospace",
+        "$type": "fontFamily",
+        "$description": "Monospace typography for IDs, timestamps, and dense data cells"
+      }
+    },
+    "fontSize": {
+      "xs": {
+        "$value": "0.6875rem",
+        "$type": "dimension",
+        "$description": "11px - Ultra compact grid cell typography"
+      },
+      "sm": {
+        "$value": "0.75rem",
+        "$type": "dimension",
+        "$description": "12px - High density workbench labels and metadata"
+      },
+      "base": {
+        "$value": "0.875rem",
+        "$type": "dimension",
+        "$description": "14px - Standard interface body text"
+      },
+      "md": {
+        "$value": "1rem",
+        "$type": "dimension",
+        "$description": "16px - Section headers and modal titles"
+      },
+      "lg": {
+        "$value": "1.25rem",
+        "$type": "dimension",
+        "$description": "20px - Workbench module header"
+      }
+    },
+    "fontWeight": {
+      "regular": {
+        "$value": "400",
+        "$type": "fontWeight",
+        "$description": "Regular weight"
+      },
+      "medium": {
+        "$value": "500",
+        "$type": "fontWeight",
+        "$description": "Medium weight for headers and active states"
+      },
+      "semibold": {
+        "$value": "600",
+        "$type": "fontWeight",
+        "$description": "Semibold weight for warnings and titles"
+      }
+    }
+  }
+}

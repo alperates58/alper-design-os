@@ -1,0 +1,19 @@
+{
+  "name": "@alper-design-os/analyzer",
+  "version": "0.1.0",
+  "description": "Read-only project stack detector and UX/UI auditor for Alper Design OS",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@alper-design-os/adapter-contract": "workspace:*",
+    "@alper-design-os/design-core": "workspace:*",
+    "@alper-design-os/registry": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

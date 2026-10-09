@@ -1,0 +1,28 @@
+{
+  "name": "FactoryFlow",
+  "domain": "Industrial Operational Resource & Schedule Management",
+  "description": "Enterprise finite capacity planning and operation scheduling system. Built for production planners managing resource queues, machine schedules, dynamic rescheduling, and frozen horizons. Requires interactive timeline with capacity utilization metrics, bottleneck detection, real-time constraint violation alerts, what-if scenario branching, high-density order grids, split panes, multi-criteria filters, and keyboard-heavy context menus.",
+  "targetUsers": [
+    "Production Planner",
+    "Operations Lead",
+    "Shop Floor Dispatcher"
+  ],
+  "keyFeatures": [
+    "finite capacity planning",
+    "production planner persona",
+    "machine/resource scheduling",
+    "Gantt/timeline",
+    "capacity utilization",
+    "bottleneck detection",
+    "constraint violations",
+    "rescheduling",
+    "frozen horizon",
+    "what-if scenarios",
+    "dense grids",
+    "keyboard-heavy workflow",
+    "split panes",
+    "filters",
+    "context menus"
+  ],
+  "operatingEnvironment": "Multi-monitor operations control room workbench"
+}

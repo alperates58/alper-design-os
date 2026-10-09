@@ -1,0 +1,29 @@
+{
+  "radius": {
+    "none": {
+      "$value": "0px",
+      "$type": "dimension",
+      "$description": "Sharp edges for dense data grids and workbench panes"
+    },
+    "sm": {
+      "$value": "2px",
+      "$type": "dimension",
+      "$description": "Compact button and badge radius"
+    },
+    "md": {
+      "$value": "4px",
+      "$type": "dimension",
+      "$description": "Standard inputs and card radius"
+    },
+    "lg": {
+      "$value": "8px",
+      "$type": "dimension",
+      "$description": "Modal dialog containers"
+    },
+    "full": {
+      "$value": "9999px",
+      "$type": "dimension",
+      "$description": "Pill badges and status indicators"
+    }
+  }
+}

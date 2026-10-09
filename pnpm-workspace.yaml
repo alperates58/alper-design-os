@@ -1,0 +1,7 @@
+packages:
+  - 'design-core'
+  - 'adapters/*'
+  - 'registry'
+  - 'packages/*'
+allowBuilds:
+  esbuild: true

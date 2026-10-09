@@ -1,0 +1,99 @@
+{
+  "catalogName": "awesome-mcp-servers-discovery-index",
+  "upstreamRepo": "https://github.com/punkpeye/awesome-mcp-servers",
+  "version": "1.0.0",
+  "updatedAt": "2026-10-09T00:00:00Z",
+  "itemCount": 5,
+  "items": [
+    {
+      "id": "mcp-github",
+      "name": "GitHub MCP Server",
+      "description": "Model Context Protocol server for interacting with GitHub repositories, issues, PRs, and commits.",
+      "category": "Developer Tools",
+      "sourceCatalog": "AWESOME_MCP",
+      "url": "https://github.com/modelcontextprotocol/servers/tree/main/src/github",
+      "authType": "API_KEY",
+      "https": true,
+      "license": {
+        "type": "MIT",
+        "commercialUseAllowed": true
+      },
+      "tags": ["github", "git", "issues", "version-control"],
+      "capabilities": ["tools", "resources"],
+      "transport": "STDIO",
+      "lastVerified": "2026-10-09"
+    },
+    {
+      "id": "mcp-postgres",
+      "name": "PostgreSQL MCP Server",
+      "description": "Read-only and operational PostgreSQL database inspection and query schema tool.",
+      "category": "Databases & Storage",
+      "sourceCatalog": "AWESOME_MCP",
+      "url": "https://github.com/modelcontextprotocol/servers/tree/main/src/postgres",
+      "authType": "CUSTOM",
+      "https": true,
+      "license": {
+        "type": "MIT",
+        "commercialUseAllowed": true
+      },
+      "tags": ["postgres", "sql", "relational", "schema"],
+      "capabilities": ["tools", "resources"],
+      "transport": "STDIO",
+      "lastVerified": "2026-10-09"
+    },
+    {
+      "id": "mcp-filesystem",
+      "name": "Local Filesystem MCP Server",
+      "description": "Secure file access and directory traversal within sandboxed boundaries.",
+      "category": "System & Filesystem",
+      "sourceCatalog": "AWESOME_MCP",
+      "url": "https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem",
+      "authType": "NONE",
+      "https": true,
+      "license": {
+        "type": "MIT",
+        "commercialUseAllowed": true
+      },
+      "tags": ["files", "directories", "local-system"],
+      "capabilities": ["tools", "resources"],
+      "transport": "STDIO",
+      "lastVerified": "2026-10-09"
+    },
+    {
+      "id": "mcp-docker",
+      "name": "Docker MCP Server",
+      "description": "Inspect containers, images, volumes, and networks across local Docker daemon.",
+      "category": "DevOps & Containers",
+      "sourceCatalog": "AWESOME_MCP",
+      "url": "https://github.com/modelcontextprotocol/servers/tree/main/src/docker",
+      "authType": "NONE",
+      "https": true,
+      "license": {
+        "type": "MIT",
+        "commercialUseAllowed": true
+      },
+      "tags": ["docker", "containers", "devops", "kubernetes"],
+      "capabilities": ["tools"],
+      "transport": "STDIO",
+      "lastVerified": "2026-10-09"
+    },
+    {
+      "id": "mcp-memory",
+      "name": "Knowledge Graph Memory MCP Server",
+      "description": "Persistent knowledge graph and associative entity-relation memory for AI agents.",
+      "category": "Memory & Knowledge",
+      "sourceCatalog": "AWESOME_MCP",
+      "url": "https://github.com/modelcontextprotocol/servers/tree/main/src/memory",
+      "authType": "NONE",
+      "https": true,
+      "license": {
+        "type": "MIT",
+        "commercialUseAllowed": true
+      },
+      "tags": ["memory", "graph", "entities", "state"],
+      "capabilities": ["tools", "resources"],
+      "transport": "STDIO",
+      "lastVerified": "2026-10-09"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "alper-design-os": {
+      "command": "node",
+      "args": [
+        "${env:ALPER_DESIGN_OS_HOME}/packages/mcp-server/dist/index.js"
+      ],
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}

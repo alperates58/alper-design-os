@@ -1,0 +1,18 @@
+{
+  "name": "@alper-design-os/adapter-html-css-js",
+  "version": "0.1.0",
+  "description": "Semantic HTML5, modern CSS3, and ES6 JavaScript adapter for Alper Design OS",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@alper-design-os/adapter-contract": "workspace:*",
+    "@alper-design-os/design-core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "alper-design-os",
+  "displayName": "Alper Design OS",
+  "description": "Understand the product before designing the interface. Technology-agnostic Design/UX Development OS with Domain Intelligence.",
+  "version": "0.1.0",
+  "suggestedPrompts": [
+    "Understand and design an industrial manufacturing scheduling app",
+    "Analyze this legacy PHP/Blade project and prepare a modernization plan",
+    "Audit accessibility and information density for this React dashboard"
+  ]
+}

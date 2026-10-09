@@ -1,0 +1,65 @@
+{
+  "color": {
+    "brand": {
+      "primary": {
+        "$value": "#0284c7",
+        "$type": "color",
+        "$description": "Core brand interactive primary color (Sky-600)"
+      },
+      "primary-hover": {
+        "$value": "#0369a1",
+        "$type": "color",
+        "$description": "Hover state for brand primary"
+      },
+      "primary-subtle": {
+        "$value": "#e0f2fe",
+        "$type": "color",
+        "$description": "Subtle background accent for active rows"
+      }
+    },
+    "surface": {
+      "base": {
+        "$value": "#090d16",
+        "$type": "color",
+        "$description": "Workbench base canvas background"
+      },
+      "layer-1": {
+        "$value": "#111827",
+        "$type": "color",
+        "$description": "Panel and split-pane background"
+      },
+      "layer-2": {
+        "$value": "#1f2937",
+        "$type": "color",
+        "$description": "Card, table row hover, and toolbar background"
+      },
+      "border": {
+        "$value": "#374151",
+        "$type": "color",
+        "$description": "Default structural separator and gridline border"
+      }
+    },
+    "status": {
+      "scheduled": {
+        "$value": "#10b981",
+        "$type": "color",
+        "$description": "On-time or normal scheduled operation block"
+      },
+      "delayed": {
+        "$value": "#f59e0b",
+        "$type": "color",
+        "$description": "Warning state or delayed operation"
+      },
+      "violation": {
+        "$value": "#ef4444",
+        "$type": "color",
+        "$description": "Constraint violation or bottleneck overload"
+      },
+      "frozen": {
+        "$value": "#6366f1",
+        "$type": "color",
+        "$description": "Frozen scheduling horizon locked block"
+      }
+    }
+  }
+}
