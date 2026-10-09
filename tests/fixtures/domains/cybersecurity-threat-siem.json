@@ -1,0 +1,25 @@
+{
+  "name": "SentinelSec SIEM",
+  "domain": "Security Operations Center Threat Detection and Incident Response",
+  "description": "Enterprise cybersecurity SIEM dashboard and security operations center workbench for tier-2/3 SOC analysts. Monitors continuous firewall log streams, MITRE ATT&CK killchain detections, real-time threat telemetry, host quarantine triggers, and incident escalation workflows.",
+  "targetUsers": [
+    "SOC Incident Responder",
+    "Threat Intelligence Analyst",
+    "Chief Information Security Officer"
+  ],
+  "keyFeatures": [
+    "real-time security event log stream",
+    "threat incident triage matrix grid",
+    "attack killchain timeline visualizer",
+    "critical severity violation alerts",
+    "split pane forensic payload inspector",
+    "IOC faceted filter bar",
+    "command palette shortcuts for containment"
+  ],
+  "operatingEnvironment": "24/7 Security Operations Center multi-monitor video wall and analyst console",
+  "expectedTraits": {
+    "domainClassification": "DEVELOPER_TOOL",
+    "informationDensity": "HIGH",
+    "interactionStyle": "HYBRID_MOUSE_KEYBOARD"
+  }
+}

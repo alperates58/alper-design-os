@@ -1,0 +1,24 @@
+{
+  "name": "FleetPulse GPS",
+  "domain": "Vehicle Fleet Telematics and Dispatch Operations",
+  "description": "Commercial transportation fleet telematics platform for tracking live truck GPS locations, driver hours-of-service compliance, fuel consumption telemetry, route deviation alerts, maintenance scheduling, and geofence events.",
+  "targetUsers": [
+    "Fleet Dispatch Coordinator",
+    "Safety Compliance Manager",
+    "Maintenance Fleet Chief"
+  ],
+  "keyFeatures": [
+    "live vehicle telematics GPS map and list",
+    "driver duty hours timeline",
+    "fuel efficiency and speed violation indicators",
+    "preventive maintenance schedule grid",
+    "split pane vehicle health telemetry inspector",
+    "geofence status filter bar"
+  ],
+  "operatingEnvironment": "Dispatch control room multi-display operations desk",
+  "expectedTraits": {
+    "domainClassification": "INDUSTRIAL_OPERATIONAL",
+    "informationDensity": "HIGH",
+    "interactionStyle": "HYBRID_MOUSE_KEYBOARD"
+  }
+}

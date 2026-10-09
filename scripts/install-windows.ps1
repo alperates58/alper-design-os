@@ -176,10 +176,19 @@ if (-not $SkipAntigravityConfig) {
     }
 
     $servers["alper-design-os"] = $mcpServerEntry
+    $servers["chrome-devtools"] = @{
+        command = "npx"
+        args = @("-y", "chrome-devtools-mcp@latest")
+    }
+    $servers["playwright"] = @{
+        command = "npx"
+        args = @("-y", "@playwright/mcp@latest")
+    }
+
     $finalConfig = @{ mcpServers = $servers }
     $jsonOutput = $finalConfig | ConvertTo-Json -Depth 10
     Set-Content -Path $mcpConfigFile -Value $jsonOutput -Encoding UTF8
-    Write-Host "[+] Successfully registered 'alper-design-os' MCP server in $mcpConfigFile" -ForegroundColor Green
+    Write-Host "[+] Successfully registered 'alper-design-os', 'chrome-devtools', and 'playwright' MCP servers in $mcpConfigFile" -ForegroundColor Green
 }
 
 Write-Host "`n========================================================" -ForegroundColor Cyan

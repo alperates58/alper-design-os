@@ -1,0 +1,24 @@
+{
+  "name": "SensorGrid IoT",
+  "domain": "Industrial Internet of Things Telemetry and Edge Sensor Monitoring",
+  "description": "Industrial telemetry monitoring system for distributed smart factory sensors, PLC gateways, vibration analytics, temperature anomaly thresholds, and automated alert dispatching to maintenance teams.",
+  "targetUsers": [
+    "Reliability Engineer",
+    "Condition Monitoring Technician",
+    "Plant Maintenance Director"
+  ],
+  "keyFeatures": [
+    "real-time sensor telemetry stream",
+    "edge device health status grid",
+    "signal time-series anomaly timeline",
+    "threshold constraint violation indicators",
+    "split pane device diagnostics inspector",
+    "facility zone faceted filter bar"
+  ],
+  "operatingEnvironment": "Plant operations engineering room and mobile technician tablet",
+  "expectedTraits": {
+    "domainClassification": "INDUSTRIAL_OPERATIONAL",
+    "informationDensity": "HIGH",
+    "interactionStyle": "HYBRID_MOUSE_KEYBOARD"
+  }
+}

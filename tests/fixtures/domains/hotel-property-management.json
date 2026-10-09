@@ -1,0 +1,24 @@
+{
+  "name": "StayCore PMS",
+  "domain": "Hospitality Property Management and Front Desk Operations",
+  "description": "Hotel front desk and property management system for managing room inventory, daily guest arrivals, departures, room cleaning statuses, rate tier matrices, folios, billing payments, and concierge reservation scheduling.",
+  "targetUsers": [
+    "Front Desk Agent",
+    "Night Auditor",
+    "Housekeeping Supervisor"
+  ],
+  "keyFeatures": [
+    "room grid occupancy matrix",
+    "guest check-in and check-out ledger",
+    "reservation timeline and stay calendar",
+    "split pane guest folio inspector",
+    "quick room status filters",
+    "right-click context menu for keycard issuance"
+  ],
+  "operatingEnvironment": "Front desk counter touch-and-keyboard terminal",
+  "expectedTraits": {
+    "domainClassification": "B2B_ENTERPRISE",
+    "informationDensity": "HIGH",
+    "interactionStyle": "HYBRID_MOUSE_KEYBOARD"
+  }
+}

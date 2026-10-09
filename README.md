@@ -26,8 +26,11 @@ ALPER DESIGN OS is not just a UI component library. It is an AI-native, technolo
    - `NEW`: Greenfield architecture from domain understanding and user ergonomics.
    - `REPAIR`: Surgical remediation preserving existing tech stack and styling.
    - `MODERNIZE`: Staged, non-destructive 4-phase modernization from legacy code to modern design tokens and accessible grids.
-4. **Antigravity Native Plugin**: Ships complete with `skills/`, `agents/`, `rules/`, `mcp_config.json`, and an official 15-tool TypeScript MCP server.
-5. **DTCG Design Tokens**: 100% compliant with the Design Tokens Community Group specification, compile-ready for Style Dictionary.
+4. **Engineering Guardrails Layer**: Technology-agnostic quality profiles, STRIDE threat models, stack-aware security policies (TS/JS, PHP, Laravel, ASP.NET), and strict release gates (blocking on CRITICAL/HIGH vulnerabilities, secret leaks, and exploitable dependencies).
+5. **Browser, QA & Verification Engine**: Official Chrome DevTools MCP & Microsoft Playwright MCP integration with role separation, resilient accessible-role locators, runtime console/network failure inspection, visual regression with human review gates, and transparent QA reporting.
+6. **Software Engineering Intelligence Layer**: Architecture style detection (11 styles), ADR generation, database migration safety (SAFE/REVIEW/DANGEROUS), N+1 query loop detection, OpenTelemetry observability with PII scrubbing, and OpenAPI/AsyncAPI breaking change evaluation.
+7. **Antigravity Native Plugin**: Ships complete with 38 `skills/`, `agents/`, `rules/`, `mcp_config.json`, and an official 29-tool TypeScript MCP server.
+8. **DTCG Design Tokens**: 100% compliant with the Design Tokens Community Group specification, compile-ready for Style Dictionary.
 
 ---
 
@@ -35,33 +38,60 @@ ALPER DESIGN OS is not just a UI component library. It is an AI-native, technolo
 
 ```text
 alper-design-os/
-├── plugin.json                 # Antigravity Plugin Manifest
+├── plugin.json                 # Antigravity Plugin Manifest (38 Skills Registered)
 ├── mcp_config.json             # Local MCP Server Registration
 ├── hooks.json                  # Antigravity Lifecycle Hooks
 ├── pnpm-workspace.yaml         # Monorepo Workspace Configuration
 │
 ├── scripts/                    # Portable Automation & Health Scripts
-│   ├── install-windows.ps1     # Portable Windows Installer
+│   ├── install-windows.ps1     # Portable Windows Installer (alper + chrome-devtools + playwright)
 │   ├── update.ps1              # One-Click Git & Build Updater
-│   └── doctor.ps1              # System Diagnostics & Verification
+│   ├── doctor.ps1              # PowerShell System Diagnostics & Verification
+│   ├── doctor.js               # Node.js Cross-Platform Health Check
+│   └── register-mcp.js         # Cross-Platform MCP Server Registration
 │
-├── skills/                     # Antigravity Skills
+├── skills/                     # 38 Antigravity Skills
 │   ├── alper-design-new/       # Greenfield Product Design Workflow
 │   ├── alper-design-repair/    # Surgical UX/UI Repair Workflow
 │   ├── alper-design-modernize/ # 4-Phase Legacy Modernization Workflow
-│   └── alper-domain-intelligence/ # Domain & Workflow Extraction
-│
-├── agents/                     # Antigravity Specialized Agents
-│   ├── ux-architect.md         # Layouts, Density, and System Architecture
-│   ├── design-token-specialist.md # DTCG Tokens & Style Dictionary
-│   ├── legacy-modernizer.md    # Phased Enterprise Modernization
-│   └── domain-researcher.md    # Operational Workflows & Persona Research
-│
-├── rules/                      # Antigravity Always-On Rules
-│   └── AGENTS.md               # Core Tenets & Safety Rules
+│   ├── alper-domain-intelligence/ # Domain & Workflow Extraction
+│   ├── alper-secure-coding/    # OWASP ASVS & Top 10 Secure Coding
+│   ├── alper-security-audit/   # Passive Vulnerability Audit & Gates
+│   ├── alper-api-security/     # OWASP API Security Top 10
+│   ├── alper-ai-coding-safety/ # AI Coding Hallucination & Supply Chain Defense
+│   ├── alper-code-quality/     # Typed Linting & Complexity Controls
+│   ├── alper-performance-engineering/ # Core Web Vitals & Budgets
+│   ├── alper-reliability/      # SLI/SLO & Circuit Breakers
+│   ├── alper-supply-chain-security/   # NIST SSDF, SLSA & CycloneDX SBOM
+│   ├── alper-dependency-hygiene/      # CVE Audits & Lockfile Hygiene
+│   ├── alper-secret-management/       # Zero-Tolerance Secret Leak Scanning
+│   ├── alper-testing-strategy/ # Test Pyramid Synthesis
+│   ├── alper-observability/    # OpenTelemetry Traces, Metrics & PII Scrubbing
+│   ├── alper-browser-qa/       # Master Browser QA Orchestration
+│   ├── alper-playwright-testing/ # Role-Based Playwright E2E Tests
+│   ├── alper-runtime-debugging/ # Chrome DevTools Runtime Exception & Network Debugging
+│   ├── alper-visual-regression/ # Multi-Viewport & Theme Visual Diffing
+│   ├── alper-accessibility-testing/ # axe-core & Keyboard Operability Audits
+│   ├── alper-performance-testing/ # Lighthouse & Trace Bottleneck Profiling
+│   ├── alper-api-testing/      # Contract, Schema & Negative Testing
+│   ├── alper-contract-testing/ # Pact Consumer-Driven Contracts
+│   ├── alper-load-testing/     # Grafana k6 Throughput & Stress Testing
+│   ├── alper-regression-testing/ # Targeted Funnel Smoke & Regression Suites
+│   ├── alper-cross-browser-testing/ # Chromium, Firefox, WebKit & Mobile
+│   ├── alper-architecture/     # Style Discovery & Subsystem Boundaries
+│   ├── alper-architecture-audit/ # Coupling & Circular Dependency Detection
+│   ├── alper-refactoring-strategy/ # Strangler Fig & Branch-by-Abstraction
+│   ├── alper-database-engineering/ # Schema Design & Connection Pools
+│   ├── alper-sql-performance/  # N+1 Query & Keyset Pagination Diagnostics
+│   ├── alper-migration-safety/ # Expand/Contract & DDL Risk Analysis
+│   ├── alper-data-integrity/   # ACID & Idempotency Key Governance
+│   ├── alper-api-architecture/ # OpenAPI/AsyncAPI & Breaking Changes
+│   ├── alper-resilience/       # Bulkheads & Graceful Degradation
+│   ├── alper-release-safety/   # OpenFeature Flags & Zero-Downtime Rollouts
+│   └── alper-dependency-lifecycle/ # Renovate & Dependency Governance
 │
 ├── design-core/                # Technology-Agnostic Design Engine
-│   ├── src/domain/             # Domain Intelligence & ProductUXProfile Schema
+│   ├── src/domain/             # 15 Domain Benchmarks & ProductUXProfile Engine
 │   ├── src/tokens/             # DTCG Tokens & Style Dictionary Compiler
 │   ├── src/layout/             # Multi-Pane Workbench & DataGrid Layouts
 │   ├── src/ux-patterns/        # Core UX Patterns (Gantt, DataGrid, SplitPane, etc.)
@@ -78,24 +108,21 @@ alper-design-os/
 │   ├── laravel-blade/          # Laravel Blade Components & Alpine.js
 │   └── aspnet-razor/           # ASP.NET Core Razor Pages & Blazor
 │
-├── registry/                   # Adapter Factory & Auto-Detection Registry
-│
-├── sources/                    # Discovery & Index Catalogs
-│   ├── schema.ts               # Normalized Catalog Schema
-│   ├── apis/                   # Public APIs Discovery Index
-│   └── mcp/                    # Awesome MCP Servers Discovery Index
-│
 ├── packages/
 │   ├── analyzer/               # Read-Only Stack Detector & UI/A11y Auditor
-│   └── mcp-server/             # TypeScript MCP Server with 15 Typed Tools
+│   ├── source-intelligence/    # 48 Authoritative Sources & Multi-Criteria Ranking
+│   ├── engineering-guardrails/ # Quality Profiles, Threat Models & Safe Scanner
+│   ├── qa-engine/              # Playwright, DevTools, Visual Diff & QA Reporter
+│   ├── software-intelligence/  # Architecture, Database, Observability & API Governance
+│   └── mcp-server/             # TypeScript MCP Server with 29 Typed Tools
 │
-├── tests/                      # Automated Vitest Suite
-│   ├── fixtures/aps/           # Industrial APS Manufacturing Test Fixture
-│   ├── domain-intelligence.test.ts
-│   ├── project-analyzer.test.ts
-│   ├── adapters.test.ts
-│   ├── design-tokens.test.ts
-│   ├── sources-catalog.test.ts
+├── tests/                      # Automated Vitest Suite (130+ Tests across 11 Suites)
+│   ├── fixtures/domains/       # 15 Domain Benchmarks (APS, CRM, Hospital, PMS, POS, WMS, Fintech, etc.)
+│   ├── domain-benchmark-15.test.ts
+│   ├── source-intelligence.test.ts
+│   ├── engineering-guardrails.test.ts
+│   ├── qa-engine.test.ts
+│   ├── software-intelligence.test.ts
 │   └── mcp-server.test.ts
 │
 └── docs/                       # Architectural Documentation
@@ -123,71 +150,53 @@ cd alper-design-os
 ```
 
 ### 3. Tek Komutla Otomatik Kurulum
-PowerShell'i açın ve kurulum script'ini çalıştırın:
+PowerShell veya terminalinizi açıp kurulumu tamamlayın:
+```bash
+npm run build && node scripts/register-mcp.js
+```
+Veya PowerShell kullanıcıları için:
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\install-windows.ps1
 ```
 
 Bu script otomatik olarak:
 1. `ALPER_DESIGN_OS_HOME` kullanıcı ortam değişkenini mevcut klasöre ayarlar.
-2. Node.js ve Git kontrollerini yapar; gerekiyorsa `pnpm`'i global kurar.
+2. Node.js ve Git kontrollerini yapar; bağımlılıkları derler.
 3. `.env.example` dosyasından `.env` dosyasını oluşturur.
-4. Monorepo paket bağımlılıklarını (`pnpm install`) kurar.
-5. Tüm paketleri ve MCP sunucusunu derler (`pnpm run build`).
-6. Test paketini (`pnpm test`) çalıştırır.
-7. Antigravity global MCP konfigürasyonunu (`~/.gemini/config/mcp_config.json`) otomatik veya yedekli olarak günceller.
+4. Monorepo paket bağımlılıklarını kurar ve tüm TypeScript paketlerini derler (`npm run build`).
+5. Antigravity global MCP konfigürasyonunu (`~/.gemini/config/mcp_config.json`) otomatik olarak günceller ve 3 sunucuyu kaydeder:
+   - `alper-design-os` (29 typed tool içeren yerel mimari ve UX sunucusu)
+   - `chrome-devtools` (`chrome-devtools-mcp@latest`)
+   - `playwright` (`@playwright/mcp@latest`)
 
 ### 4. Sağlık Taraması (Doctor)
 Kurulumun eksiksiz olduğunu doğrulamak için:
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\doctor.ps1
-```
-
-### 5. Güncelleme (Update)
-İlerleyen dönemde yeni sürümleri tek komutla çekip derlemek için:
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\update.ps1
+```bash
+npm run doctor
 ```
 
 ---
 
-## Antigravity Entegrasyonu
+## Doğrulama & Test
 
-Alper Design OS, Antigravity ile hem **Native Plugin** hem de **Local MCP Server** olarak çalışır.
-
-1. **Antigravity Plugin Olarak**:
-   Proje kökündeki `plugin.json`, Antigravity tarafından doğrudan bir plugin bundle olarak tanınır. Skills, agents ve rules otomatik olarak etkinleşir.
-
-2. **MCP Sunucusu Olarak**:
-   `mcp_config.json` içinde tanımlı MCP sunucusu, Antigravity'ye 15 güçlü araç sağlar:
-   - `analyze_project` & `detect_stack`: Proje yığınını ve mevcut durumunu analiz eder.
-   - `understand_product` & `research_domain`: Domain Intelligence çalıştırarak `ProductUXProfile` üretir.
-   - `recommend_ux_patterns` & `search_design_patterns`: Yüksek veri yoğunluğu ve etkileşim stiline uygun pattern'ler önerir.
-   - `get_design_tokens`: DTCG uyumlu token'ları CSS, SCSS, TS veya Tailwind formatında derler.
-   - `create_design_plan`: Güvenli, read-only plan üretir (Analiz → Plan → Uygulama).
-   - `audit_existing_ui`, `audit_accessibility`, `audit_responsive`: Mevcut UI/a11y/responsive sorunlarını denetler.
-   - `recommend_modernization`: Aşamalı modernizasyon yol haritası sunar.
-   - `search_public_apis` & `search_mcp_servers`: API ve MCP kataloglarında arama yapar.
-
----
-
-## Test & Doğrulama
-
-Vitest ile test paketini çalıştırmak için:
-```powershell
-pnpm test
+Vitest ile monorepo genelindeki 133+ testi çalıştırmak için:
+```bash
+npm run test
 ```
 
 Test kapsamı:
-- **APS Domain Test Fixture**: İmalat çizelgeleme (APS) domain'inin tam analizi (finite capacity, planner persona, Gantt, bottleneck, what-if, split-pane vb.).
-- **Adapters**: 7 adapter'ın kontrat uyumluluğu.
-- **DTCG Tokens**: Token formatının ve derleyicinin doğrulanması.
-- **Analyzer & Auditor**: Stack tespiti, UI ve a11y denetimleri.
-- **Catalogs**: API ve MCP discovery katalog şemalarının doğrulanması.
-- **MCP Server**: 15 MCP aracının sözleşme testleri.
+- **15 Domain Benchmark**: APS, CRM, Hospital, Hotel PMS, Restaurant POS, Warehouse WMS, Banking, Streaming, E-commerce, School Management, Fleet Logistics, Legal Case Management, Accounting, Cybersecurity Dashboard, IoT Monitoring.
+- **Source Intelligence**: 48 yetkili kaynak (OWASP, NIST, CWE, OpenSSF, Google, Microsoft, PHP-FIG, Laravel, typescript-eslint, PHPStan, OpenTelemetry, CycloneDX, SLSA, Pact, k6 vb.) katalog araması, ağırlıklı skorlama ve lisans denetimi.
+- **Engineering Guardrails**: Stack-aware quality profilleri, STRIDE tehdit modelleme, pasif SAST/secret taraması ve release gate blocker kuralları.
+- **Browser & QA Engine**: Playwright test üretimi, Chrome DevTools runtime denetimi, görsel regresyon insan onayı ve eksik alanları şeffaf listeleyen `QA_REPORT.md` üretimi.
+- **Software Intelligence**: Mimari tip tespiti, ADR oluşturma, veritabanı N+1 tespiti, migrasyon risk sınıflandırması ve OpenAPI breaking change denetimi.
+- **MCP Sunucusu**: 29 aracın tamamının tip güvenli sözleşme testleri.
 
 ---
 
-## Lisans & Gizlilik
+## Lisans & Güvenlik İlkeleri
 - Kod tabanı **MIT Lisansı** altındadır.
-- API anahtarları veya kişisel sırlar repository'ye commit edilmez (`.gitignore` korumalıdır).
+- **Sır Güvenliği**: API anahtarları veya kişisel sırlar repository'ye commit edilmez (`.gitignore` korumalıdır).
+- **Tarama Güvenliği**: Aktif güvenlik taramaları (DAST) varsayılan olarak engellidir; yalnızca localhost/staging hedeflerinde ve açık kullanıcı onayı ile çalışabilir.
+- **Doğrulama Şeffaflığı**: Test edilmeyen hiçbir akış veya yetenek sahte olarak "PASS" raporlanmaz; QA raporlarında "UNVERIFIED" olarak açıkça listelenir.
+

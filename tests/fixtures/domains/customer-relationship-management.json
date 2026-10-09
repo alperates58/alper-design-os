@@ -1,0 +1,24 @@
+{
+  "name": "OmniRelate CRM",
+  "domain": "B2B Sales Pipeline and Customer Relationship Management",
+  "description": "Enterprise customer relationship platform for account managers and sales teams. Focuses on deal pipeline tracking, lead qualification, communication timeline history, account contact hierarchy, meeting notes, activity reminders, and revenue forecasting stages.",
+  "targetUsers": [
+    "Sales Development Representative",
+    "Account Executive",
+    "VP of Sales"
+  ],
+  "keyFeatures": [
+    "deal pipeline kanban",
+    "contact and lead directory",
+    "activity timeline and communication log",
+    "opportunity value forecasting",
+    "faceted filter bar",
+    "quick contextual actions"
+  ],
+  "operatingEnvironment": "Standard office dual-monitor laptop workstation",
+  "expectedTraits": {
+    "domainClassification": "B2B_ENTERPRISE",
+    "informationDensity": "HIGH",
+    "interactionStyle": "HYBRID_MOUSE_KEYBOARD"
+  }
+}

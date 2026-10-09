@@ -1,0 +1,21 @@
+{
+  "name": "@alper-design-os/software-intelligence",
+  "version": "0.1.0",
+  "description": "Technology-agnostic Software Engineering Intelligence Layer: Architecture, Database, Observability, API Governance, Resilience, Supply Chain, and Production Readiness",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@alper-design-os/analyzer": "workspace:*",
+    "@alper-design-os/design-core": "workspace:*",
+    "@alper-design-os/engineering-guardrails": "workspace:*",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "typescript": "^5.6.3"
+  }
+}

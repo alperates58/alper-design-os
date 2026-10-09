@@ -29,50 +29,95 @@ export function inferProductUXProfile(input: ProductBriefInput): ProductUXProfil
     environment
   ].join(' ').toLowerCase();
 
+  function hasKeyword(words: string[]): boolean {
+    return words.some((w) => {
+      const escaped = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return new RegExp(`\\b${escaped}\\b`, 'i').test(corpus);
+    });
+  }
+
   // 1. Generic Domain Classification
   let classification: DomainClassification = 'B2B_ENTERPRISE';
   if (
-    corpus.includes('operational') ||
-    corpus.includes('factory') ||
-    corpus.includes('plant') ||
-    corpus.includes('manufacturing') ||
-    corpus.includes('production') ||
-    corpus.includes('dispatch') ||
-    corpus.includes('industrial') ||
-    corpus.includes('logistics') ||
-    corpus.includes('hardware') ||
-    corpus.includes('scada')
-  ) {
-    classification = 'INDUSTRIAL_OPERATIONAL';
-  } else if (
-    corpus.includes('trading') ||
-    corpus.includes('forex') ||
-    corpus.includes('fintech') ||
-    corpus.includes('banking') ||
-    corpus.includes('ledger')
-  ) {
-    classification = 'FINTECH';
-  } else if (
-    corpus.includes('developer') ||
-    corpus.includes('ide') ||
-    corpus.includes('cli') ||
-    corpus.includes('sdk') ||
-    corpus.includes('api')
-  ) {
-    classification = 'DEVELOPER_TOOL';
-  } else if (
-    corpus.includes('patient') ||
-    corpus.includes('clinical') ||
-    corpus.includes('hospital') ||
-    corpus.includes('medical') ||
-    corpus.includes('health')
+    hasKeyword([
+      'patient',
+      'patients',
+      'clinical',
+      'hospital',
+      'hospitals',
+      'medical',
+      'health records',
+      'ehr',
+      'physician',
+      'pharmacist',
+      'ward'
+    ])
   ) {
     classification = 'HEALTHCARE';
   } else if (
-    corpus.includes('consumer') ||
-    corpus.includes('social') ||
-    corpus.includes('personal') ||
-    corpus.includes('ecommerce')
+    hasKeyword([
+      'operational',
+      'factory',
+      'plant',
+      'manufacturing',
+      'production',
+      'dispatch',
+      'industrial',
+      'logistics',
+      'hardware',
+      'scada',
+      'warehouse',
+      'telematics',
+      'fleet',
+      'iot',
+      'sensor',
+      'sensors'
+    ])
+  ) {
+    classification = 'INDUSTRIAL_OPERATIONAL';
+  } else if (
+    hasKeyword([
+      'trading',
+      'forex',
+      'fintech',
+      'banking',
+      'general ledger',
+      'double-entry',
+      'accounting',
+      'reconciliation',
+      'treasury'
+    ])
+  ) {
+    classification = 'FINTECH';
+  } else if (
+    hasKeyword([
+      'developer',
+      'ide',
+      'cli',
+      'sdk',
+      'cybersecurity',
+      'siem',
+      'threat',
+      'compiler',
+      'debugger',
+      'git-ops'
+    ])
+  ) {
+    classification = 'DEVELOPER_TOOL';
+  } else if (
+    hasKeyword([
+      'consumer',
+      'social',
+      'ecommerce',
+      'streaming',
+      'video',
+      'entertainment',
+      'fashion',
+      'boutique',
+      'shopper',
+      'viewer',
+      'cinema'
+    ])
   ) {
     classification = 'B2C_CONSUMER';
   }
@@ -80,58 +125,60 @@ export function inferProductUXProfile(input: ProductBriefInput): ProductUXProfil
   // 2. Generic Information Density Inference
   let density: InformationDensity = 'MEDIUM';
   const hasDenseIndicators =
-    corpus.includes('dense') ||
-    corpus.includes('high-density') ||
-    corpus.includes('workbench') ||
-    corpus.includes('grid') ||
-    corpus.includes('timeline') ||
-    corpus.includes('utilization') ||
-    corpus.includes('control room') ||
-    corpus.includes('multi-monitor');
+    hasKeyword([
+      'dense',
+      'high-density',
+      'workbench',
+      'timeline',
+      'utilization',
+      'control room',
+      'multi-monitor',
+      'accounting',
+      'ledger',
+      'matrix',
+      'grid'
+    ]);
 
   const hasExtremeIndicators =
-    corpus.includes('extreme') ||
-    corpus.includes('sub-pixel') ||
-    corpus.includes('telemetry') ||
-    corpus.includes('real-time stream') ||
-    corpus.includes('order book');
+    hasKeyword([
+      'extreme',
+      'sub-pixel',
+      'order book',
+      'microsecond'
+    ]);
 
-  if (hasExtremeIndicators) {
+  if (classification === 'B2C_CONSUMER') {
+    density = 'SPACIOUS';
+  } else if (hasExtremeIndicators) {
     density = 'EXTREME';
   } else if (hasDenseIndicators || classification === 'INDUSTRIAL_OPERATIONAL' || classification === 'FINTECH') {
     density = 'HIGH';
-  } else if (classification === 'B2C_CONSUMER') {
+  } else if (hasKeyword(['spacious', 'browse'])) {
     density = 'SPACIOUS';
   }
 
   // 3. Generic Usage Frequency Inference
   let usageFrequency: UsageFrequency = 'DAILY_FREQUENT';
   if (
-    corpus.includes('continuous') ||
-    corpus.includes('shift') ||
-    corpus.includes('control room') ||
-    corpus.includes('hours') ||
-    corpus.includes('workbench')
+    hasKeyword(['continuous', 'shift', 'control room', 'workbench']) ||
+    corpus.includes('hours/day')
   ) {
     usageFrequency = 'CONTINUOUS_WORKBENCH';
-  } else if (corpus.includes('admin') || corpus.includes('periodic') || corpus.includes('monthly')) {
+  } else if (hasKeyword(['admin', 'periodic', 'monthly', 'quarterly'])) {
     usageFrequency = 'OCCASIONAL_ADMIN';
-  } else if (corpus.includes('checkout') || corpus.includes('transaction') || corpus.includes('single-task')) {
+  } else if (hasKeyword(['checkout', 'transaction', 'single-task', 'pos', 'counter terminal', 'counter'])) {
     usageFrequency = 'TRANSACTIONAL';
   }
 
   // 4. Generic Interaction Style Inference
   let interactionStyle: InteractionStyle = 'HYBRID_MOUSE_KEYBOARD';
-  if (
-    corpus.includes('keyboard-first') ||
-    corpus.includes('keyboard-heavy') ||
-    corpus.includes('shortcuts') ||
-    corpus.includes('hotkeys')
-  ) {
-    interactionStyle = 'HYBRID_MOUSE_KEYBOARD';
-  } else if (corpus.includes('touch') || corpus.includes('tablet') || corpus.includes('mobile-first')) {
+  const hasTouchOnly =
+    hasKeyword(['touch-optimized', 'touchscreen', 'tablet-first', 'handheld tablet', 'pos']) &&
+    !hasKeyword(['multi-monitor', 'numeric keypad', 'desk workstation', 'touch-and-keyboard', 'keyboard']);
+
+  if (hasTouchOnly) {
     interactionStyle = 'TOUCH_OPTIMIZED';
-  } else if (corpus.includes('wizard') || corpus.includes('step-by-step')) {
+  } else if (hasKeyword(['wizard', 'step-by-step'])) {
     interactionStyle = 'GUIDED_WIZARD';
   }
 

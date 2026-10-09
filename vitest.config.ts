@@ -19,6 +19,10 @@ export default defineConfig({
       '@alper-design-os/adapter-aspnet-razor': path.resolve(__dirname, 'adapters/aspnet-razor/src/index.ts'),
       '@alper-design-os/registry': path.resolve(__dirname, 'registry/src/index.ts'),
       '@alper-design-os/analyzer': path.resolve(__dirname, 'packages/analyzer/src/index.ts'),
+      '@alper-design-os/source-intelligence': path.resolve(__dirname, 'packages/source-intelligence/src/index.ts'),
+      '@alper-design-os/engineering-guardrails': path.resolve(__dirname, 'packages/engineering-guardrails/src/index.ts'),
+      '@alper-design-os/qa-engine': path.resolve(__dirname, 'packages/qa-engine/src/index.ts'),
+      '@alper-design-os/software-intelligence': path.resolve(__dirname, 'packages/software-intelligence/src/index.ts'),
       '@alper-design-os/mcp-server': path.resolve(__dirname, 'packages/mcp-server/src/index.ts')
     }
   },

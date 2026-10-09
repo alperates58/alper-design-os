@@ -148,6 +148,19 @@ importers:
         specifier: ^5.6.3
         version: 5.9.3
 
+  packages/engineering-guardrails:
+    dependencies:
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.1
+        version: 22.20.5
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+
   packages/mcp-server:
     dependencies:
       '@alper-design-os/adapter-contract':
@@ -159,12 +172,81 @@ importers:
       '@alper-design-os/design-core':
         specifier: workspace:*
         version: link:../../design-core
+      '@alper-design-os/engineering-guardrails':
+        specifier: workspace:*
+        version: link:../engineering-guardrails
+      '@alper-design-os/qa-engine':
+        specifier: workspace:*
+        version: link:../qa-engine
       '@alper-design-os/registry':
         specifier: workspace:*
         version: link:../../registry
+      '@alper-design-os/software-intelligence':
+        specifier: workspace:*
+        version: link:../software-intelligence
+      '@alper-design-os/source-intelligence':
+        specifier: workspace:*
+        version: link:../source-intelligence
       '@modelcontextprotocol/sdk':
         specifier: ^1.4.1
         version: 1.32.1(zod@3.25.76)
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.1
+        version: 22.20.5
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+
+  packages/qa-engine:
+    dependencies:
+      '@alper-design-os/design-core':
+        specifier: workspace:*
+        version: link:../../design-core
+      '@alper-design-os/engineering-guardrails':
+        specifier: workspace:*
+        version: link:../engineering-guardrails
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.1
+        version: 22.20.5
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+
+  packages/software-intelligence:
+    dependencies:
+      '@alper-design-os/analyzer':
+        specifier: workspace:*
+        version: link:../analyzer
+      '@alper-design-os/design-core':
+        specifier: workspace:*
+        version: link:../../design-core
+      '@alper-design-os/engineering-guardrails':
+        specifier: workspace:*
+        version: link:../engineering-guardrails
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.1
+        version: 22.20.5
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+
+  packages/source-intelligence:
+    dependencies:
+      '@alper-design-os/design-core':
+        specifier: workspace:*
+        version: link:../../design-core
       zod:
         specifier: ^3.24.1
         version: 3.25.76

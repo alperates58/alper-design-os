@@ -10,7 +10,31 @@ import {
 } from '@alper-design-os/design-core';
 import { AdapterRegistry } from '@alper-design-os/registry';
 import { auditAccessibility, auditExistingUI, auditResponsive, detectStack } from '@alper-design-os/analyzer';
+import { SourceIntelligenceEngine } from '@alper-design-os/source-intelligence';
 import { ProjectFile } from '@alper-design-os/adapter-contract';
+import {
+  generateEngineeringProfile,
+  evaluateReleaseGates,
+  createThreatModel,
+  detectAllToolCapabilities,
+  runSafeSecurityScan,
+  AuditFinding,
+  ReleaseGatePolicy
+} from '@alper-design-os/engineering-guardrails';
+import {
+  synthesizeUserJourneys,
+  generatePlaywrightTestCode,
+  createQAReport,
+  createTestStrategy
+} from '@alper-design-os/qa-engine';
+import {
+  analyzeArchitecture,
+  createArchitectureDecisionRecord,
+  analyzeDatabase,
+  detectMigrationRisk,
+  analyzeApiContract,
+  classifyFileCodeType
+} from '@alper-design-os/software-intelligence';
 import * as T from '../types.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -294,4 +318,278 @@ export function handleSearchMcpServers(input: T.SearchMcpServersInput) {
     totalResults: results.length,
     results
   };
+}
+
+// 16. discover_sources
+export function handleDiscoverSources(input: T.DiscoverSourcesInput) {
+  const engine = SourceIntelligenceEngine.getInstance();
+  const sources = engine.discoverSources({
+    type: input.type,
+    framework: input.framework,
+    domain: input.domain,
+    accessibilityLevel: input.accessibilityLevel,
+    minTrustScore: input.minTrustScore,
+    searchQuery: input.searchQuery
+  });
+
+  return {
+    totalSourcesFound: sources.length,
+    sources
+  };
+}
+
+// 17. search_sources
+export function handleSearchSources(input: T.SearchSourcesInput) {
+  const engine = SourceIntelligenceEngine.getInstance();
+  const results = engine.searchSources(input.query, {
+    framework: input.framework,
+    domain: input.domain
+  });
+
+  return {
+    query: input.query,
+    totalMatches: results.length,
+    rankedResults: results
+  };
+}
+
+// 18. rank_sources
+export function handleRankSources(input: T.RankSourcesInput) {
+  const engine = SourceIntelligenceEngine.getInstance();
+  const ranked = engine.recommendSourcesForStack(input.framework || 'Framework Agnostic', input.domain);
+
+  return {
+    totalRanked: ranked.length,
+    rankedSources: ranked
+  };
+}
+
+// 19. inspect_source
+export function handleInspectSource(input: T.InspectSourceInput) {
+  const engine = SourceIntelligenceEngine.getInstance();
+  const source = engine.inspectSource(input.sourceId);
+
+  if (!source) {
+    throw new Error(`Source with id '${input.sourceId}' was not found in catalog.`);
+  }
+
+  return source;
+}
+
+// 20. recommend_sources_for_product
+export function handleRecommendSourcesForProduct(input: T.RecommendSourcesForProductInput) {
+  const engine = SourceIntelligenceEngine.getInstance();
+  const profile = input.profile || inferProductUXProfile({
+    productName: input.productName || 'Target Product',
+    description: input.description || 'Target product requirements',
+    domain: input.domain
+  });
+
+  const recommendations = engine.recommendSourcesForProduct(profile);
+
+  return {
+    productName: profile.productName,
+    domainClassification: profile.domainClassification,
+    informationDensity: profile.informationDensity,
+    totalRecommendations: recommendations.length,
+    topRecommendations: recommendations.slice(0, 10)
+  };
+}
+
+// 21. recommend_sources_for_stack
+export function handleRecommendSourcesForStack(input: T.RecommendSourcesForStackInput) {
+  const engine = SourceIntelligenceEngine.getInstance();
+  const recommendations = engine.recommendSourcesForStack(input.framework, input.domain);
+
+  return {
+    framework: input.framework,
+    domain: input.domain,
+    totalRecommendations: recommendations.length,
+    topRecommendations: recommendations.slice(0, 10)
+  };
+}
+
+// 22. check_source_license
+export function handleCheckSourceLicense(input: T.CheckSourceLicenseInput) {
+  const engine = SourceIntelligenceEngine.getInstance();
+  return engine.checkSourceLicense(input.license);
+}
+
+// 23. generate_engineering_policy
+export function handleGenerateEngineeringPolicy(input: T.GenerateEngineeringPolicyInput) {
+  return generateEngineeringProfile(input.stack, {
+    securityLevel: input.securityLevel ? (`LEVEL_${input.securityLevel === 'CRITICAL' ? '3' : input.securityLevel === 'HIGH' ? '2' : '1'}` as any) : undefined
+  });
+}
+
+// 24. evaluate_release_gates
+export function handleEvaluateReleaseGates(input: T.EvaluateReleaseGatesInput) {
+  const policy: ReleaseGatePolicy = {
+    blockOnCriticalSecurity: true,
+    blockOnHighSecurity: true,
+    blockOnSecretDetected: true,
+    blockOnExploitableDependency: true,
+    blockOnFailedCriticalTests: true,
+    mediumSecurityAction: 'WARN',
+    lowSecurityAction: 'IGNORE'
+  };
+
+  const allFindings: AuditFinding[] = [
+    ...(input.staticIssues || []),
+    ...(input.dynamicIssues || []),
+    ...(input.vulnerableDependencies || []),
+    ...(input.detectedSecrets || [])
+  ];
+
+  return evaluateReleaseGates(allFindings, policy, false);
+}
+
+// 25. generate_threat_model
+export function handleGenerateThreatModel(input: T.GenerateThreatModelInput) {
+  return createThreatModel({
+    productName: input.systemName,
+    domain: input.architecture || 'GENERAL_WEB',
+    assets: input.dataAssets,
+    entryPoints: input.externalInterfaces
+  });
+}
+
+// 26. detect_tool_capabilities
+export async function handleDetectToolCapabilities(input: T.DetectToolCapabilitiesInput) {
+  const all = await detectAllToolCapabilities();
+  if (input.targetTools && input.targetTools.length > 0) {
+    return all.filter((t) => input.targetTools!.includes(t.toolId));
+  }
+  return all;
+}
+
+// 27. run_safe_security_scan
+export async function handleRunSafeSecurityScan(input: T.RunSafeSecurityScanInput) {
+  return await runSafeSecurityScan(
+    {
+      projectDir: input.targetDir,
+      targetUrl: input.targetUrl
+    },
+    {
+      mode: input.activeScanApproved ? 'ACTIVE' : 'PASSIVE',
+      userExplicitApproval: input.activeScanApproved
+    }
+  );
+}
+
+// 28. generate_user_journeys
+export function handleGenerateUserJourneys(input: T.GenerateUserJourneysInput) {
+  const profile = inferProductUXProfile({
+    productName: input.productName,
+    description: input.description,
+    domain: input.domain
+  });
+  return synthesizeUserJourneys(profile);
+}
+
+// 29. generate_playwright_test
+export function handleGeneratePlaywrightTest(input: T.GeneratePlaywrightTestInput) {
+  return generatePlaywrightTestCode({
+    id: `journey-${Date.now()}`,
+    goal: input.journeyTitle,
+    persona: 'Standard User',
+    criticality: 'MISSION_CRITICAL',
+    preconditions: ['User is on target page'],
+    steps: input.steps.map((s) => `${s.action} on ${s.target} ${s.value ? `with ${s.value}` : ''}`),
+    expectedOutcome: 'Action completes without console errors or accessibility violations',
+    failureStates: ['ERROR_ALERT', 'CRASH'],
+    performanceBudget: { maxFlowDurationMs: 5000, maxStepLatencyMs: 1500 },
+    accessibilityRequirements: { keyboardOnlyNavigable: true, announceLiveRegions: true, minTouchTargetPx: 44 }
+  }, {
+    baseURL: input.targetUrl
+  });
+}
+
+// 30. generate_qa_report
+export function handleGenerateQAReport(input: T.GenerateQAReportInput) {
+  return createQAReport({
+    targetApplication: input.targetApplication,
+    testedFlows: input.testedFlows,
+    consoleErrors: input.consoleErrors,
+    networkFailures: input.networkFailures,
+    accessibilityFindings: input.accessibilityFindings,
+    visualDiffs: input.visualDiffs,
+    unverifiedAreas: input.unverifiedAreas
+  });
+}
+
+// 31. generate_test_pyramid
+export function handleGenerateTestPyramid(input: T.GenerateTestPyramidInput) {
+  return createTestStrategy({
+    name: input.projectName,
+    projectType: input.projectType === 'ENTERPRISE_ERP_CRM'
+      ? 'ENTERPRISE_ERP_CRM'
+      : input.projectType === 'LANDING_PAGE'
+        ? 'LANDING_PAGE'
+        : input.projectType === 'MICROSERVICE_API'
+          ? 'MICROSERVICE_API'
+          : 'GENERIC_SPA'
+  });
+}
+
+// 32. analyze_architecture
+export function handleAnalyzeArchitecture(input: T.AnalyzeArchitectureInput) {
+  const files = collectProjectFiles(input.projectPath, 150);
+  return analyzeArchitecture({
+    rootDir: input.projectPath,
+    files
+  });
+}
+
+// 33. generate_adr
+export function handleGenerateADR(input: T.GenerateADRInput) {
+  return createArchitectureDecisionRecord({
+    title: input.title,
+    context: input.context,
+    decision: input.decision,
+    consequences: input.consequences
+  });
+}
+
+// 34. analyze_database_schema
+export function handleAnalyzeDatabaseSchema(input: T.AnalyzeDatabaseSchemaInput) {
+  const migrationEvaluation = input.migrationContent
+    ? detectMigrationRisk(input.migrationContent.split('\n'))
+    : null;
+
+  const dbProfile = analyzeDatabase({
+    sqlStatements: input.querySample ? [input.querySample] : [],
+    migrationDdl: input.migrationContent ? input.migrationContent.split('\n') : []
+  });
+
+  return {
+    databaseProfile: dbProfile,
+    migrationEvaluation
+  };
+}
+
+// 35. evaluate_api_compatibility
+export function handleEvaluateAPICompatibility(input: T.EvaluateAPICompatibilityInput) {
+  let prevSpec: any = {};
+  let currSpec: any = {};
+  try {
+    prevSpec = JSON.parse(input.oldSpec);
+    currSpec = JSON.parse(input.newSpec);
+  } catch {
+    // raw
+  }
+  return analyzeApiContract({
+    hasOpenApi: input.specType === 'OPENAPI',
+    hasAsyncApi: input.specType === 'ASYNCAPI',
+    previousSpec: prevSpec,
+    currentSpec: currSpec
+  });
+}
+
+// 36. classify_code_paths
+export function handleClassifyCodePaths(input: T.ClassifyCodePathsInput) {
+  return input.paths.map((p) => ({
+    path: p,
+    classification: classifyFileCodeType(p)
+  }));
 }

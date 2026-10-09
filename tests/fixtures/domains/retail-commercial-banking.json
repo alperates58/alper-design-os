@@ -1,0 +1,24 @@
+{
+  "name": "VaultCore Banking",
+  "domain": "Commercial Banking Cash Operations and Treasury Management",
+  "description": "Commercial banking treasury workstation for financial corporate clients and loan officers. Manages wire transfers, multi-currency ledger accounts, liquidity forecasting, compliance sanction screening, and dual-authorization approval queues.",
+  "targetUsers": [
+    "Corporate Treasury Analyst",
+    "Commercial Loan Officer",
+    "Risk Compliance Officer"
+  ],
+  "keyFeatures": [
+    "multi-currency general ledger grid",
+    "dual-authorization transaction queue",
+    "liquidity position timeline chart",
+    "sanction compliance constraint violation alerts",
+    "split pane transfer inspector",
+    "swift code filter bar"
+  ],
+  "operatingEnvironment": "High-security multi-monitor financial desk workstation",
+  "expectedTraits": {
+    "domainClassification": "FINTECH",
+    "informationDensity": "HIGH",
+    "interactionStyle": "HYBRID_MOUSE_KEYBOARD"
+  }
+}

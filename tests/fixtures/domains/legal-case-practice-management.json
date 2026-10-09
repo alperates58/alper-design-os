@@ -1,0 +1,24 @@
+{
+  "name": "LexJuris CasePro",
+  "domain": "Legal Practice and Litigation Matter Management",
+  "description": "Comprehensive legal case and litigation workflow platform for law firm attorneys and paralegals. Manages court filing deadlines, case docket timelines, document discovery indices, billable hour timers, conflict-of-interest checks, and privileged matter access controls.",
+  "targetUsers": [
+    "Litigation Partner",
+    "Senior Paralegal",
+    "Firm Billing Administrator"
+  ],
+  "keyFeatures": [
+    "matter litigation docket grid",
+    "statutory court deadline timeline",
+    "document discovery index table",
+    "billable time entry ledger",
+    "split pane evidence and pleadings inspector",
+    "conflict check search and filter bar"
+  ],
+  "operatingEnvironment": "Law office dual-display desktop and courtroom tablet",
+  "expectedTraits": {
+    "domainClassification": "B2B_ENTERPRISE",
+    "informationDensity": "HIGH",
+    "interactionStyle": "HYBRID_MOUSE_KEYBOARD"
+  }
+}

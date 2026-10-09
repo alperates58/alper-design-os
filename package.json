@@ -5,11 +5,11 @@
   "description": "Understand the product before designing the interface. Technology-agnostic Design/UX Development OS with Domain Intelligence.",
   "type": "module",
   "scripts": {
-    "build": "node node_modules/typescript/bin/tsc -b design-core adapters/contract adapters/generic-web adapters/html-css-js adapters/react adapters/react-typescript adapters/php adapters/laravel-blade adapters/aspnet-razor registry packages/analyzer packages/mcp-server",
+    "build": "node node_modules/typescript/bin/tsc -b design-core adapters/contract adapters/generic-web adapters/html-css-js adapters/react adapters/react-typescript adapters/php adapters/laravel-blade adapters/aspnet-razor registry packages/analyzer packages/source-intelligence packages/engineering-guardrails packages/qa-engine packages/software-intelligence packages/mcp-server",
     "test": "node node_modules/vitest/vitest.mjs run",
     "test:watch": "node node_modules/vitest/vitest.mjs",
-    "typecheck": "node node_modules/typescript/bin/tsc --noEmit",
-    "doctor": "powershell -ExecutionPolicy Bypass -File ./scripts/doctor.ps1",
+    "doctor": "node scripts/doctor.js",
+    "doctor:ps": "powershell -ExecutionPolicy Bypass -File ./scripts/doctor.ps1",
     "mcp": "node packages/mcp-server/dist/index.js"
   },
   "keywords": [

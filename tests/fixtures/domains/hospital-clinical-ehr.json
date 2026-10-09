@@ -1,0 +1,24 @@
+{
+  "name": "MedPulse EHR",
+  "domain": "Hospital Inpatient Clinical Health Records and Ward Management",
+  "description": "Hospital clinical information system for inpatient wards, triage, and nurse stations. Provides patient chart reviews, active medication orders, vital sign telemetry, lab result alert badges, clinical doctor handover notes, and allergy warnings under strict patient safety standards.",
+  "targetUsers": [
+    "Attending Physician",
+    "Ward Charge Nurse",
+    "Clinical Pharmacist"
+  ],
+  "keyFeatures": [
+    "patient chart review",
+    "vital sign telemetry history",
+    "active medication order grid",
+    "clinical allergy and constraint warnings",
+    "split pane patient summary",
+    "multi-criteria filter by ward and acuity"
+  ],
+  "operatingEnvironment": "Point-of-care mobile workstation cart and ward desk displays",
+  "expectedTraits": {
+    "domainClassification": "HEALTHCARE",
+    "informationDensity": "HIGH",
+    "interactionStyle": "HYBRID_MOUSE_KEYBOARD"
+  }
+}

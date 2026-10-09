@@ -1,0 +1,24 @@
+{
+  "name": "ApexStore WMS",
+  "domain": "Warehouse Inventory Logistics and Fulfillment Management",
+  "description": "Industrial warehouse operations platform for inbound receiving, pallet bin storage allocation, automated picking path optimization, packing stations, manifest dispatching, and cross-docking bottlenecks.",
+  "targetUsers": [
+    "Warehouse Floor Supervisor",
+    "Inbound Receiving Clerk",
+    "Inventory Control Specialist"
+  ],
+  "keyFeatures": [
+    "bin storage allocation grid",
+    "pick wave scheduling timeline",
+    "dock door capacity utilization",
+    "bottleneck detection in packing queue",
+    "split pane inventory item inspector",
+    "barcode filter bar"
+  ],
+  "operatingEnvironment": "Warehouse dispatch office desktop and rugged forklift terminals",
+  "expectedTraits": {
+    "domainClassification": "INDUSTRIAL_OPERATIONAL",
+    "informationDensity": "HIGH",
+    "interactionStyle": "HYBRID_MOUSE_KEYBOARD"
+  }
+}

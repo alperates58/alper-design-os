@@ -1,0 +1,20 @@
+{
+  "name": "@alper-design-os/qa-engine",
+  "version": "0.1.0",
+  "description": "Browser, QA & Verification Engine for Alper Design OS: Playwright, Chrome DevTools, axe-core, Lighthouse, k6, Visual Regression, and User Journeys",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@alper-design-os/design-core": "workspace:*",
+    "@alper-design-os/engineering-guardrails": "workspace:*",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "typescript": "^5.6.3"
+  }
+}

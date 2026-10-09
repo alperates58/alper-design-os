@@ -1,0 +1,23 @@
+{
+  "name": "StreamSphere",
+  "domain": "Consumer Digital Media and Video Streaming Platform",
+  "description": "Consumer video entertainment streaming platform offering on-demand cinema, live broadcast channels, personalized recommendation carousels, episodic binge queues, responsive video players, subtitles, and user watchlist curation.",
+  "targetUsers": [
+    "Digital Content Subscriber",
+    "Casual Family Viewer"
+  ],
+  "keyFeatures": [
+    "hero content banner carousel",
+    "personalized category recommendation rows",
+    "video player playback controls",
+    "watchlist queue manager",
+    "genre and mood filter bar",
+    "content rating badges"
+  ],
+  "operatingEnvironment": "Responsive consumer web browsers, smart TVs, and mobile devices",
+  "expectedTraits": {
+    "domainClassification": "B2C_CONSUMER",
+    "informationDensity": "SPACIOUS",
+    "interactionStyle": "HYBRID_MOUSE_KEYBOARD"
+  }
+}

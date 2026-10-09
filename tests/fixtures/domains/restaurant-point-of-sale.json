@@ -1,0 +1,24 @@
+{
+  "name": "BistroTap POS",
+  "domain": "Hospitality Quick-Service and Dine-In Restaurant Point of Sale",
+  "description": "High-velocity restaurant point of sale touch system for floor servers and cashiers. Handles quick table layout visualizers, order item modifiers, kitchen display system (KDS) firing, split check payments, and tip processing during high-stress peak dining rushes.",
+  "targetUsers": [
+    "Floor Server",
+    "Head Bartender",
+    "Restaurant Floor Manager"
+  ],
+  "keyFeatures": [
+    "table floor layout visualizer",
+    "touch optimized fast-item entry menu grid",
+    "split check bill payment modal",
+    "kitchen firing status alert indicators",
+    "order modifier selectors",
+    "context menu for table transfer"
+  ],
+  "operatingEnvironment": "15-inch ruggedized counter touch terminal and handheld tablets",
+  "expectedTraits": {
+    "domainClassification": "B2B_ENTERPRISE",
+    "informationDensity": "HIGH",
+    "interactionStyle": "TOUCH_OPTIMIZED"
+  }
+}

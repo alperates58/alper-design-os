@@ -197,6 +197,274 @@ export function createAlperDesignServer(): Server {
         },
         required: ['query']
       }
+    },
+    {
+      name: 'discover_sources',
+      description: 'Discovers world-class design systems, component libraries, and accessibility standards with filtering.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          type: { type: 'string' },
+          framework: { type: 'string' },
+          domain: { type: 'string' },
+          accessibilityLevel: { type: 'string' },
+          minTrustScore: { type: 'number' },
+          searchQuery: { type: 'string' }
+        }
+      }
+    },
+    {
+      name: 'search_sources',
+      description: 'Full-text ranked search across the open-source design systems and knowledge catalog.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          query: { type: 'string' },
+          framework: { type: 'string' },
+          domain: { type: 'string' }
+        },
+        required: ['query']
+      }
+    },
+    {
+      name: 'rank_sources',
+      description: 'Scores and ranks design system sources using weighted multi-criteria algorithms.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          framework: { type: 'string' },
+          domain: { type: 'string' },
+          requirePermissiveLicense: { type: 'boolean' }
+        }
+      }
+    },
+    {
+      name: 'inspect_source',
+      description: 'Inspects full normalized metadata for a specific design system, library, or standard.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          sourceId: { type: 'string' }
+        },
+        required: ['sourceId']
+      }
+    },
+    {
+      name: 'recommend_sources_for_product',
+      description: 'Recommends matching design systems and guidelines based on a ProductUXProfile or product brief.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          profile: { type: 'object' },
+          productName: { type: 'string' },
+          description: { type: 'string' },
+          domain: { type: 'string' }
+        }
+      }
+    },
+    {
+      name: 'recommend_sources_for_stack',
+      description: 'Recommends design systems and component libraries tailored to a specific tech stack (React, Blade, Razor, etc.).',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          framework: { type: 'string' },
+          domain: { type: 'string' }
+        },
+        required: ['framework']
+      }
+    },
+    {
+      name: 'check_source_license',
+      description: 'Checks software license compliance, commercial usage permissions, and attribution requirements.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          license: { type: 'string' }
+        },
+        required: ['license']
+      }
+    },
+    {
+      name: 'generate_engineering_policy',
+      description: 'Generates stack-aware EngineeringQualityProfile (security, quality, performance budgets, release gates).',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          stack: { type: 'string' },
+          securityLevel: { type: 'string', enum: ['STANDARD', 'HIGH', 'CRITICAL'] },
+          targetEnvironment: { type: 'string' }
+        },
+        required: ['stack']
+      }
+    },
+    {
+      name: 'evaluate_release_gates',
+      description: 'Evaluates security, code quality, dependency, and secret findings against release gates.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          profile: { type: 'object' },
+          staticIssues: { type: 'array', items: { type: 'object' } },
+          dynamicIssues: { type: 'array', items: { type: 'object' } },
+          vulnerableDependencies: { type: 'array', items: { type: 'object' } },
+          detectedSecrets: { type: 'array', items: { type: 'object' } }
+        }
+      }
+    },
+    {
+      name: 'generate_threat_model',
+      description: 'Generates STRIDE threat model with asset, boundary, and mitigation mapping.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          systemName: { type: 'string' },
+          architecture: { type: 'string' },
+          dataAssets: { type: 'array', items: { type: 'string' } },
+          externalInterfaces: { type: 'array', items: { type: 'string' } }
+        },
+        required: ['systemName']
+      }
+    },
+    {
+      name: 'detect_tool_capabilities',
+      description: 'Detects available security, linting, testing, and profiling tools on host machine.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          targetTools: { type: 'array', items: { type: 'string' } }
+        }
+      }
+    },
+    {
+      name: 'run_safe_security_scan',
+      description: 'Executes safe passive code security scan. Active DAST requires targetUrl and activeScanApproved=true.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          targetDir: { type: 'string' },
+          activeScanApproved: { type: 'boolean' },
+          targetUrl: { type: 'string' }
+        },
+        required: ['targetDir']
+      }
+    },
+    {
+      name: 'generate_user_journeys',
+      description: 'Synthesizes persona-driven user journeys from ProductUXProfile or product requirements.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          productName: { type: 'string' },
+          description: { type: 'string' },
+          domain: { type: 'string' }
+        },
+        required: ['productName', 'description']
+      }
+    },
+    {
+      name: 'generate_playwright_test',
+      description: 'Generates resilient Playwright test script using accessible role locators and viewport matrix.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          journeyTitle: { type: 'string' },
+          targetUrl: { type: 'string' },
+          steps: { type: 'array', items: { type: 'object' } }
+        },
+        required: ['journeyTitle', 'targetUrl', 'steps']
+      }
+    },
+    {
+      name: 'generate_qa_report',
+      description: 'Generates comprehensive QA verification report (markdown and JSON) with unverified areas prominently noted.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          targetApplication: { type: 'string' },
+          testedFlows: { type: 'array', items: { type: 'string' } },
+          consoleErrors: { type: 'array', items: { type: 'object' } },
+          networkFailures: { type: 'array', items: { type: 'object' } },
+          accessibilityFindings: { type: 'array', items: { type: 'string' } },
+          visualDiffs: { type: 'array', items: { type: 'object' } },
+          unverifiedAreas: { type: 'array', items: { type: 'string' } }
+        },
+        required: ['targetApplication']
+      }
+    },
+    {
+      name: 'generate_test_pyramid',
+      description: 'Generates context-aware testing strategy pyramid based on application archetype.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          projectName: { type: 'string' },
+          projectType: { type: 'string', enum: ['LANDING_PAGE', 'ENTERPRISE_ERP_CRM', 'MICROSERVICE_API', 'STANDARD_WEB'] }
+        },
+        required: ['projectName', 'projectType']
+      }
+    },
+    {
+      name: 'analyze_architecture',
+      description: 'Detects architectural style, subsystem boundaries, coupling, and circular dependencies.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          projectPath: { type: 'string' }
+        },
+        required: ['projectPath']
+      }
+    },
+    {
+      name: 'generate_adr',
+      description: 'Generates Architecture Decision Record (ADR) document with context, decision, and trade-offs.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          number: { type: 'number' },
+          title: { type: 'string' },
+          context: { type: 'string' },
+          decision: { type: 'string' },
+          consequences: { type: 'object' }
+        },
+        required: ['number', 'title', 'context', 'decision', 'consequences']
+      }
+    },
+    {
+      name: 'analyze_database_schema',
+      description: 'Detects database engine, classifies migration safety (SAFE/REVIEW/DANGEROUS), and checks N+1 query hazards.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          projectPath: { type: 'string' },
+          migrationContent: { type: 'string' },
+          querySample: { type: 'string' }
+        }
+      }
+    },
+    {
+      name: 'evaluate_api_compatibility',
+      description: 'Evaluates OpenAPI/AsyncAPI specifications for breaking changes, removed endpoints, and altered payloads.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          oldSpec: { type: 'string' },
+          newSpec: { type: 'string' },
+          specType: { type: 'string', enum: ['OPENAPI', 'ASYNCAPI'], default: 'OPENAPI' }
+        },
+        required: ['oldSpec', 'newSpec']
+      }
+    },
+    {
+      name: 'classify_code_paths',
+      description: 'Classifies repository file paths into SOURCE, GENERATED, VENDORED, BUILD_OUTPUT, MIGRATION, or CONFIGURATION.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          paths: { type: 'array', items: { type: 'string' } }
+        },
+        required: ['paths']
+      }
     }
   ];
 
@@ -255,6 +523,69 @@ export function createAlperDesignServer(): Server {
           break;
         case 'search_mcp_servers':
           result = Tools.handleSearchMcpServers(T.SearchMcpServersInputSchema.parse(args));
+          break;
+        case 'discover_sources':
+          result = Tools.handleDiscoverSources(T.DiscoverSourcesInputSchema.parse(args));
+          break;
+        case 'search_sources':
+          result = Tools.handleSearchSources(T.SearchSourcesInputSchema.parse(args));
+          break;
+        case 'rank_sources':
+          result = Tools.handleRankSources(T.RankSourcesInputSchema.parse(args));
+          break;
+        case 'inspect_source':
+          result = Tools.handleInspectSource(T.InspectSourceInputSchema.parse(args));
+          break;
+        case 'recommend_sources_for_product':
+          result = Tools.handleRecommendSourcesForProduct(T.RecommendSourcesForProductInputSchema.parse(args));
+          break;
+        case 'recommend_sources_for_stack':
+          result = Tools.handleRecommendSourcesForStack(T.RecommendSourcesForStackInputSchema.parse(args));
+          break;
+        case 'check_source_license':
+          result = Tools.handleCheckSourceLicense(T.CheckSourceLicenseInputSchema.parse(args));
+          break;
+        case 'generate_engineering_policy':
+          result = Tools.handleGenerateEngineeringPolicy(T.GenerateEngineeringPolicyInputSchema.parse(args));
+          break;
+        case 'evaluate_release_gates':
+          result = Tools.handleEvaluateReleaseGates(T.EvaluateReleaseGatesInputSchema.parse(args));
+          break;
+        case 'generate_threat_model':
+          result = Tools.handleGenerateThreatModel(T.GenerateThreatModelInputSchema.parse(args));
+          break;
+        case 'detect_tool_capabilities':
+          result = await Tools.handleDetectToolCapabilities(T.DetectToolCapabilitiesInputSchema.parse(args));
+          break;
+        case 'run_safe_security_scan':
+          result = await Tools.handleRunSafeSecurityScan(T.RunSafeSecurityScanInputSchema.parse(args));
+          break;
+        case 'generate_user_journeys':
+          result = Tools.handleGenerateUserJourneys(T.GenerateUserJourneysInputSchema.parse(args));
+          break;
+        case 'generate_playwright_test':
+          result = Tools.handleGeneratePlaywrightTest(T.GeneratePlaywrightTestInputSchema.parse(args));
+          break;
+        case 'generate_qa_report':
+          result = Tools.handleGenerateQAReport(T.GenerateQAReportInputSchema.parse(args));
+          break;
+        case 'generate_test_pyramid':
+          result = Tools.handleGenerateTestPyramid(T.GenerateTestPyramidInputSchema.parse(args));
+          break;
+        case 'analyze_architecture':
+          result = Tools.handleAnalyzeArchitecture(T.AnalyzeArchitectureInputSchema.parse(args));
+          break;
+        case 'generate_adr':
+          result = Tools.handleGenerateADR(T.GenerateADRInputSchema.parse(args));
+          break;
+        case 'analyze_database_schema':
+          result = Tools.handleAnalyzeDatabaseSchema(T.AnalyzeDatabaseSchemaInputSchema.parse(args));
+          break;
+        case 'evaluate_api_compatibility':
+          result = Tools.handleEvaluateAPICompatibility(T.EvaluateAPICompatibilityInputSchema.parse(args));
+          break;
+        case 'classify_code_paths':
+          result = Tools.handleClassifyCodePaths(T.ClassifyCodePathsInputSchema.parse(args));
           break;
         default:
           throw new Error(`Tool not found: ${name}`);

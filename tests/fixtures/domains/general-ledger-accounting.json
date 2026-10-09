@@ -1,0 +1,24 @@
+{
+  "name": "AccuBalance ERP",
+  "domain": "Financial Accounting General Ledger and Financial Closing",
+  "description": "Enterprise corporate accounting workstation for certified public accountants and financial controllers. Manages chart of accounts, journal entry double-entry postings, bank reconciliation matching, multi-entity consolidation, and month-end close schedules.",
+  "targetUsers": [
+    "Financial Controller",
+    "Senior Staff Accountant",
+    "External Financial Auditor"
+  ],
+  "keyFeatures": [
+    "double-entry general ledger grid",
+    "bank reconciliation matching workbench",
+    "month-end closing schedule timeline",
+    "unbalanced entry constraint violation alerts",
+    "split pane journal voucher inspector",
+    "fiscal period faceted filter bar"
+  ],
+  "operatingEnvironment": "High-density finance multi-monitor workstation with 10-key numeric keypad",
+  "expectedTraits": {
+    "domainClassification": "FINTECH",
+    "informationDensity": "HIGH",
+    "interactionStyle": "HYBRID_MOUSE_KEYBOARD"
+  }
+}

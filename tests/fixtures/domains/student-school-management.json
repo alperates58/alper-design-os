@@ -1,0 +1,24 @@
+{
+  "name": "EduTrack SIS",
+  "domain": "K-12 and Higher Education Student Information System",
+  "description": "School administrative and academic management portal for registrars, faculty, and counselors. Coordinates student enrollment records, attendance logs, gradebook calculations, course section timetables, parent-teacher communications, and report card exports.",
+  "targetUsers": [
+    "School Registrar",
+    "Classroom Teacher",
+    "Academic Counselor"
+  ],
+  "keyFeatures": [
+    "student cumulative record grid",
+    "academic gradebook table",
+    "weekly class timetable matrix",
+    "attendance status tracking",
+    "split pane student details inspector",
+    "faceted filter by grade level and homeroom"
+  ],
+  "operatingEnvironment": "Campus desktop computer and classroom laptops",
+  "expectedTraits": {
+    "domainClassification": "B2B_ENTERPRISE",
+    "informationDensity": "HIGH",
+    "interactionStyle": "HYBRID_MOUSE_KEYBOARD"
+  }
+}

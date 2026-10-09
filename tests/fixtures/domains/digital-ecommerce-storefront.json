@@ -1,0 +1,23 @@
+{
+  "name": "NovaBoutique",
+  "domain": "Consumer Retail Fashion and Digital E-commerce Storefront",
+  "description": "Consumer fashion retail store featuring responsive product catalog browsing, rich photo galleries, faceted size and color swatches, shopping bag cart drawer, flash sale countdown badges, guest checkout, and payment gateways.",
+  "targetUsers": [
+    "Online Retail Shopper",
+    "Repeat Brand Customer"
+  ],
+  "keyFeatures": [
+    "product catalog gallery grid",
+    "faceted filter bar for size color and price",
+    "slide-out shopping bag drawer",
+    "multi-angle image viewer",
+    "single-page transactional checkout",
+    "customer review ratings"
+  ],
+  "operatingEnvironment": "Responsive mobile-first smartphones and desktop browsers",
+  "expectedTraits": {
+    "domainClassification": "B2C_CONSUMER",
+    "informationDensity": "SPACIOUS",
+    "interactionStyle": "HYBRID_MOUSE_KEYBOARD"
+  }
+}

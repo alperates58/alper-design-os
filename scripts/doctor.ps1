@@ -86,8 +86,14 @@ $mcpConfigFile = Join-Path $env:USERPROFILE ".gemini\config\mcp_config.json"
 if (Test-Path $mcpConfigFile) {
     try {
         $cfg = (Get-Content $mcpConfigFile -Raw) | ConvertFrom-Json
-        if ($cfg.mcpServers."alper-design-os") {
-            Write-Host " OK (Registered in $mcpConfigFile)" -ForegroundColor Green
+        $alperOk = [bool]($cfg.mcpServers."alper-design-os")
+        $chromeOk = [bool]($cfg.mcpServers."chrome-devtools")
+        $playwrightOk = [bool]($cfg.mcpServers."playwright")
+
+        if ($alperOk -and $chromeOk -and $playwrightOk) {
+            Write-Host " OK (alper-design-os, chrome-devtools, playwright registered)" -ForegroundColor Green
+        } elseif ($alperOk) {
+            Write-Host " PARTIAL (alper-design-os registered; run install-windows.ps1 to add chrome-devtools & playwright)" -ForegroundColor Yellow
         } else {
             Write-Host " WARNING (mcp_config.json exists, but 'alper-design-os' is not listed)" -ForegroundColor Yellow
         }
