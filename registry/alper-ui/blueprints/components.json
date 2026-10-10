@@ -1,0 +1,22 @@
+{
+  "name": "Alper UI Canonical Components",
+  "version": "1.0.0",
+  "total": 15,
+  "components": [
+    { "id": "canonical-button", "type": "BUTTON", "role": "button", "density": "COMFORTABLE" },
+    { "id": "canonical-input", "type": "INPUT", "role": "textbox", "density": "COMFORTABLE" },
+    { "id": "canonical-select", "type": "SELECT", "role": "combobox", "density": "COMFORTABLE" },
+    { "id": "canonical-checkbox", "type": "CHECKBOX", "role": "checkbox", "density": "COMFORTABLE" },
+    { "id": "canonical-radio", "type": "RADIO", "role": "radio", "density": "COMFORTABLE" },
+    { "id": "canonical-switch", "type": "SWITCH", "role": "switch", "density": "COMFORTABLE" },
+    { "id": "canonical-badge", "type": "BADGE", "role": "status", "density": "COMPACT" },
+    { "id": "canonical-alert", "type": "ALERT", "role": "alert", "density": "COMFORTABLE" },
+    { "id": "canonical-card", "type": "CARD", "role": "region", "density": "COMFORTABLE" },
+    { "id": "canonical-modal-dialog", "type": "MODAL_DIALOG", "role": "dialog", "density": "COMFORTABLE" },
+    { "id": "canonical-drawer", "type": "DRAWER", "role": "complementary", "density": "COMFORTABLE" },
+    { "id": "canonical-tooltip", "type": "TOOLTIP", "role": "tooltip", "density": "COMPACT" },
+    { "id": "canonical-dropdown-menu", "type": "DROPDOWN_MENU", "role": "menu", "density": "COMFORTABLE" },
+    { "id": "canonical-data-table", "type": "DATA_TABLE", "role": "table", "density": "COMPACT" },
+    { "id": "canonical-filter-bar", "type": "FILTER_BAR", "role": "search", "density": "COMPACT" }
+  ]
+}

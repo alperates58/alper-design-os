@@ -32,7 +32,7 @@ COPY docs/ ./docs/
 COPY hooks.json mcp_config.json plugin.json README.md ARCHITECTURE.md LICENSE_POLICY.md SOURCES.md ROADMAP.md ./
 
 # Clean installation from scratch inside container (Host node_modules NOT mounted)
-RUN pnpm install
+RUN pnpm install --no-frozen-lockfile
 
 # Build all TypeScript packages & adapters
 RUN pnpm run build

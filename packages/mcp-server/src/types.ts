@@ -571,4 +571,99 @@ export const ExplainSourceRecommendationInputSchema = z.object({
 });
 export type ExplainSourceRecommendationInput = z.infer<typeof ExplainSourceRecommendationInputSchema>;
 
+// 66. create_design_intent
+export const CreateDesignIntentInputSchema = z.object({
+  productType: z.enum(['ENTERPRISE_INTERNAL', 'B2B_SAAS', 'B2C_CONSUMER', 'ADMIN_OPERATIONAL', 'ANALYTICS_DATA', 'DEVELOPER_TOOL']).optional(),
+  userExpertise: z.enum(['NOVICE', 'INTERMEDIATE', 'EXPERT']).optional(),
+  usageFrequency: z.enum(['RARE_SPORADIC', 'PERIODIC', 'DAILY_FREQUENT', 'CONTINUOUS_INTENSIVE']).optional(),
+  sessionDuration: z.enum(['SHORT_FOCUSED', 'MEDIUM', 'LONG_EXTENDED']).optional(),
+  informationDensity: z.enum(['COMPACT', 'COMFORTABLE', 'SPACIOUS']).optional(),
+  interactionIntensity: z.enum(['READ_DOMINANT', 'BALANCED', 'INPUT_INTENSIVE', 'KEYBOARD_POWER']).optional(),
+  devicePriority: z.enum(['DESKTOP_FIRST', 'MOBILE_FIRST', 'BALANCED_RESPONSIVE']).optional(),
+  taskCriticality: z.enum(['LOW', 'MEDIUM', 'HIGH', 'MISSION_CRITICAL']).optional(),
+  errorCost: z.enum(['TRIVIAL', 'LOW', 'SIGNIFICANT', 'CATASTROPHIC']).optional(),
+  brandCharacter: z.enum(['UTILITY_NEUTRAL', 'AUTHORITATIVE', 'FRIENDLY', 'TECHNICAL']).optional(),
+  visualEmphasis: z.enum(['CONTENT_FIRST', 'DATA_FIRST', 'ACTION_FIRST', 'BRAND_FIRST']).optional(),
+  motionTolerance: z.enum(['REDUCED', 'SUBTLE', 'EXPRESSIVE']).optional(),
+  accessibilityNeeds: z.enum(['STANDARD_AA', 'ENHANCED_AAA', 'HIGH_CONTRAST', 'SCREEN_READER_OPTIMIZED']).optional()
+});
+export type CreateDesignIntentInput = z.infer<typeof CreateDesignIntentInputSchema>;
+
+// 67. create_page_blueprint
+export const CreatePageBlueprintInputSchema = z.object({
+  id: z.string().optional().default('data-management-workspace'),
+  title: z.string().optional().default('Data Management Workspace'),
+  preset: z.enum(['DATA_MANAGEMENT_WORKSPACE', 'LOGIN_PAGE', 'SETTINGS_PAGE', 'LIST_DETAIL_PAGE', 'DASHBOARD_PAGE', 'FORM_PAGE']).optional().default('DATA_MANAGEMENT_WORKSPACE')
+});
+export type CreatePageBlueprintInput = z.infer<typeof CreatePageBlueprintInputSchema>;
+
+// 68. create_component_blueprint
+export const CreateComponentBlueprintInputSchema = z.object({
+  id: z.string().optional(),
+  type: z.enum(['BUTTON', 'INPUT', 'SELECT', 'CHECKBOX', 'RADIO', 'SWITCH', 'BADGE', 'ALERT', 'CARD', 'MODAL_DIALOG', 'DRAWER', 'TOOLTIP', 'DROPDOWN_MENU', 'DATA_TABLE', 'FILTER_BAR']),
+  density: z.enum(['COMPACT', 'COMFORTABLE', 'SPACIOUS']).optional()
+});
+export type CreateComponentBlueprintInput = z.infer<typeof CreateComponentBlueprintInputSchema>;
+
+// 69. create_app_shell_blueprint
+export const CreateAppShellBlueprintInputSchema = z.object({
+  id: z.string().optional().default('app-shell'),
+  variant: z.enum(['ENTERPRISE_DENSE', 'SAAS_STANDARD', 'CONSUMER_CONTENT']).optional().default('ENTERPRISE_DENSE')
+});
+export type CreateAppShellBlueprintInput = z.infer<typeof CreateAppShellBlueprintInputSchema>;
+
+// 70. render_blueprint
+export const RenderBlueprintInputSchema = z.object({
+  blueprintId: z.string().optional().default('data-management-workspace'),
+  targetStack: z.enum(['html-css-js', 'react-typescript', 'laravel-blade', 'aspnet-razor']).optional().default('html-css-js'),
+  theme: z.enum(['LIGHT', 'DARK', 'HIGH_CONTRAST']).optional().default('LIGHT'),
+  density: z.enum(['COMPACT', 'COMFORTABLE', 'SPACIOUS']).optional().default('COMPACT')
+});
+export type RenderBlueprintInput = z.infer<typeof RenderBlueprintInputSchema>;
+
+// 71. render_component
+export const RenderComponentInputSchema = z.object({
+  componentType: z.enum(['BUTTON', 'INPUT', 'SELECT', 'CHECKBOX', 'RADIO', 'SWITCH', 'BADGE', 'ALERT', 'CARD', 'MODAL_DIALOG', 'DRAWER', 'TOOLTIP', 'DROPDOWN_MENU', 'DATA_TABLE', 'FILTER_BAR']),
+  targetStack: z.enum(['html-css-js', 'react-typescript', 'laravel-blade', 'aspnet-razor']).optional().default('html-css-js'),
+  theme: z.enum(['LIGHT', 'DARK', 'HIGH_CONTRAST']).optional().default('LIGHT'),
+  density: z.enum(['COMPACT', 'COMFORTABLE', 'SPACIOUS']).optional().default('COMFORTABLE')
+});
+export type RenderComponentInput = z.infer<typeof RenderComponentInputSchema>;
+
+// 72. create_ui_recipe
+export const CreateUiRecipeInputSchema = z.object({
+  recipeType: z.enum(['LOGIN_PAGE', 'SETTINGS_PAGE', 'LIST_DETAIL_PAGE', 'DATA_MANAGEMENT_PAGE', 'DASHBOARD_PAGE', 'FORM_PAGE'])
+});
+export type CreateUiRecipeInput = z.infer<typeof CreateUiRecipeInputSchema>;
+
+// 73. select_design_personality
+export const SelectDesignPersonalityInputSchema = z.object({
+  productType: z.enum(['ENTERPRISE_INTERNAL', 'B2B_SAAS', 'B2C_CONSUMER', 'ADMIN_OPERATIONAL', 'ANALYTICS_DATA', 'DEVELOPER_TOOL']).optional(),
+  informationDensity: z.enum(['COMPACT', 'COMFORTABLE', 'SPACIOUS']).optional(),
+  brandCharacter: z.enum(['UTILITY_NEUTRAL', 'AUTHORITATIVE', 'FRIENDLY', 'TECHNICAL']).optional(),
+  visualEmphasis: z.enum(['CONTENT_FIRST', 'DATA_FIRST', 'ACTION_FIRST', 'BRAND_FIRST']).optional(),
+  motionTolerance: z.enum(['REDUCED', 'SUBTLE', 'EXPRESSIVE']).optional()
+});
+export type SelectDesignPersonalityInput = z.infer<typeof SelectDesignPersonalityInputSchema>;
+
+// 74. evaluate_design_antipatterns
+export const EvaluateDesignAntipatternsInputSchema = z.object({
+  content: z.string().optional().describe('Markup or CSS content to inspect'),
+  blueprintPreset: z.enum(['DATA_MANAGEMENT_WORKSPACE', 'LOGIN_PAGE', 'SETTINGS_PAGE', 'LIST_DETAIL_PAGE', 'DASHBOARD_PAGE', 'FORM_PAGE']).optional()
+});
+export type EvaluateDesignAntipatternsInput = z.infer<typeof EvaluateDesignAntipatternsInputSchema>;
+
+// 75. compare_renderer_parity
+export const CompareRendererParityInputSchema = z.object({
+  blueprintPreset: z.enum(['DATA_MANAGEMENT_WORKSPACE', 'LOGIN_PAGE', 'SETTINGS_PAGE', 'LIST_DETAIL_PAGE', 'DASHBOARD_PAGE', 'FORM_PAGE']).optional().default('DATA_MANAGEMENT_WORKSPACE')
+});
+export type CompareRendererParityInput = z.infer<typeof CompareRendererParityInputSchema>;
+
+// 76. inspect_alper_registry
+export const InspectAlperRegistryInputSchema = z.object({
+  section: z.enum(['ALL', 'TOKENS', 'BLUEPRINTS', 'PATTERNS', 'RECIPES']).optional().default('ALL')
+});
+export type InspectAlperRegistryInput = z.infer<typeof InspectAlperRegistryInputSchema>;
+
+
 

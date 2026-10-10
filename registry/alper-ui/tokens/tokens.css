@@ -1,0 +1,104 @@
+/**
+ * Alper Design OS - Canonical Design Tokens V2
+ * Technology-neutral compiled cross-stack stylesheet.
+ */
+
+:root, [data-theme="light"] {
+  --alper-color-gray-0: #ffffff;
+  --alper-color-gray-50: #f9fafb;
+  --alper-color-gray-100: #f3f4f6;
+  --alper-color-gray-200: #e5e7eb;
+  --alper-color-gray-300: #d1d5db;
+  --alper-color-gray-400: #9ca3af;
+  --alper-color-gray-500: #6b7280;
+  --alper-color-gray-600: #4b5563;
+  --alper-color-gray-700: #374151;
+  --alper-color-gray-800: #1f2937;
+  --alper-color-gray-900: #111827;
+  --alper-color-gray-950: #030712;
+
+  --alper-surface-default: #ffffff;
+  --alper-surface-elevated: #f9fafb;
+  --alper-surface-subtle: #f3f4f6;
+  --alper-text-primary: #111827;
+  --alper-text-secondary: #4b5563;
+  --alper-text-muted: #9ca3af;
+  --alper-text-inverse: #ffffff;
+  --alper-border-subtle: #e5e7eb;
+  --alper-border-strong: #9ca3af;
+  --alper-action-primary: #2563eb;
+  --alper-action-primary-hover: #1d4ed8;
+  --alper-action-secondary: #f3f4f6;
+  --alper-status-critical: #dc2626;
+  --alper-status-warning: #f59e0b;
+  --alper-status-success: #16a34a;
+  --alper-focus-ring: #3b82f6;
+
+  --alper-space-1: 4px;
+  --alper-space-2: 8px;
+  --alper-space-3: 12px;
+  --alper-space-4: 16px;
+  --alper-space-6: 24px;
+  --alper-space-8: 32px;
+
+  --alper-radius-sm: 4px;
+  --alper-radius-md: 6px;
+  --alper-radius-lg: 8px;
+  --alper-radius-full: 9999px;
+
+  --alper-density-unit: 8px;
+  --alper-input-height: 40px;
+  --alper-button-height: 40px;
+  --alper-table-row-height: 48px;
+  --alper-font-size-base: 14px;
+  --alper-font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --alper-font-heading: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --alper-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+[data-theme="dark"] {
+  --alper-surface-default: #111827;
+  --alper-surface-elevated: #1f2937;
+  --alper-surface-subtle: #374151;
+  --alper-text-primary: #f9fafb;
+  --alper-text-secondary: #9ca3af;
+  --alper-text-muted: #6b7280;
+  --alper-text-inverse: #111827;
+  --alper-border-subtle: #374151;
+  --alper-border-strong: #4b5563;
+  --alper-action-primary: #3b82f6;
+  --alper-action-primary-hover: #2563eb;
+  --alper-action-secondary: #374151;
+  --alper-status-critical: #ef4444;
+  --alper-status-warning: #fbbf24;
+  --alper-status-success: #22c55e;
+  --alper-focus-ring: #60a5fa;
+}
+
+[data-theme="high-contrast"] {
+  --alper-surface-default: #000000;
+  --alper-surface-elevated: #000000;
+  --alper-surface-subtle: #111111;
+  --alper-text-primary: #ffffff;
+  --alper-text-secondary: #ffff00;
+  --alper-border-subtle: #ffffff;
+  --alper-border-strong: #ffffff;
+  --alper-action-primary: #00ffff;
+  --alper-focus-ring: #ffff00;
+}
+
+[data-density="compact"] {
+  --alper-density-unit: 4px;
+  --alper-input-height: 32px;
+  --alper-button-height: 32px;
+  --alper-table-row-height: 36px;
+  --alper-font-size-base: 13px;
+}
+
+[data-density="spacious"] {
+  --alper-density-unit: 12px;
+  --alper-input-height: 48px;
+  --alper-button-height: 48px;
+  --alper-table-row-height: 60px;
+  --alper-font-size-base: 16px;
+}

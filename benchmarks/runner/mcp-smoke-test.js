@@ -176,6 +176,47 @@ export async function runMcpSmokeTest() {
             args: {
               query: 'grid'
             }
+          },
+          {
+            name: 'create_design_intent',
+            args: {
+              productType: 'ENTERPRISE_INTERNAL',
+              informationDensity: 'COMPACT',
+              taskCriticality: 'MISSION_CRITICAL'
+            }
+          },
+          {
+            name: 'create_page_blueprint',
+            args: {
+              preset: 'DATA_MANAGEMENT_WORKSPACE'
+            }
+          },
+          {
+            name: 'create_component_blueprint',
+            args: {
+              type: 'DATA_TABLE',
+              density: 'COMPACT'
+            }
+          },
+          {
+            name: 'render_blueprint',
+            args: {
+              targetStack: 'html-css-js',
+              theme: 'LIGHT',
+              density: 'COMPACT'
+            }
+          },
+          {
+            name: 'compare_renderer_parity',
+            args: {
+              blueprintPreset: 'DATA_MANAGEMENT_WORKSPACE'
+            }
+          },
+          {
+            name: 'inspect_alper_registry',
+            args: {
+              section: 'ALL'
+            }
           }
         ];
 

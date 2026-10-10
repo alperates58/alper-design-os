@@ -854,6 +854,136 @@ export function createAlperDesignServer(): Server {
         },
         required: ['sourceId']
       }
+    },
+    {
+      name: 'create_design_intent',
+      description: 'Synthesizes canonical, technology-neutral DesignIntent from contextual ProductUXProfile characteristics.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          productType: { type: 'string', enum: ['ENTERPRISE_INTERNAL', 'B2B_SAAS', 'B2C_CONSUMER', 'ADMIN_OPERATIONAL', 'ANALYTICS_DATA', 'DEVELOPER_TOOL'] },
+          userExpertise: { type: 'string', enum: ['NOVICE', 'INTERMEDIATE', 'EXPERT'] },
+          informationDensity: { type: 'string', enum: ['COMPACT', 'COMFORTABLE', 'SPACIOUS'] },
+          taskCriticality: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'MISSION_CRITICAL'] }
+        }
+      }
+    },
+    {
+      name: 'create_page_blueprint',
+      description: 'Creates a technology-neutral PageBlueprint DSL structure with regions, layout, and component blueprints.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          title: { type: 'string' },
+          preset: { type: 'string', enum: ['DATA_MANAGEMENT_WORKSPACE', 'LOGIN_PAGE', 'SETTINGS_PAGE', 'LIST_DETAIL_PAGE', 'DASHBOARD_PAGE', 'FORM_PAGE'] }
+        }
+      }
+    },
+    {
+      name: 'create_component_blueprint',
+      description: 'Generates canonical ComponentBlueprint with token bindings, states, and accessibility contracts for one of 15 canonical components.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          type: { type: 'string', enum: ['BUTTON', 'INPUT', 'SELECT', 'CHECKBOX', 'RADIO', 'SWITCH', 'BADGE', 'ALERT', 'CARD', 'MODAL_DIALOG', 'DRAWER', 'TOOLTIP', 'DROPDOWN_MENU', 'DATA_TABLE', 'FILTER_BAR'] },
+          density: { type: 'string', enum: ['COMPACT', 'COMFORTABLE', 'SPACIOUS'] }
+        },
+        required: ['type']
+      }
+    },
+    {
+      name: 'create_app_shell_blueprint',
+      description: 'Generates canonical ApplicationShellBlueprint (ENTERPRISE_DENSE, SAAS_STANDARD, CONSUMER_CONTENT) driven by UX profile.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          variant: { type: 'string', enum: ['ENTERPRISE_DENSE', 'SAAS_STANDARD', 'CONSUMER_CONTENT'] }
+        }
+      }
+    },
+    {
+      name: 'render_blueprint',
+      description: 'Renders a canonical PageBlueprint to a target production stack (html-css-js, react-typescript, laravel-blade, aspnet-razor).',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          blueprintId: { type: 'string' },
+          targetStack: { type: 'string', enum: ['html-css-js', 'react-typescript', 'laravel-blade', 'aspnet-razor'] },
+          theme: { type: 'string', enum: ['LIGHT', 'DARK', 'HIGH_CONTRAST'] },
+          density: { type: 'string', enum: ['COMPACT', 'COMFORTABLE', 'SPACIOUS'] }
+        }
+      }
+    },
+    {
+      name: 'render_component',
+      description: 'Renders an individual canonical component blueprint to target stack code without framework colonization.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          componentType: { type: 'string', enum: ['BUTTON', 'INPUT', 'SELECT', 'CHECKBOX', 'RADIO', 'SWITCH', 'BADGE', 'ALERT', 'CARD', 'MODAL_DIALOG', 'DRAWER', 'TOOLTIP', 'DROPDOWN_MENU', 'DATA_TABLE', 'FILTER_BAR'] },
+          targetStack: { type: 'string', enum: ['html-css-js', 'react-typescript', 'laravel-blade', 'aspnet-razor'] },
+          theme: { type: 'string', enum: ['LIGHT', 'DARK', 'HIGH_CONTRAST'] },
+          density: { type: 'string', enum: ['COMPACT', 'COMFORTABLE', 'SPACIOUS'] }
+        },
+        required: ['componentType']
+      }
+    },
+    {
+      name: 'create_ui_recipe',
+      description: 'Instantiates one of 6 canonical UI recipes (LOGIN_PAGE, SETTINGS_PAGE, LIST_DETAIL_PAGE, DATA_MANAGEMENT_PAGE, DASHBOARD_PAGE, FORM_PAGE).',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          recipeType: { type: 'string', enum: ['LOGIN_PAGE', 'SETTINGS_PAGE', 'LIST_DETAIL_PAGE', 'DATA_MANAGEMENT_PAGE', 'DASHBOARD_PAGE', 'FORM_PAGE'] }
+        },
+        required: ['recipeType']
+      }
+    },
+    {
+      name: 'select_design_personality',
+      description: 'Calculates 6 quantitative personality axes (-100 to +100) from contextual attributes, preventing superficial AI design clichés.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          productType: { type: 'string', enum: ['ENTERPRISE_INTERNAL', 'B2B_SAAS', 'B2C_CONSUMER', 'ADMIN_OPERATIONAL', 'ANALYTICS_DATA', 'DEVELOPER_TOOL'] },
+          informationDensity: { type: 'string', enum: ['COMPACT', 'COMFORTABLE', 'SPACIOUS'] },
+          brandCharacter: { type: 'string', enum: ['UTILITY_NEUTRAL', 'AUTHORITATIVE', 'FRIENDLY', 'TECHNICAL'] }
+        }
+      }
+    },
+    {
+      name: 'evaluate_design_antipatterns',
+      description: 'Design Critic evaluation for UI anti-patterns: excessive cards (card soup), meaningless gradients, glassmorphism, low contrast, tiny touch targets.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          content: { type: 'string' },
+          blueprintPreset: { type: 'string', enum: ['DATA_MANAGEMENT_WORKSPACE', 'LOGIN_PAGE', 'SETTINGS_PAGE', 'LIST_DETAIL_PAGE', 'DASHBOARD_PAGE', 'FORM_PAGE'] }
+        }
+      }
+    },
+    {
+      name: 'compare_renderer_parity',
+      description: 'Evaluates visual, behavioral, and accessibility parity across HTML, React, Blade, and Razor renderers, outputting quantitative parity scores.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          blueprintPreset: { type: 'string', enum: ['DATA_MANAGEMENT_WORKSPACE', 'LOGIN_PAGE', 'SETTINGS_PAGE', 'LIST_DETAIL_PAGE', 'DASHBOARD_PAGE', 'FORM_PAGE'] }
+        }
+      }
+    },
+    {
+      name: 'inspect_alper_registry',
+      description: 'Inspects Alper UI canonical registry contents (tokens, 15 component blueprints, 28 patterns, 6 recipes).',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          section: { type: 'string', enum: ['ALL', 'TOKENS', 'BLUEPRINTS', 'PATTERNS', 'RECIPES'] }
+        }
+      }
     }
   ];
 
@@ -1062,6 +1192,39 @@ export function createAlperDesignServer(): Server {
           break;
         case 'explain_source_recommendation':
           result = Tools.handleExplainSourceRecommendation(T.ExplainSourceRecommendationInputSchema.parse(args));
+          break;
+        case 'create_design_intent':
+          result = Tools.handleCreateDesignIntent(T.CreateDesignIntentInputSchema.parse(args));
+          break;
+        case 'create_page_blueprint':
+          result = Tools.handleCreatePageBlueprint(T.CreatePageBlueprintInputSchema.parse(args));
+          break;
+        case 'create_component_blueprint':
+          result = Tools.handleCreateComponentBlueprint(T.CreateComponentBlueprintInputSchema.parse(args));
+          break;
+        case 'create_app_shell_blueprint':
+          result = Tools.handleCreateAppShellBlueprint(T.CreateAppShellBlueprintInputSchema.parse(args));
+          break;
+        case 'render_blueprint':
+          result = Tools.handleRenderBlueprint(T.RenderBlueprintInputSchema.parse(args));
+          break;
+        case 'render_component':
+          result = Tools.handleRenderComponent(T.RenderComponentInputSchema.parse(args));
+          break;
+        case 'create_ui_recipe':
+          result = Tools.handleCreateUiRecipe(T.CreateUiRecipeInputSchema.parse(args));
+          break;
+        case 'select_design_personality':
+          result = Tools.handleSelectDesignPersonality(T.SelectDesignPersonalityInputSchema.parse(args));
+          break;
+        case 'evaluate_design_antipatterns':
+          result = Tools.handleEvaluateDesignAntipatterns(T.EvaluateDesignAntipatternsInputSchema.parse(args));
+          break;
+        case 'compare_renderer_parity':
+          result = Tools.handleCompareRendererParity(T.CompareRendererParityInputSchema.parse(args));
+          break;
+        case 'inspect_alper_registry':
+          result = Tools.handleInspectAlperRegistry(T.InspectAlperRegistryInputSchema.parse(args));
           break;
         default:
           throw new Error(`Tool not found: ${name}`);

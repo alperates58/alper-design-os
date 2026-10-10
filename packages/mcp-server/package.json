@@ -21,6 +21,7 @@
     "@alper-design-os/qa-engine": "workspace:*",
     "@alper-design-os/software-intelligence": "workspace:*",
     "@alper-design-os/agent-governance": "workspace:*",
+    "@alper-design-os/design-language": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.4.1",
     "zod": "^3.24.1"
   },

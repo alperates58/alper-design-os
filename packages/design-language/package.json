@@ -1,0 +1,19 @@
+{
+  "name": "@alper-design-os/design-language",
+  "version": "0.1.0",
+  "description": "Canonical Design Language, Technology-Neutral UI Blueprint DSL and Cross-Stack Renderers for Alper Design OS",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@alper-design-os/design-core": "workspace:*",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "typescript": "^5.6.3"
+  }
+}

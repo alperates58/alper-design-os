@@ -341,5 +341,109 @@ describe('Alper Design MCP Tools Verification', () => {
     expect(result.status).toBe('NOT_VERIFIED');
     expect(result.missingEvidence.length).toBeGreaterThan(0);
   });
+
+  it('41. create_design_intent synthesizes contextual profile', () => {
+    const result = Tools.handleCreateDesignIntent({
+      productType: 'ENTERPRISE_INTERNAL',
+      informationDensity: 'COMPACT'
+    });
+    expect(result.productType).toBe('ENTERPRISE_INTERNAL');
+    expect(result.informationDensity).toBe('COMPACT');
+    expect(result.decisionPrinciples.length).toBeGreaterThan(0);
+  });
+
+  it('42. create_page_blueprint instantiates canonical workspace blueprint', () => {
+    const result = Tools.handleCreatePageBlueprint({
+      preset: 'DATA_MANAGEMENT_WORKSPACE'
+    });
+    expect(result.id).toBe('data-management-workspace');
+    expect(result.regions.length).toBe(5);
+  });
+
+  it('43. create_component_blueprint outputs canonical component blueprint', () => {
+    const result = Tools.handleCreateComponentBlueprint({
+      type: 'DATA_TABLE',
+      density: 'COMPACT'
+    });
+    expect(result.type).toBe('DATA_TABLE');
+    expect(result.density).toBe('COMPACT');
+    expect(result.interactions).toBeDefined();
+  });
+
+  it('44. create_app_shell_blueprint creates shell based on variant', () => {
+    const result = Tools.handleCreateAppShellBlueprint({
+      id: 'test-shell',
+      variant: 'ENTERPRISE_DENSE'
+    });
+    expect(result.variant).toBe('ENTERPRISE_DENSE');
+    expect(result.navigation.breadcrumbs).toBe(true);
+  });
+
+  it('45. render_blueprint compiles canonical blueprint to target stack', () => {
+    const result = Tools.handleRenderBlueprint({
+      targetStack: 'html-css-js',
+      theme: 'LIGHT',
+      density: 'COMPACT'
+    });
+    expect(result.stack).toBe('html-css-js');
+    expect(result.primaryFile.content).toContain('<!DOCTYPE html>');
+    expect(result.supportingFiles.length).toBe(3);
+  });
+
+  it('46. render_component compiles single component blueprint', () => {
+    const result = Tools.handleRenderComponent({
+      componentType: 'BUTTON',
+      targetStack: 'react-typescript'
+    });
+    expect(result.stack).toBe('react-typescript');
+    expect(result.primaryFile.content).toContain('export const');
+  });
+
+  it('47. create_ui_recipe instantiates canonical recipe', () => {
+    const result = Tools.handleCreateUiRecipe({
+      recipeType: 'LOGIN_PAGE'
+    });
+    expect(result.type).toBe('LOGIN_PAGE');
+    expect(result.supportedThemes).toContain('DARK');
+  });
+
+  it('48. select_design_personality calculates quantitative axes', () => {
+    const result = Tools.handleSelectDesignPersonality({
+      productType: 'DEVELOPER_TOOL',
+      informationDensity: 'COMPACT'
+    });
+    expect(result.compactToSpacious).toBeLessThan(0);
+    expect(result.technicalToEditorial).toBeLessThan(0);
+  });
+
+  it('49. evaluate_design_antipatterns inspects markup/css for defects', () => {
+    const result = Tools.handleEvaluateDesignAntipatterns({
+      content: 'button { color: #888888; backdrop-filter: blur(10px); }',
+      blueprintPreset: 'DATA_MANAGEMENT_WORKSPACE'
+    });
+    expect(result.totalIssues).toBeGreaterThan(0);
+    expect(result.issues.some((i) => i.code === 'LOW_CONTRAST' || i.code === 'GLASSMORPHISM_OVERUSE')).toBe(true);
+  });
+
+  it('50. compare_renderer_parity evaluates cross-stack parity scores', () => {
+    const result = Tools.handleCompareRendererParity({
+      blueprintPreset: 'DATA_MANAGEMENT_WORKSPACE'
+    });
+    expect(result.overallParityScore).toBeGreaterThanOrEqual(90);
+    expect(result.stackOutputs['html-css-js'].status).toBe('PASS');
+    expect(result.stackOutputs['react-typescript'].status).toBe('PASS');
+    expect(result.stackOutputs['laravel-blade'].status).toBe('PASS');
+    expect(result.stackOutputs['aspnet-razor'].status).toBe('PASS');
+  });
+
+  it('51. inspect_alper_registry queries registry catalog', () => {
+    const result = Tools.handleInspectAlperRegistry({
+      section: 'ALL'
+    });
+    expect(result.name).toBe('Alper UI Canonical Registry');
+    expect(result.componentsCount).toBe(15);
+    expect(result.recipesCount).toBe(6);
+  });
 });
+
 

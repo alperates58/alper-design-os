@@ -60,6 +60,25 @@ import {
   writeExecutionJournal,
   evaluateCompletionClaim
 } from '@alper-design-os/agent-governance';
+import {
+  createDesignIntent,
+  computeDesignPersonality,
+  createPageBlueprint,
+  createDataManagementWorkspaceBlueprint,
+  createComponentBlueprint,
+  canonicalComponentSet,
+  createAppShellBlueprint,
+  createRecipeBlueprint,
+  getRecipeByType,
+  canonicalRecipes,
+  evaluateDesignAntiPatterns,
+  evaluateCrossStackParity,
+  getAlperUiRegistrySummary,
+  HtmlCssJsRenderer,
+  ReactTypeScriptRenderer,
+  LaravelBladeRenderer,
+  AspNetRazorRenderer
+} from '@alper-design-os/design-language';
 import * as T from '../types.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -992,5 +1011,147 @@ export function handleExplainSourceRecommendation(input: T.ExplainSourceRecommen
     domain: input.targetDomain
   });
 }
+
+// 66. create_design_intent
+export function handleCreateDesignIntent(input: T.CreateDesignIntentInput) {
+  return createDesignIntent(input);
+}
+
+// 67. create_page_blueprint
+export function handleCreatePageBlueprint(input: T.CreatePageBlueprintInput) {
+  if (input.preset === 'DATA_MANAGEMENT_WORKSPACE') {
+    return createDataManagementWorkspaceBlueprint();
+  }
+  return createRecipeBlueprint(input.preset as any);
+}
+
+// 68. create_component_blueprint
+export function handleCreateComponentBlueprint(input: T.CreateComponentBlueprintInput) {
+  const found = canonicalComponentSet.find((c: { type: string }) => c.type === input.type);
+  if (found) {
+    return {
+      ...found,
+      id: input.id || found.id,
+      density: input.density || found.density
+    };
+  }
+  return createComponentBlueprint(input.id || `custom-${input.type.toLowerCase()}`, input.type, {
+    density: input.density || 'COMFORTABLE'
+  });
+}
+
+// 69. create_app_shell_blueprint
+export function handleCreateAppShellBlueprint(input: T.CreateAppShellBlueprintInput) {
+  return createAppShellBlueprint(input.id, input.variant);
+}
+
+// 70. render_blueprint
+export function handleRenderBlueprint(input: T.RenderBlueprintInput) {
+  const blueprint = createDataManagementWorkspaceBlueprint();
+  let renderer;
+  switch (input.targetStack) {
+    case 'react-typescript':
+      renderer = new ReactTypeScriptRenderer();
+      break;
+    case 'laravel-blade':
+      renderer = new LaravelBladeRenderer();
+      break;
+    case 'aspnet-razor':
+      renderer = new AspNetRazorRenderer();
+      break;
+    case 'html-css-js':
+    default:
+      renderer = new HtmlCssJsRenderer();
+      break;
+  }
+
+  return renderer.renderPageBlueprint(blueprint, {
+    theme: input.theme,
+    density: input.density
+  });
+}
+
+// 71. render_component
+export function handleRenderComponent(input: T.RenderComponentInput) {
+  const found = canonicalComponentSet.find((c: { type: string }) => c.type === input.componentType) ||
+    createComponentBlueprint(`comp-${input.componentType.toLowerCase()}`, input.componentType);
+
+  let renderer;
+  switch (input.targetStack) {
+    case 'react-typescript':
+      renderer = new ReactTypeScriptRenderer();
+      break;
+    case 'laravel-blade':
+      renderer = new LaravelBladeRenderer();
+      break;
+    case 'aspnet-razor':
+      renderer = new AspNetRazorRenderer();
+      break;
+    case 'html-css-js':
+    default:
+      renderer = new HtmlCssJsRenderer();
+      break;
+  }
+
+  return renderer.renderComponentBlueprint(found, {
+    theme: input.theme,
+    density: input.density
+  });
+}
+
+// 72. create_ui_recipe
+export function handleCreateUiRecipe(input: T.CreateUiRecipeInput) {
+  const recipe = getRecipeByType(input.recipeType);
+  if (!recipe) {
+    throw new Error(`Recipe with type '${input.recipeType}' not found.`);
+  }
+  return recipe;
+}
+
+// 73. select_design_personality
+export function handleSelectDesignPersonality(input: T.SelectDesignPersonalityInput) {
+  const intent = createDesignIntent(input);
+  return computeDesignPersonality(intent);
+}
+
+// 74. evaluate_design_antipatterns
+export function handleEvaluateDesignAntipatterns(input: T.EvaluateDesignAntipatternsInput) {
+  let blueprint;
+  if (input.blueprintPreset) {
+    blueprint = input.blueprintPreset === 'DATA_MANAGEMENT_WORKSPACE'
+      ? createDataManagementWorkspaceBlueprint()
+      : createRecipeBlueprint(input.blueprintPreset as any);
+  }
+
+  return evaluateDesignAntiPatterns({
+    content: input.content,
+    blueprint
+  });
+}
+
+// 75. compare_renderer_parity
+export function handleCompareRendererParity(input: T.CompareRendererParityInput) {
+  const blueprint = input.blueprintPreset === 'DATA_MANAGEMENT_WORKSPACE'
+    ? createDataManagementWorkspaceBlueprint()
+    : createRecipeBlueprint(input.blueprintPreset as any);
+
+  return evaluateCrossStackParity(blueprint);
+}
+
+// 76. inspect_alper_registry
+export function handleInspectAlperRegistry(input: T.InspectAlperRegistryInput) {
+  const summary = getAlperUiRegistrySummary();
+  if (input.section === 'TOKENS') {
+    return { section: 'TOKENS', description: 'Canonical Tokens V2: Primitives, Semantics (Light/Dark/High-Contrast), Components, Typography, Motion' };
+  }
+  if (input.section === 'BLUEPRINTS') {
+    return { section: 'BLUEPRINTS', componentsCount: summary.componentsCount, components: summary.components };
+  }
+  if (input.section === 'RECIPES') {
+    return { section: 'RECIPES', recipesCount: summary.recipesCount, recipes: summary.recipes };
+  }
+  return summary;
+}
+
 
 

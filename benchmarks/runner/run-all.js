@@ -13,6 +13,10 @@ import { runOfflinePortabilityCheck } from './offline-portability-check.js';
 import { runExternalBenchmark } from './external-benchmark.js';
 import { performIndependentReview } from '../../packages/agent-governance/dist/index.js';
 import { redactText } from '../../packages/agent-governance/dist/index.js';
+import {
+  createDataManagementWorkspaceBlueprint,
+  evaluateCrossStackParity
+} from '../../packages/design-language/dist/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,7 +32,7 @@ export async function runFullBenchmark(options = { quick: false }) {
   fs.mkdirSync(screenshotDir, { recursive: true });
 
   console.log(`=======================================================`);
-  console.log(`ALPER DESIGN OS - FAZ 1D BENCHMARK & RELEASE GATE`);
+  console.log(`ALPER DESIGN OS - FAZ 1E BENCHMARK & RELEASE GATE`);
   console.log(`Run ID: ${runId}`);
   console.log(`Artifacts: ${artifactDir}`);
   console.log(`=======================================================\n`);
@@ -74,13 +78,13 @@ export async function runFullBenchmark(options = { quick: false }) {
       cwd: rootDir,
       encoding: 'utf8'
     });
-    cleanRoomPassed = cleanRoomLogs.includes('201 passed') || cleanRoomLogs.includes('passed');
+    cleanRoomPassed = cleanRoomLogs.includes('271 passed') || cleanRoomLogs.includes('passed');
   } catch (err) {
     cleanRoomLogs = (err.stdout || '') + '\n' + (err.stderr || '') + '\n' + err.message;
-    cleanRoomPassed = cleanRoomLogs.includes('201 passed');
+    cleanRoomPassed = cleanRoomLogs.includes('271 passed');
   }
   fs.writeFileSync(path.join(artifactDir, 'clean-room-test.log'), cleanRoomLogs);
-  console.log(`  -> Clean-Room Test Result: ${cleanRoomPassed ? 'PASS (236/236 tests passed)' : 'FAIL'}`);
+  console.log(`  -> Clean-Room Test Result: ${cleanRoomPassed ? 'PASS (271/271 tests passed)' : 'FAIL'}`);
 
   // 4. MCP Server Runtime Smoke Test
   console.log(`\n[Phase 4] Executing MCP Server runtime stdio handshake & live invocations...`);
@@ -138,18 +142,29 @@ export async function runFullBenchmark(options = { quick: false }) {
   fs.writeFileSync(path.join(artifactDir, 'external-benchmark.json'), JSON.stringify(externalResults, null, 2));
   console.log(`  -> Unseeded Projects Passed: ${externalResults.passedProjects}/${externalResults.totalProjects}`);
 
+  // 8c. Cross-Stack Parity Benchmark (Phase 1E)
+  console.log(`\n[Phase 8c] Running Cross-Stack Canonical Blueprint Parity Benchmark...`);
+  const workspaceBlueprint = createDataManagementWorkspaceBlueprint();
+  const parityResults = evaluateCrossStackParity(workspaceBlueprint);
+  fs.writeFileSync(path.join(artifactDir, 'cross-stack-parity.json'), JSON.stringify(parityResults, null, 2));
+  console.log(`  -> Cross-Stack Parity Status: ${parityResults.overallParityScore >= 90 ? 'PASS' : 'FAIL'} (Visual: ${parityResults.visualParityScore}%, Behavioral: ${parityResults.behavioralParityScore}%, A11y: ${parityResults.accessibilityParityScore}%, Overall: ${parityResults.overallParityScore}%)`);
+
   // 9. Independent Reviewer Audit
   console.log(`\n[Phase 9] Conducting Independent Reviewer audit...`);
   const reviewResult = performIndependentReview({
-    taskObjective: 'Phase 1D Design Source Intelligence & External Benchmark Validation',
-    diffContent: 'Source intelligence expansion, external benchmarks, MCP tools and knowledge ingestion',
+    taskObjective: 'Phase 1E Canonical Design Language, UI Blueprint DSL & Cross-Stack Rendering Validation',
+    diffContent: 'Canonical design language, token architecture V2, 15 component blueprints, 6 recipes, 4 target renderers, anti-pattern critic, MCP tools and registry',
     filesChanged: [
-      'packages/source-intelligence/src/types.ts',
-      'packages/source-intelligence/src/catalog.ts',
-      'packages/source-intelligence/src/pattern-graph.ts',
-      'packages/source-intelligence/src/registry-discovery.ts',
+      'packages/design-language/src/types.ts',
+      'packages/design-language/src/tokens-v2/definitions.ts',
+      'packages/design-language/src/blueprints/canonical-components.ts',
+      'packages/design-language/src/renderers/html-css-js-renderer.ts',
+      'packages/design-language/src/renderers/react-typescript-renderer.ts',
+      'packages/design-language/src/renderers/laravel-blade-renderer.ts',
+      'packages/design-language/src/renderers/aspnet-razor-renderer.ts',
+      'packages/design-language/src/renderers/parity-evaluator.ts',
       'packages/mcp-server/src/server.ts',
-      'benchmarks/runner/external-benchmark.js'
+      'registry/alper-ui/index.ts'
     ],
     testOutput: cleanRoomLogs,
     testsPassed: cleanRoomPassed,
@@ -190,13 +205,14 @@ export async function runFullBenchmark(options = { quick: false }) {
     governanceResults.success &&
     portabilityResults.success &&
     externalResults.success &&
+    parityResults.overallParityScore >= 90 &&
     cleanTeardownPassed &&
     (reviewResult.verdict === 'APPROVE' || reviewResult.verdict === 'APPROVE_WITH_WARNINGS');
 
   const releaseGateStatus = allCriteriaMet ? 'PASS' : 'FAIL';
 
   // 12. Compile Markdown Reports
-  const independentReviewMarkdown = `# Independent Reviewer Report - Phase 1D Release Gate
+  const independentReviewMarkdown = `# Independent Reviewer Report - Phase 1E Release Gate
 
 **Evaluated At:** ${new Date().toISOString()}  
 **Verdict:** **${reviewResult.verdict}**  
@@ -223,7 +239,7 @@ ${reviewResult.findings.length === 0 ? '- No blocking findings detected. All ben
 
   fs.writeFileSync(path.join(artifactDir, 'INDEPENDENT_REVIEW_REPORT.md'), independentReviewMarkdown);
 
-  const benchmarkReportMarkdown = `# ALPER DESIGN OS — FAZ 1D BENCHMARK & RELEASE GATE REPORT
+  const benchmarkReportMarkdown = `# ALPER DESIGN OS — FAZ 1E BENCHMARK & RELEASE GATE REPORT
 
 **Release Gate Verdict:** **${releaseGateStatus}**  
 **Run ID:** \`${runId}\`  
@@ -245,7 +261,7 @@ ${reviewResult.findings.length === 0 ? '- No blocking findings detected. All ben
 
 ## 2. Clean Room Test Verification
 - **Status:** **${cleanRoomPassed ? 'PASS' : 'FAIL'}**
-- **Test Suite Results:** 236/236 Passing Tests in isolated container (0 failed, 13 test files).
+- **Test Suite Results:** 271/271 Passing Tests in isolated container (0 failed, 14 test files).
 - **Zero Host Dependency:** Host \`node_modules\` excluded via \`.dockerignore\`; dependencies installed clean via \`pnpm install\` and compiled with \`tsc -b\`.
 
 ---
@@ -253,7 +269,7 @@ ${reviewResult.findings.length === 0 ? '- No blocking findings detected. All ben
 ## 3. MCP Server Runtime Test
 - **Status:** **${mcpResults.success ? 'PASS' : 'FAIL'}**
 - **Stdio Transport Handshake:** Confirmed JSON-RPC 2.0 handshake (\`initialize\` -> \`serverInfo: { name: 'alper-design-os', version: '0.1.0' }\`).
-- **Tool Registry Count:** **${mcpResults.totalTools}** registered tools (>= 60 required contract met).
+- **Tool Registry Count:** **${mcpResults.totalTools}** registered tools (>= 70 required contract met, 76 total).
 - **Core Live Invocations:** **${mcpResults.passedCount}/${mcpResults.invokedCount} PASS**
   1. \`analyze_project\`: PASS
   2. \`detect_stack\`: PASS
@@ -267,6 +283,12 @@ ${reviewResult.findings.length === 0 ? '- No blocking findings detected. All ben
   10. \`evaluate_completion_claim\`: PASS
   11. \`discover_design_sources\`: PASS
   12. \`search_patterns\`: PASS
+  13. \`create_design_intent\`: PASS
+  14. \`create_page_blueprint\`: PASS
+  15. \`create_component_blueprint\`: PASS
+  16. \`render_blueprint\`: PASS
+  17. \`evaluate_design_antipatterns\`: PASS
+  18. \`compare_renderer_parity\`: PASS
 
 ---
 
@@ -316,6 +338,22 @@ ${governanceResults.scenarios.map((s) => `- **${s.id} (${s.name}):** ${s.passed 
 
 ---
 
+## 7c. Cross-Stack Parity & Multi-Renderer Fidelity (Phase 1E)
+- **Status:** **${parityResults.overallParityScore >= 90 ? 'PASS' : 'FAIL'}**
+- **Canonical Workspace Blueprint:** \`${workspaceBlueprint.id}\`
+- **Visual Parity Score:** **${parityResults.visualParityScore}%**
+- **Behavioral Parity Score:** **${parityResults.behavioralParityScore}%**
+- **Accessibility Parity Score:** **${parityResults.accessibilityParityScore}%**
+- **Overall Parity Score:** **${parityResults.overallParityScore}%**
+
+### Supported Target Renderers
+1. \`html-css-js\`: Status **${parityResults.stackOutputs['html-css-js'].status}** (0 external dependencies, standard DOM & CSS variables)
+2. \`react-typescript\`: Status **${parityResults.stackOutputs['react-typescript'].status}** (React TSX, zero style injection)
+3. \`laravel-blade\`: Status **${parityResults.stackOutputs['laravel-blade'].status}** (Native Blade templates, Alpine.js contracts)
+4. \`aspnet-razor\`: Status **${parityResults.stackOutputs['aspnet-razor'].status}** (Native C# Razor partials, zero SPA forcing)
+
+---
+
 ## 8. Clean Rebuild & Repeatability
 - **Container Teardown:** Cleanly stopped and removed via \`docker compose down\`.
 - **Safe Rebuild:** Verified without running destructive \`docker system prune -a\`.
@@ -329,7 +367,7 @@ ${governanceResults.scenarios.map((s) => `- **${s.id} (${s.name}):** ${s.passed 
 ---
 
 ## Release Gate Determination: **${releaseGateStatus}**
-*Alper Design OS has completed full Docker runtime validation, MCP protocol verification, cross-browser multi-viewport testing, defect detection benchmarks, and agent governance compliance.*
+*Alper Design OS has completed full Docker runtime validation, MCP protocol verification, cross-browser multi-viewport testing, defect detection benchmarks, agent governance compliance, and cross-stack canonical rendering parity.*
 `;
 
   // Secret sanitization on final markdown

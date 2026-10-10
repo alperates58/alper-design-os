@@ -1,0 +1,13 @@
+{
+  "name": "Alper UI Canonical Recipes",
+  "version": "1.0.0",
+  "total": 6,
+  "recipes": [
+    { "id": "recipe-login-page", "type": "LOGIN_PAGE", "title": "Sign In to Workspace" },
+    { "id": "recipe-settings-page", "type": "SETTINGS_PAGE", "title": "Account & Workspace Settings" },
+    { "id": "recipe-list-detail-page", "type": "LIST_DETAIL_PAGE", "title": "Directory & Item Inspector" },
+    { "id": "recipe-data-management-page", "type": "DATA_MANAGEMENT_PAGE", "title": "Data Management Workspace" },
+    { "id": "recipe-dashboard-page", "type": "DASHBOARD_PAGE", "title": "Executive Metrics & Pulse" },
+    { "id": "recipe-form-page", "type": "FORM_PAGE", "title": "New Record Submission Form" }
+  ]
+}
