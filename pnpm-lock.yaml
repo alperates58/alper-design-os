@@ -132,6 +132,37 @@ importers:
         specifier: ^5.6.3
         version: 5.9.3
 
+  packages/agent-governance:
+    dependencies:
+      '@alper-design-os/adapter-contract':
+        specifier: workspace:*
+        version: link:../../adapters/contract
+      '@alper-design-os/design-core':
+        specifier: workspace:*
+        version: link:../../design-core
+      '@alper-design-os/engineering-guardrails':
+        specifier: workspace:*
+        version: link:../engineering-guardrails
+      '@alper-design-os/qa-engine':
+        specifier: workspace:*
+        version: link:../qa-engine
+      '@alper-design-os/software-intelligence':
+        specifier: workspace:*
+        version: link:../software-intelligence
+      '@alper-design-os/source-intelligence':
+        specifier: workspace:*
+        version: link:../source-intelligence
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.1
+        version: 22.20.5
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+
   packages/analyzer:
     dependencies:
       '@alper-design-os/adapter-contract':
@@ -166,6 +197,9 @@ importers:
       '@alper-design-os/adapter-contract':
         specifier: workspace:*
         version: link:../../adapters/contract
+      '@alper-design-os/agent-governance':
+        specifier: workspace:*
+        version: link:../agent-governance
       '@alper-design-os/analyzer':
         specifier: workspace:*
         version: link:../analyzer

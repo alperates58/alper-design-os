@@ -88,6 +88,22 @@ Adapters are registered via `AdapterRegistry.getInstance()`. To introduce suppor
 
 ---
 
-## 5. Security & Safety Model
-- **Read-Only by Default**: File analyzers and MCP tools never mutate user code automatically.
-- **Analyze → Plan → Apply**: The system mandates a reviewable plan before performing file modifications.
+## 5. Security, Governance & Safety Model (Phase 1B)
+Alper Design OS operates as an autonomous, self-governing platform with strict boundaries:
+- **Mandatory Action Planning**: No significant code modifications without an approved `AgentActionPlan` defining objectives, blast radius, verification steps, and rollback plans.
+- **Scope Guard (Zero Silent Expansion)**: Files classified into `IN_SCOPE`, `REQUIRED_DEPENDENCY`, `OUT_OF_SCOPE`, or `FORBIDDEN`. Unsolicited changes to database schemas, APIs, or dependencies are blocked.
+- **Change Risk & Blast Radius**: Evaluates 10 safety factors (`LOW`, `MEDIUM`, `HIGH`, `CRITICAL`). `HIGH` and `CRITICAL` changes enforce mandatory checkpoints before mutation.
+- **Git Safety Engine**: Detects dirty working trees, creates checkpoint branches, blocks destructive commands (`git reset --hard`, `git clean -fd`, `force push`) without explicit approval, and provides automated rollback scripts.
+- **Independent Reviewer**: Code reviews are conducted against raw diffs, test outputs, browser logs, and security results—never trusting implementer self-assurances alone.
+- **Evidence-Based Verification**: Supports 13 verified evidence types (`BUILD_OUTPUT`, `TEST_RESULT`, `SCREENSHOT`, `VISUAL_DIFF`, `CONSOLE_LOG`, `NETWORK_TRACE`, `PERFORMANCE_TRACE`, `ACCESSIBILITY_REPORT`, `SECURITY_REPORT`, `DATABASE_ANALYSIS`, `API_CONTRACT_RESULT`, `STATIC_ANALYSIS`, `GIT_DIFF`). Responsive PASS requires full 4-viewport validation (390x844, 768x1024, 1440x900, 1920x1080).
+- **Claim Verification Policy**: Prohibits unbacked claims ("Tamamen test edildi", "Production ready", "Security sorunu yok"). Enforces `VERIFIED`, `PARTIALLY_VERIFIED`, `NOT_VERIFIED`, `NOT_APPLICABLE`, or `FAILED`.
+- **Policy Engine Priority**:
+  1. `USER_EXPLICIT_REQUIREMENT`
+  2. `SECURITY_DATA_SAFETY` (Prevents user requests from violating safety)
+  3. `PROJECT_RULES`
+  4. `ALPER_DESIGN_OS_RULES`
+  5. `FRAMEWORK_BEST_PRACTICES`
+  6. `OPTIONAL_RECOMMENDATIONS`
+- **Context & Tool Routing**: Selectively scopes context to conserve token budgets and routes to low-cost/read-only tools first.
+- **Execution Journal**: Writes structured, secret-sanitized audit trails to `.alper-design-os/runs/<run-id>/`.
+

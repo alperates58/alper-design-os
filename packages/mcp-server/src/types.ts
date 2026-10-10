@@ -301,3 +301,140 @@ export const ClassifyCodePathsInputSchema = z.object({
   paths: z.array(z.string()).describe('Array of relative file paths to classify')
 });
 export type ClassifyCodePathsInput = z.infer<typeof ClassifyCodePathsInputSchema>;
+
+// ==========================================
+// Phase 1B: Agent Governance & Orchestration Tools
+// ==========================================
+
+// 37. create_action_plan
+export const CreateActionPlanInputSchema = z.object({
+  objective: z.string().describe('Clear description of what the agent aims to achieve'),
+  requestedScope: z.array(z.string()).describe('Explicit target files, screens, or features requested by user'),
+  filesExpectedToChange: z.array(z.string()).describe('List of files agent plans to modify'),
+  filesForbiddenToChange: z.array(z.string()).optional().describe('List of protected files agent must not modify'),
+  detectedProject: z.record(z.any()).optional().describe('Project metadata or detected stack profile')
+});
+export type CreateActionPlanInput = z.infer<typeof CreateActionPlanInputSchema>;
+
+// 38. evaluate_scope
+export const EvaluateScopeInputSchema = z.object({
+  filesToChange: z.array(z.string()).describe('Files proposed for modification'),
+  requestedScope: z.array(z.string()).describe('Allowed file or directory patterns'),
+  forbiddenList: z.array(z.string()).optional().describe('Explicitly forbidden paths')
+});
+export type EvaluateScopeInput = z.infer<typeof EvaluateScopeInputSchema>;
+
+// 39. evaluate_change_risk
+export const EvaluateChangeRiskInputSchema = z.object({
+  fileCount: z.number().optional().default(1),
+  architectureImpact: z.boolean().optional().default(false),
+  databaseImpact: z.boolean().optional().default(false),
+  authenticationImpact: z.boolean().optional().default(false),
+  authorizationImpact: z.boolean().optional().default(false),
+  publicApiImpact: z.boolean().optional().default(false),
+  dependencyImpact: z.boolean().optional().default(false),
+  configurationImpact: z.boolean().optional().default(false),
+  deploymentImpact: z.boolean().optional().default(false),
+  dataLossPossibility: z.boolean().optional().default(false)
+});
+export type EvaluateChangeRiskInput = z.infer<typeof EvaluateChangeRiskInputSchema>;
+
+// 40. create_checkpoint_plan
+export const CreateCheckpointPlanInputSchema = z.object({
+  gitStatusText: z.string().describe('Output of git status command'),
+  taskName: z.string().describe('Name or summary of upcoming task'),
+  currentBranch: z.string().optional().default('main')
+});
+export type CreateCheckpointPlanInput = z.infer<typeof CreateCheckpointPlanInputSchema>;
+
+// 41. create_verification_plan
+export const CreateVerificationPlanInputSchema = z.object({
+  objective: z.string().describe('Task objective'),
+  isUI: z.boolean().optional().default(true),
+  isSecuritySensitive: z.boolean().optional().default(false),
+  riskLevel: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional().default('MEDIUM')
+});
+export type CreateVerificationPlanInput = z.infer<typeof CreateVerificationPlanInputSchema>;
+
+// 42. normalize_verification_evidence
+export const NormalizeVerificationEvidenceInputSchema = z.object({
+  rawItems: z.array(z.any()).describe('Array of raw test results, logs, or execution outputs')
+});
+export type NormalizeVerificationEvidenceInput = z.infer<typeof NormalizeVerificationEvidenceInputSchema>;
+
+// 43. review_change
+export const ReviewChangeInputSchema = z.object({
+  taskObjective: z.string(),
+  diffContent: z.string(),
+  filesChanged: z.array(z.string()),
+  testOutput: z.string().optional(),
+  testsPassed: z.boolean().optional(),
+  consoleErrors: z.array(z.string()).optional(),
+  networkErrors: z.array(z.string()).optional(),
+  securityFindings: z.array(z.object({
+    severity: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']),
+    title: z.string()
+  })).optional()
+});
+export type ReviewChangeInput = z.infer<typeof ReviewChangeInputSchema>;
+
+// 44. detect_regression
+export const DetectRegressionInputSchema = z.object({
+  baselines: z.array(z.object({
+    id: z.string(),
+    type: z.enum(['ROUTE', 'API_ENDPOINT', 'DOM_SELECTOR', 'COMPONENT', 'DATABASE_INVARIANT']),
+    expectedValue: z.any()
+  })),
+  currentStates: z.array(z.object({
+    id: z.string(),
+    type: z.enum(['ROUTE', 'API_ENDPOINT', 'DOM_SELECTOR', 'COMPONENT', 'DATABASE_INVARIANT']),
+    actualValue: z.any()
+  }))
+});
+export type DetectRegressionInput = z.infer<typeof DetectRegressionInputSchema>;
+
+// 45. create_environment_profile
+export const CreateEnvironmentProfileInputSchema = z.object({
+  projectPath: z.string().describe('Directory path of the project to inspect')
+});
+export type CreateEnvironmentProfileInput = z.infer<typeof CreateEnvironmentProfileInputSchema>;
+
+// 46. route_context
+export const RouteContextInputSchema = z.object({
+  taskId: z.string(),
+  taskBrief: z.string(),
+  detectedStack: z.string().optional(),
+  domain: z.string().optional(),
+  mode: z.enum(['NEW', 'REPAIR', 'MODERNIZE']).optional().default('REPAIR')
+});
+export type RouteContextInput = z.infer<typeof RouteContextInputSchema>;
+
+// 47. route_tool
+export const RouteToolInputSchema = z.object({
+  taskDescription: z.string(),
+  isOffline: z.boolean().optional().default(false),
+  requireLiveBrowser: z.boolean().optional().default(false)
+});
+export type RouteToolInput = z.infer<typeof RouteToolInputSchema>;
+
+// 48. create_execution_journal
+export const CreateExecutionJournalInputSchema = z.object({
+  baseDir: z.string(),
+  runId: z.string(),
+  plan: z.record(z.any()),
+  projectProfile: z.record(z.any()).optional(),
+  actions: z.array(z.record(z.any())).optional(),
+  verification: z.record(z.any()).optional(),
+  evidence: z.array(z.record(z.any())).optional(),
+  review: z.record(z.any()).optional(),
+  summaryMarkdown: z.string().optional()
+});
+export type CreateExecutionJournalInput = z.infer<typeof CreateExecutionJournalInputSchema>;
+
+// 49. evaluate_completion_claim
+export const EvaluateCompletionClaimInputSchema = z.object({
+  claim: z.string().describe('Completion phrase or statement to evaluate against evidence'),
+  evidences: z.array(z.any()).optional().default([])
+});
+export type EvaluateCompletionClaimInput = z.infer<typeof EvaluateCompletionClaimInputSchema>;
+

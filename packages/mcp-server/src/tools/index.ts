@@ -35,13 +35,29 @@ import {
   analyzeApiContract,
   classifyFileCodeType
 } from '@alper-design-os/software-intelligence';
+import {
+  createActionPlan,
+  auditActionScope,
+  evaluateChangeRisk,
+  parseGitStatus,
+  createCheckpointPlan,
+  planPipeline,
+  normalizeEvidenceBatch,
+  performIndependentReview,
+  detectRegressions,
+  createEnvironmentProfile,
+  routeContext,
+  routeTool,
+  writeExecutionJournal,
+  evaluateCompletionClaim
+} from '@alper-design-os/agent-governance';
 import * as T from '../types.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Helper to safely collect files from a directory (shallow or limited depth)
-function collectProjectFiles(targetDir: string, maxFiles: number = 60): ProjectFile[] {
+function collectProjectFiles(targetDir: string, maxFiles: number = 250): ProjectFile[] {
   const result: ProjectFile[] = [];
   if (!fs.existsSync(targetDir)) return result;
 
@@ -49,35 +65,38 @@ function collectProjectFiles(targetDir: string, maxFiles: number = 60): ProjectF
     if (depth > 4 || result.length >= maxFiles) return;
     try {
       const entries = fs.readdirSync(current, { withFileTypes: true });
-      for (const entry of entries) {
+      const fileEntries = entries.filter((e) => e.isFile());
+      const dirEntries = entries.filter((e) => e.isDirectory());
+
+      for (const entry of fileEntries) {
+        if (result.length >= maxFiles) break;
+        const fullPath = path.join(current, entry.name);
+        const ext = path.extname(entry.name).toLowerCase();
+        const shouldReadContent = ['.json', '.html', '.css', '.js', '.jsx', '.tsx', '.ts', '.php', '.cs', '.cshtml', '.yaml', '.yml', '.lock', '.example'].includes(ext) || entry.name.startsWith('.env');
+        let content: string | undefined = undefined;
+
+        if (shouldReadContent) {
+          try {
+            const stat = fs.statSync(fullPath);
+            if (stat.size < 250000) {
+              content = fs.readFileSync(fullPath, 'utf-8');
+            }
+          } catch {
+            // Ignore read errors
+          }
+        }
+
+        result.push({
+          path: path.relative(targetDir, fullPath).replace(/\\/g, '/'),
+          extension: ext,
+          content
+        });
+      }
+
+      for (const entry of dirEntries) {
         if (result.length >= maxFiles) break;
         if (entry.name === 'node_modules' || entry.name === '.git' || entry.name === 'dist') continue;
-
-        const fullPath = path.join(current, entry.name);
-        if (entry.isDirectory()) {
-          traverse(fullPath, depth + 1);
-        } else if (entry.isFile()) {
-          const ext = path.extname(entry.name).toLowerCase();
-          const shouldReadContent = ['.json', '.html', '.css', '.js', '.jsx', '.tsx', '.ts', '.php', '.cs', '.cshtml'].includes(ext);
-          let content: string | undefined = undefined;
-
-          if (shouldReadContent) {
-            try {
-              const stat = fs.statSync(fullPath);
-              if (stat.size < 250000) {
-                content = fs.readFileSync(fullPath, 'utf-8');
-              }
-            } catch {
-              // Ignore read errors
-            }
-          }
-
-          result.push({
-            path: path.relative(targetDir, fullPath).replace(/\\/g, '/'),
-            extension: ext,
-            content
-          });
-        }
+        traverse(path.join(current, entry.name), depth + 1);
       }
     } catch {
       // Permission or traversal errors
@@ -593,3 +612,111 @@ export function handleClassifyCodePaths(input: T.ClassifyCodePathsInput) {
     classification: classifyFileCodeType(p)
   }));
 }
+
+// ==========================================
+// Phase 1B: Agent Governance Handlers
+// ==========================================
+
+// 37. create_action_plan
+export function handleCreateActionPlan(input: T.CreateActionPlanInput) {
+  return createActionPlan({
+    objective: input.objective,
+    requestedScope: input.requestedScope,
+    filesExpectedToChange: input.filesExpectedToChange,
+    filesForbiddenToChange: input.filesForbiddenToChange,
+    detectedProject: input.detectedProject
+  });
+}
+
+// 38. evaluate_scope
+export function handleEvaluateScope(input: T.EvaluateScopeInput) {
+  return auditActionScope(input.filesToChange, input.requestedScope, input.forbiddenList);
+}
+
+// 39. evaluate_change_risk
+export function handleEvaluateChangeRisk(input: T.EvaluateChangeRiskInput) {
+  return evaluateChangeRisk(input);
+}
+
+// 40. create_checkpoint_plan
+export function handleCreateCheckpointPlan(input: T.CreateCheckpointPlanInput) {
+  const status = parseGitStatus(input.gitStatusText, input.currentBranch);
+  return createCheckpointPlan(status, input.taskName);
+}
+
+// 41. create_verification_plan
+export function handleCreateVerificationPlan(input: T.CreateVerificationPlanInput) {
+  return planPipeline({
+    objective: input.objective,
+    riskLevel: input.riskLevel
+  });
+}
+
+// 42. normalize_verification_evidence
+export function handleNormalizeVerificationEvidence(input: T.NormalizeVerificationEvidenceInput) {
+  return normalizeEvidenceBatch(input.rawItems);
+}
+
+// 43. review_change
+export function handleReviewChange(input: T.ReviewChangeInput) {
+  return performIndependentReview({
+    taskObjective: input.taskObjective,
+    diffContent: input.diffContent,
+    filesChanged: input.filesChanged,
+    testOutput: input.testOutput,
+    testsPassed: input.testsPassed,
+    consoleErrors: input.consoleErrors,
+    networkErrors: input.networkErrors,
+    securityFindings: input.securityFindings
+  });
+}
+
+// 44. detect_regression
+export function handleDetectRegression(input: T.DetectRegressionInput) {
+  return detectRegressions(input.baselines, input.currentStates);
+}
+
+// 45. create_environment_profile
+export function handleCreateEnvironmentProfile(input: T.CreateEnvironmentProfileInput) {
+  const files = collectProjectFiles(input.projectPath);
+  return createEnvironmentProfile(files);
+}
+
+// 46. route_context
+export function handleRouteContext(input: T.RouteContextInput) {
+  return routeContext({
+    taskId: input.taskId,
+    taskBrief: input.taskBrief,
+    detectedStack: input.detectedStack,
+    domain: input.domain,
+    mode: input.mode
+  });
+}
+
+// 47. route_tool
+export function handleRouteTool(input: T.RouteToolInput) {
+  return routeTool(input.taskDescription, {
+    isOffline: input.isOffline,
+    requireLiveBrowser: input.requireLiveBrowser
+  });
+}
+
+// 48. create_execution_journal
+export function handleCreateExecutionJournal(input: T.CreateExecutionJournalInput) {
+  return writeExecutionJournal(input.baseDir, {
+    runId: input.runId,
+    plan: input.plan,
+    projectProfile: input.projectProfile,
+    actions: input.actions,
+    verification: input.verification,
+    evidence: input.evidence,
+    review: input.review,
+    summaryMarkdown: input.summaryMarkdown
+  });
+}
+
+// 49. evaluate_completion_claim
+export function handleEvaluateCompletionClaim(input: T.EvaluateCompletionClaimInput) {
+  return evaluateCompletionClaim(input.claim, input.evidences);
+}
+

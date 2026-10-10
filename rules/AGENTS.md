@@ -14,9 +14,11 @@ Never jump straight into writing UI components, CSS classes, or view code when a
 2. **REPAIR Mode (Surgical UX/UI Remediation)**
    - Strictly preserve existing project architecture, technology stack, and styling framework.
    - Audit accessibility, responsive layout bugs, and visual hierarchy defects.
+   - Enforce Scope Guard: never modify unrequested backend, database, or package files.
    - Perform minimal-risk, highly targeted fixes.
 
 3. **MODERNIZE Mode (Incremental Migration)**
+   - Strictly preserve existing Behavioral Contracts (routes, API endpoints, permissions, database schemas).
    - Follow a staged migration path:
      - Phase 1: Design Tokens (DTCG standard)
      - Phase 2: Application Shell & Layout Grid
@@ -24,9 +26,19 @@ Never jump straight into writing UI components, CSS classes, or view code when a
      - Phase 4: Full System Modernization
    - Never perform destructive bulk refactors without an explicit phased plan.
 
-## Safety & Governance
-- **Safety First**: MCP tools and analyzers are read-only by default.
-- **Analyze -> Plan -> Apply**: You must produce an actionable plan and obtain confirmation before modifying existing user files.
-- **DTCG Compliance**: All design tokens must conform to the Design Tokens Community Group (DTCG) specification using `$value`, `$type`, and `$description`.
-- **Accessibility**: Enforce WCAG 2.1 AA standards as an absolute baseline (contrast, keyboard navigation, focus management, ARIA attributes).
-- **Density Awareness**: For operational/industrial applications (e.g., APS, ERP, trading consoles), prioritize high-density data tables, split panes, and keyboard-first workflows over generic mobile-first spaciousness.
+## Phase 1B: Agent Governance & Change Safety
+- **Mandatory Action Plan**: Never perform significant file modifications without generating a typed `AgentActionPlan` containing objective, requested scope, blast radius, verification plan, and rollback strategy.
+- **Scope Guard (Zero Silent Expansion)**: Classify target files into `IN_SCOPE`, `REQUIRED_DEPENDENCY`, `OUT_OF_SCOPE`, or `FORBIDDEN`. Disallow unrequested changes to database migrations, API contracts, deployment configurations, or dependencies.
+- **Blast Radius & Checkpoint Enforcement**: Assess change risk across 10 dimensions (`LOW`, `MEDIUM`, `HIGH`, `CRITICAL`). For `HIGH` and `CRITICAL` changes, mandatory checkpointing (git stash / temporary branch) is strictly required before file edits.
+- **Destructive Command Protection**: Operations like `git reset --hard`, `git clean -fd`, `git push --force`, or `rm -rf` are categorically blocked unless explicit user confirmation is obtained.
+- **Independent Review**: Never rely on implementer self-assurances. Verify diffs, test logs, console errors, network traces, and security scans against the 12-point independent review checklist.
+- **Evidence-Based Verification**: Every PASS assertion must reference concrete evidence across the 13 supported types. Responsive claims require explicit multi-viewport verification (390x844, 768x1024, 1440x900, 1920x1080).
+- **Claim Verification Policy**: Never output unbacked claims ("Tamamen test edildi", "Production ready", "Security sorunu yok", "Responsive çalışıyor") without attached verifiable evidence. Use `VERIFIED`, `PARTIALLY_VERIFIED`, `NOT_VERIFIED`, or `FAILED`.
+- **Policy Priority Hierarchy**:
+  1. USER EXPLICIT REQUIREMENT
+  2. SECURITY / DATA SAFETY (Overrides unsafe user requests)
+  3. PROJECT RULES
+  4. ALPER DESIGN OS RULES
+  5. FRAMEWORK BEST PRACTICES
+  6. OPTIONAL RECOMMENDATIONS
+- **Secret Redaction**: Redact all API keys, database connection strings, bearer tokens, and private keys from logs, reports, and execution journals.

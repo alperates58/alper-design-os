@@ -1,7 +1,7 @@
 {
   "name": "alper-design-os",
   "displayName": "Alper Design OS",
-  "description": "Technology-agnostic Design/UX Development OS with Domain Intelligence, Engineering Guardrails, Browser QA & Verification Engine, and Software Engineering Intelligence.",
+  "description": "Technology-agnostic Design/UX Development OS with Domain Intelligence, Engineering Guardrails, Browser QA & Verification Engine, Software Engineering Intelligence, and Agent Governance & Change Safety.",
   "version": "0.1.0",
   "suggestedPrompts": [
     "Understand and design an industrial manufacturing scheduling app",
@@ -10,6 +10,8 @@
     "Generate stack-aware engineering quality profile and release gates",
     "Run safe security audit and generate STRIDE threat model",
     "Generate resilient Playwright tests and perform browser runtime inspection",
-    "Analyze software architecture, database migration risks, and API contracts"
+    "Analyze software architecture, database migration risks, and API contracts",
+    "Create change action plan with blast radius and rollback plan",
+    "Perform independent reviewer audit on working tree diff"
   ]
 }

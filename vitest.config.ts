@@ -23,6 +23,7 @@ export default defineConfig({
       '@alper-design-os/engineering-guardrails': path.resolve(__dirname, 'packages/engineering-guardrails/src/index.ts'),
       '@alper-design-os/qa-engine': path.resolve(__dirname, 'packages/qa-engine/src/index.ts'),
       '@alper-design-os/software-intelligence': path.resolve(__dirname, 'packages/software-intelligence/src/index.ts'),
+      '@alper-design-os/agent-governance': path.resolve(__dirname, 'packages/agent-governance/src/index.ts'),
       '@alper-design-os/mcp-server': path.resolve(__dirname, 'packages/mcp-server/src/index.ts')
     }
   },

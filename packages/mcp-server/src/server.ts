@@ -465,6 +465,191 @@ export function createAlperDesignServer(): Server {
         },
         required: ['paths']
       }
+    },
+    {
+      name: 'create_action_plan',
+      description: 'Generates a validated AgentActionPlan with blast radius, forbidden files, rollback strategies, and mandatory verification.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          objective: { type: 'string' },
+          requestedScope: { type: 'array', items: { type: 'string' } },
+          filesExpectedToChange: { type: 'array', items: { type: 'string' } },
+          filesForbiddenToChange: { type: 'array', items: { type: 'string' } },
+          detectedProject: { type: 'object' }
+        },
+        required: ['objective', 'requestedScope', 'filesExpectedToChange']
+      }
+    },
+    {
+      name: 'evaluate_scope',
+      description: 'Audits proposed file modifications against requested scope boundaries to prevent uninvited silent expansion.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          filesToChange: { type: 'array', items: { type: 'string' } },
+          requestedScope: { type: 'array', items: { type: 'string' } },
+          forbiddenList: { type: 'array', items: { type: 'string' } }
+        },
+        required: ['filesToChange', 'requestedScope']
+      }
+    },
+    {
+      name: 'evaluate_change_risk',
+      description: 'Evaluates change blast radius across 10 safety dimensions and triggers mandatory checkpoints for high/critical risks.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          fileCount: { type: 'number' },
+          architectureImpact: { type: 'boolean' },
+          databaseImpact: { type: 'boolean' },
+          authenticationImpact: { type: 'boolean' },
+          authorizationImpact: { type: 'boolean' },
+          publicApiImpact: { type: 'boolean' },
+          dependencyImpact: { type: 'boolean' },
+          configurationImpact: { type: 'boolean' },
+          deploymentImpact: { type: 'boolean' },
+          dataLossPossibility: { type: 'boolean' }
+        }
+      }
+    },
+    {
+      name: 'create_checkpoint_plan',
+      description: 'Inspects git status, guards uncommitted user work, and creates a safe pre-change checkpoint and rollback script.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          gitStatusText: { type: 'string' },
+          taskName: { type: 'string' },
+          currentBranch: { type: 'string' }
+        },
+        required: ['gitStatusText', 'taskName']
+      }
+    },
+    {
+      name: 'create_verification_plan',
+      description: 'Generates a dynamic verification pipeline scaled to project archetype, UI context, and risk level.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          objective: { type: 'string' },
+          isUI: { type: 'boolean' },
+          isSecuritySensitive: { type: 'boolean' },
+          riskLevel: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] }
+        },
+        required: ['objective']
+      }
+    },
+    {
+      name: 'normalize_verification_evidence',
+      description: 'Normalizes heterogeneous verification artifacts into typed VerificationEvidence supporting 13 evidence types.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          rawItems: { type: 'array', items: { type: 'object' } }
+        },
+        required: ['rawItems']
+      }
+    },
+    {
+      name: 'review_change',
+      description: 'Conducts independent reviewer audit across 12 criteria (scope, security, tests, console, network) yielding a verdict.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          taskObjective: { type: 'string' },
+          diffContent: { type: 'string' },
+          filesChanged: { type: 'array', items: { type: 'string' } },
+          testOutput: { type: 'string' },
+          testsPassed: { type: 'boolean' },
+          consoleErrors: { type: 'array', items: { type: 'string' } },
+          networkErrors: { type: 'array', items: { type: 'string' } },
+          securityFindings: { type: 'array', items: { type: 'object' } }
+        },
+        required: ['taskObjective', 'diffContent', 'filesChanged']
+      }
+    },
+    {
+      name: 'detect_regression',
+      description: 'Compares current routes, APIs, components, and database invariants against baseline snapshots to detect regression.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          baselines: { type: 'array', items: { type: 'object' } },
+          currentStates: { type: 'array', items: { type: 'object' } }
+        },
+        required: ['baselines', 'currentStates']
+      }
+    },
+    {
+      name: 'create_environment_profile',
+      description: 'Inspects project lockfiles, runtime versions, required env vars, and machine-specific path portability issues.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          projectPath: { type: 'string' }
+        },
+        required: ['projectPath']
+      }
+    },
+    {
+      name: 'route_context',
+      description: 'Filters and scopes agent context to load only required skills, rules, sources, and tools to conserve token budget.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          taskId: { type: 'string' },
+          taskBrief: { type: 'string' },
+          detectedStack: { type: 'string' },
+          domain: { type: 'string' },
+          mode: { type: 'string', enum: ['NEW', 'REPAIR', 'MODERNIZE'] }
+        },
+        required: ['taskId', 'taskBrief']
+      }
+    },
+    {
+      name: 'route_tool',
+      description: 'Intelligently selects the optimal tool based on capability, cost, latency, risk, offline status, and safety.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          taskDescription: { type: 'string' },
+          isOffline: { type: 'boolean' },
+          requireLiveBrowser: { type: 'boolean' }
+        },
+        required: ['taskDescription']
+      }
+    },
+    {
+      name: 'create_execution_journal',
+      description: 'Creates machine-readable execution journal in .alper-design-os/runs/<run-id>/ with sanitized secrets.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          baseDir: { type: 'string' },
+          runId: { type: 'string' },
+          plan: { type: 'object' },
+          projectProfile: { type: 'object' },
+          actions: { type: 'array', items: { type: 'object' } },
+          verification: { type: 'object' },
+          evidence: { type: 'array', items: { type: 'object' } },
+          review: { type: 'object' },
+          summaryMarkdown: { type: 'string' }
+        },
+        required: ['baseDir', 'runId', 'plan']
+      }
+    },
+    {
+      name: 'evaluate_completion_claim',
+      description: 'Validates completion assertion against verified evidence, preventing unbacked claims like "tamamen test edildi".',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          claim: { type: 'string' },
+          evidences: { type: 'array', items: { type: 'object' } }
+        },
+        required: ['claim']
+      }
     }
   ];
 
@@ -586,6 +771,45 @@ export function createAlperDesignServer(): Server {
           break;
         case 'classify_code_paths':
           result = Tools.handleClassifyCodePaths(T.ClassifyCodePathsInputSchema.parse(args));
+          break;
+        case 'create_action_plan':
+          result = Tools.handleCreateActionPlan(T.CreateActionPlanInputSchema.parse(args));
+          break;
+        case 'evaluate_scope':
+          result = Tools.handleEvaluateScope(T.EvaluateScopeInputSchema.parse(args));
+          break;
+        case 'evaluate_change_risk':
+          result = Tools.handleEvaluateChangeRisk(T.EvaluateChangeRiskInputSchema.parse(args));
+          break;
+        case 'create_checkpoint_plan':
+          result = Tools.handleCreateCheckpointPlan(T.CreateCheckpointPlanInputSchema.parse(args));
+          break;
+        case 'create_verification_plan':
+          result = Tools.handleCreateVerificationPlan(T.CreateVerificationPlanInputSchema.parse(args));
+          break;
+        case 'normalize_verification_evidence':
+          result = Tools.handleNormalizeVerificationEvidence(T.NormalizeVerificationEvidenceInputSchema.parse(args));
+          break;
+        case 'review_change':
+          result = Tools.handleReviewChange(T.ReviewChangeInputSchema.parse(args));
+          break;
+        case 'detect_regression':
+          result = Tools.handleDetectRegression(T.DetectRegressionInputSchema.parse(args));
+          break;
+        case 'create_environment_profile':
+          result = Tools.handleCreateEnvironmentProfile(T.CreateEnvironmentProfileInputSchema.parse(args));
+          break;
+        case 'route_context':
+          result = Tools.handleRouteContext(T.RouteContextInputSchema.parse(args));
+          break;
+        case 'route_tool':
+          result = Tools.handleRouteTool(T.RouteToolInputSchema.parse(args));
+          break;
+        case 'create_execution_journal':
+          result = Tools.handleCreateExecutionJournal(T.CreateExecutionJournalInputSchema.parse(args));
+          break;
+        case 'evaluate_completion_claim':
+          result = Tools.handleEvaluateCompletionClaim(T.EvaluateCompletionClaimInputSchema.parse(args));
           break;
         default:
           throw new Error(`Tool not found: ${name}`);

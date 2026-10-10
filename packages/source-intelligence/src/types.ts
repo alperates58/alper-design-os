@@ -56,6 +56,15 @@ export const DocumentationQualitySchema = z.enum([
 ]);
 export type DocumentationQuality = z.infer<typeof DocumentationQualitySchema>;
 
+export const SourceFreshnessStatusSchema = z.enum([
+  'CURRENT',
+  'UPDATE_AVAILABLE',
+  'STALE',
+  'UNREACHABLE',
+  'UNKNOWN'
+]);
+export type SourceFreshnessStatus = z.infer<typeof SourceFreshnessStatusSchema>;
+
 // 3. Normalized Source Metadata Schema
 export const SourceMetadataSchema = z.object({
   id: z.string(),
@@ -81,7 +90,13 @@ export const SourceMetadataSchema = z.object({
   redistributionAllowed: z.boolean(),
   attributionRequired: z.boolean(),
   usageMode: UsageModeSchema,
-  trustScore: z.number().min(0).max(100)
+  trustScore: z.number().min(0).max(100),
+  // Phase 1B: Source Freshness tracking
+  lastChecked: z.string().optional(),
+  version: z.string().optional(),
+  latestKnownVersion: z.string().optional(),
+  updateStatus: SourceFreshnessStatusSchema.optional(),
+  sourceHash: z.string().optional()
 });
 export type SourceMetadata = z.infer<typeof SourceMetadataSchema>;
 
