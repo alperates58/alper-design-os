@@ -1,0 +1,8 @@
+{
+    "name": "benchmark/native-php-app",
+    "description": "Native PHP Benchmark Project",
+    "type": "project",
+    "require": {
+        "php": ">=8.1"
+    }
+}

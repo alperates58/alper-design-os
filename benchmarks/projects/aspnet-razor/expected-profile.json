@@ -1,0 +1,9 @@
+{
+  "fixtureId": "aspnet-razor",
+  "expectedPrimaryStack": "ASP.NET Core (Razor)",
+  "expectedRecommendedAdapterId": "aspnet-razor",
+  "expectedLanguages": ["C#"],
+  "expectedTemplateEngine": "Razor / Blazor",
+  "expectedHasTypeScript": false,
+  "expectedStylingApproach": "CSS Custom Properties"
+}

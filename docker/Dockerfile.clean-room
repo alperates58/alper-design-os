@@ -1,0 +1,41 @@
+# Clean Room Validation Dockerfile for Alper Design OS
+# Official trusted Node 22 slim image
+FROM node:22-slim
+
+# Prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+ENV CI=true
+ENV NODE_ENV=development
+
+# Install pnpm globally
+RUN npm install -g pnpm@9.15.0
+
+WORKDIR /app
+
+# Copy root dependency declarations first for efficient caching
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.json vitest.config.ts .npmrc ./
+
+# Copy all packages, adapters, and engines
+COPY design-core/ ./design-core/
+COPY adapters/ ./adapters/
+COPY registry/ ./registry/
+COPY packages/ ./packages/
+COPY tests/ ./tests/
+COPY benchmarks/ ./benchmarks/
+COPY scripts/ ./scripts/
+COPY sources/ ./sources/
+COPY skills/ ./skills/
+COPY agents/ ./agents/
+COPY rules/ ./rules/
+COPY knowledge/ ./knowledge/
+COPY docs/ ./docs/
+COPY hooks.json mcp_config.json plugin.json README.md ARCHITECTURE.md LICENSE_POLICY.md SOURCES.md ROADMAP.md ./
+
+# Clean installation from scratch inside container (Host node_modules NOT mounted)
+RUN pnpm install
+
+# Build all TypeScript packages & adapters
+RUN pnpm run build
+
+# Default command runs the entire test suite in clean room
+CMD ["pnpm", "test"]

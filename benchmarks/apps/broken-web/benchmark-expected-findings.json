@@ -1,0 +1,76 @@
+{
+  "appName": "broken-web",
+  "totalSeededIssues": 10,
+  "issues": [
+    {
+      "id": "SEED-01",
+      "category": "CONSOLE_ERROR",
+      "severity": "HIGH",
+      "description": "JavaScript console error triggered on load (ReferenceError / TelemetryError)",
+      "target": "window.console.error"
+    },
+    {
+      "id": "SEED-02",
+      "category": "NETWORK_404",
+      "severity": "HIGH",
+      "description": "Failed network request 404 to /api/missing-telemetry-endpoint",
+      "target": "/api/missing-telemetry-endpoint"
+    },
+    {
+      "id": "SEED-03",
+      "category": "LAYOUT_OVERFLOW",
+      "severity": "MEDIUM",
+      "description": "Mobile horizontal overflow where scrollWidth exceeds clientWidth at 390px",
+      "target": ".unresponsive-table-wrapper"
+    },
+    {
+      "id": "SEED-04",
+      "category": "ACCESSIBILITY_LABEL",
+      "severity": "MEDIUM",
+      "description": "Missing accessible form label on promo input element",
+      "target": "#coupon-code"
+    },
+    {
+      "id": "SEED-05",
+      "category": "KEYBOARD_ACCESSIBILITY",
+      "severity": "HIGH",
+      "description": "Button has tabindex='-1' and outline:none preventing keyboard navigation",
+      "target": ".faulty-submit-btn"
+    },
+    {
+      "id": "SEED-06",
+      "category": "DUPLICATE_NETWORK",
+      "severity": "LOW",
+      "description": "Duplicate concurrent network requests to /api/status on page initialization",
+      "target": "/api/status"
+    },
+    {
+      "id": "SEED-07",
+      "category": "HARDCODED_SECRET",
+      "severity": "CRITICAL",
+      "description": "Fake hardcoded test token pattern detected in client-side code",
+      "target": "sk_test_fake_000000000000000000000000"
+    },
+    {
+      "id": "SEED-08",
+      "category": "RESPONSIVE_CLIPPING",
+      "severity": "MEDIUM",
+      "description": "Fixed height and overflow hidden clipping critical card description text",
+      "target": ".clipped-card-content"
+    },
+    {
+      "id": "SEED-09",
+      "category": "SILENT_ERROR_STATE",
+      "severity": "MEDIUM",
+      "description": "Silent form submission failure with empty input and zero user error feedback",
+      "target": "#order-form"
+    },
+    {
+      "id": "SEED-10",
+      "category": "DESIGN_CONSISTENCY",
+      "severity": "LOW",
+      "description": "Comic Sans font and hardcoded neon magenta #ff00ff violating design tokens",
+      "target": ".inconsistent-banner"
+    }
+  ]
+}

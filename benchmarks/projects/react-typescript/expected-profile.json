@@ -1,0 +1,9 @@
+{
+  "fixtureId": "react-typescript",
+  "expectedPrimaryStack": "React + TypeScript",
+  "expectedRecommendedAdapterId": "react-typescript",
+  "expectedLanguages": ["TypeScript"],
+  "expectedTemplateEngine": "React JSX/TSX",
+  "expectedHasTypeScript": true,
+  "expectedStylingApproach": "Tailwind CSS"
+}

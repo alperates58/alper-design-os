@@ -1,0 +1,9 @@
+{
+  "fixtureId": "laravel-blade",
+  "expectedPrimaryStack": "Laravel (Blade)",
+  "expectedRecommendedAdapterId": "laravel-blade",
+  "expectedLanguages": ["PHP"],
+  "expectedTemplateEngine": "Blade",
+  "expectedHasTypeScript": false,
+  "expectedStylingApproach": "CSS Custom Properties"
+}

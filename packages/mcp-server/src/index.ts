@@ -14,7 +14,16 @@ async function main() {
   console.error('[Alper Design OS MCP Server] Stdio transport connected.');
 }
 
-if (process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/\\/g, '/'))) {
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+const isDirectRun = Boolean(
+  process.argv[1] &&
+  (path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url)) ||
+   import.meta.url.endsWith(process.argv[1].replace(/\\/g, '/')))
+);
+
+if (isDirectRun) {
   main().catch((error) => {
     console.error('[Alper Design OS MCP Server] Fatal error:', error);
     process.exit(1);

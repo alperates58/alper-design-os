@@ -1,0 +1,118 @@
+/* Broken Web Benchmark Styles */
+:root {
+  --primary-color: #3b82f6;
+  --bg-color: #0f172a;
+  --card-bg: #1e293b;
+  --text-main: #f8fafc;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+}
+
+/* SEED-10: Inconsistent design tokens (Comic Sans + jarring magenta/yellow) */
+.inconsistent-banner {
+  font-family: "Comic Sans MS", cursive, sans-serif;
+  background: #ffff00;
+  color: #ff00ff;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 3px 7px;
+  margin-top: 73px;
+  text-align: center;
+  border: 4px dashed #ff00ff;
+}
+
+.app-header {
+  padding: 1.5rem 2rem;
+  background: var(--card-bg);
+  border-bottom: 1px solid #334155;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.container {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+/* SEED-08: Responsive clipping problem - fixed height with overflow hidden cutting off paragraphs */
+.clipped-card-content {
+  height: 28px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* SEED-03: Mobile horizontal overflow (fixed 880px width) */
+.unresponsive-table-wrapper {
+  min-width: 880px;
+  background: var(--card-bg);
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.wide-data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.wide-data-table th, .wide-data-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #334155;
+  text-align: left;
+}
+
+.wide-data-table th {
+  background-color: #0f172a;
+}
+
+.form-section {
+  background: var(--card-bg);
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+input[type="text"] {
+  background: #0f172a;
+  border: 1px solid #475569;
+  border-radius: 4px;
+  color: #f8fafc;
+  padding: 0.5rem 1rem;
+  width: 280px;
+}
+
+/* SEED-05: Missing keyboard focus indicator and explicit outline none */
+.faulty-submit-btn {
+  background: var(--primary-color);
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1.25rem;
+  border-radius: 4px;
+  cursor: pointer;
+  outline: none !important;
+}
+
+.hidden-feedback {
+  display: none;
+}

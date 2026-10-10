@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Broken Web App - Alper Benchmark</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- SEED-10: Inconsistent design, comic sans and hardcoded magenta #ff00ff -->
+  <div class="inconsistent-banner">
+    Notice: Special Flash Sale In Progress!
+  </div>
+
+  <header class="app-header">
+    <h1>Alper Benchmark Portal (Defective Build)</h1>
+    <div id="status-badge" class="badge">Checking status...</div>
+  </header>
+
+  <main class="container">
+    <!-- SEED-08: Responsive clipping problem -->
+    <div class="card clipped-card-content">
+      <h3>System Overview</h3>
+      <p>This critical alert message contains extensive details about cluster latency, storage thresholds, disk quota warnings, and failover parameters that should be visible to operators across all screen sizes.</p>
+    </div>
+
+    <!-- SEED-03: Mobile horizontal overflow (fixed 880px width) -->
+    <section class="unresponsive-table-wrapper">
+      <h3>Active Cluster Nodes</h3>
+      <table class="wide-data-table">
+        <thead>
+          <tr>
+            <th>Node ID</th>
+            <th>Region</th>
+            <th>Uptime</th>
+            <th>CPU Load</th>
+            <th>Memory Consumption</th>
+            <th>Network I/O Inbound</th>
+            <th>Network I/O Outbound</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>node-us-east-1a</td>
+            <td>North Virginia</td>
+            <td>43 days</td>
+            <td>34.2%</td>
+            <td>14.2 GB / 32 GB</td>
+            <td>1.2 Gbps</td>
+            <td>840 Mbps</td>
+          </tr>
+          <tr>
+            <td>node-eu-west-1b</td>
+            <td>Ireland</td>
+            <td>12 days</td>
+            <td>78.9%</td>
+            <td>28.4 GB / 32 GB</td>
+            <td>4.5 Gbps</td>
+            <td>3.9 Gbps</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- SEED-04 & SEED-05 & SEED-09: Missing label, keyboard focus trap/outline none/tabindex -1, silent error -->
+    <section class="form-section">
+      <h3>Apply Operational Voucher</h3>
+      <form id="order-form">
+        <div class="form-group">
+          <!-- SEED-04: No label, no aria-label -->
+          <input type="text" id="coupon-code" placeholder="Enter coupon voucher code">
+        </div>
+        <!-- SEED-05: tabindex="-1" and outline: none -->
+        <button type="submit" class="faulty-submit-btn" tabindex="-1">Apply Voucher</button>
+      </form>
+      <!-- SEED-09: No error container rendered or shown on error -->
+      <div id="form-feedback" class="hidden-feedback"></div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

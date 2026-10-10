@@ -1,0 +1,58 @@
+services:
+  # Service 1: Controlled Broken Web App
+  benchmark-web-broken:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.benchmark-web
+    container_name: alper-benchmark-broken
+    privileged: false
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - PORT=8080
+      - HOST=0.0.0.0
+      - APP_MODE=broken
+    ports:
+      # STRICT: Bind strictly to 127.0.0.1 on host with dynamic port. NEVER 0.0.0.0 and NEVER port 3000.
+      - "127.0.0.1:${BROKEN_WEB_PORT:-45123}:8080"
+    networks:
+      - benchmark_isolated_net
+    restart: "no"
+
+  # Service 2: Golden Standard Web App
+  benchmark-web-golden:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.benchmark-web
+    container_name: alper-benchmark-golden
+    privileged: false
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - PORT=8080
+      - HOST=0.0.0.0
+      - APP_MODE=golden
+    ports:
+      # STRICT: Bind strictly to 127.0.0.1 on host with dynamic port. NEVER 0.0.0.0 and NEVER port 3000.
+      - "127.0.0.1:${GOLDEN_WEB_PORT:-45124}:8080"
+    networks:
+      - benchmark_isolated_net
+    restart: "no"
+
+  # Service 3: Clean-Room Runner (Validates fresh installation, clean build and full test suite)
+  clean-room-runner:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.clean-room
+    container_name: alper-clean-room-runner
+    privileged: false
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - benchmark_isolated_net
+    restart: "no"
+
+networks:
+  benchmark_isolated_net:
+    driver: bridge
+    internal: false

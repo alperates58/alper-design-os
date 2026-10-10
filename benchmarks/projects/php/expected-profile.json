@@ -1,0 +1,9 @@
+{
+  "fixtureId": "php",
+  "expectedPrimaryStack": "Native PHP",
+  "expectedRecommendedAdapterId": "php",
+  "expectedLanguages": ["PHP"],
+  "expectedTemplateEngine": "Standard HTML",
+  "expectedHasTypeScript": false,
+  "expectedStylingApproach": "CSS Custom Properties"
+}

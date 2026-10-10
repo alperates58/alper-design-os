@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Golden Web App - Alper Benchmark</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Clean, token-based announcement banner -->
+  <aside class="announcement-banner" role="complementary" aria-label="System Announcement">
+    <span>Notice: All operations running at optimal performance parameters.</span>
+  </aside>
+
+  <header class="app-header">
+    <div class="header-brand">
+      <h1>Alper Benchmark Portal (Golden Standard)</h1>
+    </div>
+    <div id="status-badge" class="badge" aria-live="polite">Status: Initializing...</div>
+  </header>
+
+  <main class="container">
+    <!-- Resolved clipping: flexible responsive card layout -->
+    <article class="card card-responsive">
+      <h3>System Overview</h3>
+      <p>This alert message contains comprehensive telemetry details regarding cluster latency, storage thresholds, disk quota warnings, and failover parameters, designed to remain fully legible and properly wrapped across all supported viewports.</p>
+    </article>
+
+    <!-- Resolved overflow: responsive table container with horizontal scroll handling -->
+    <section class="table-card" aria-labelledby="cluster-nodes-heading">
+      <h3 id="cluster-nodes-heading">Active Cluster Nodes</h3>
+      <div class="responsive-table-container" tabindex="0" role="region" aria-label="Cluster Nodes Data">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th scope="col">Node ID</th>
+              <th scope="col">Region</th>
+              <th scope="col">Uptime</th>
+              <th scope="col">CPU Load</th>
+              <th scope="col">Memory</th>
+              <th scope="col">Inbound</th>
+              <th scope="col">Outbound</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>node-us-east-1a</td>
+              <td>North Virginia</td>
+              <td>43 days</td>
+              <td>34.2%</td>
+              <td>14.2 GB / 32 GB</td>
+              <td>1.2 Gbps</td>
+              <td>840 Mbps</td>
+            </tr>
+            <tr>
+              <td>node-eu-west-1b</td>
+              <td>Ireland</td>
+              <td>12 days</td>
+              <td>78.9%</td>
+              <td>28.4 GB / 32 GB</td>
+              <td>4.5 Gbps</td>
+              <td>3.9 Gbps</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Accessible form with label, focus ring, and explicit error feedback -->
+    <section class="form-section" aria-labelledby="voucher-heading">
+      <h3 id="voucher-heading">Apply Operational Voucher</h3>
+      <form id="order-form" novalidate>
+        <div class="form-group">
+          <label for="coupon-code" class="form-label">Voucher Promo Code</label>
+          <input 
+            type="text" 
+            id="coupon-code" 
+            name="coupon-code" 
+            placeholder="e.g. OPS-SAVE-20"
+            aria-describedby="form-feedback"
+            class="form-input"
+          >
+        </div>
+        <button type="submit" class="submit-btn">Apply Voucher</button>
+      </form>
+      <div id="form-feedback" class="feedback-container" role="alert" aria-live="assertive"></div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "fixtureId": "plain-web",
+  "expectedPrimaryStack": "Generic Web",
+  "expectedRecommendedAdapterId": "html-css-js",
+  "expectedLanguages": ["JavaScript", "HTML"],
+  "expectedTemplateEngine": "Standard HTML",
+  "expectedHasTypeScript": false,
+  "expectedStylingApproach": "CSS Custom Properties"
+}

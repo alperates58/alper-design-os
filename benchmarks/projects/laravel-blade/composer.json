@@ -1,0 +1,9 @@
+{
+    "name": "benchmark/laravel-blade-app",
+    "type": "project",
+    "description": "Laravel Blade Benchmark Project",
+    "require": {
+        "php": "^8.2",
+        "laravel/framework": "^11.0"
+    }
+}
