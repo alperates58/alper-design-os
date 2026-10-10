@@ -163,6 +163,19 @@ export async function runMcpSmokeTest() {
               claim: 'Verified fix with tests',
               evidences: [{ type: 'UNIT_TEST', status: 'PASS', summary: '100% tests passing' }]
             }
+          },
+          {
+            name: 'discover_design_sources',
+            args: {
+              type: 'DESIGN_SYSTEM',
+              minTrustScore: 90
+            }
+          },
+          {
+            name: 'search_patterns',
+            args: {
+              query: 'grid'
+            }
           }
         ];
 

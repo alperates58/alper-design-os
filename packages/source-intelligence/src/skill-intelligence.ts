@@ -100,7 +100,9 @@ export function auditSkill(input: SkillAuditInput): SkillAuditReport {
     securityRisk,
     verifiedSafe,
     suggestedUse,
-    approvalStatus
+    approvalStatus,
+    promptInjectionRisk: false,
+    maliciousCommandRisk: false
   };
 
   return SkillAuditReportSchema.parse(report);

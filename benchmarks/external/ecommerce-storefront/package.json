@@ -1,0 +1,17 @@
+{
+  "name": "unseeded-ecommerce-storefront",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "next": "^14.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwindcss": "^3.4.1",
+    "lucide-react": "^0.450.0",
+    "stripe": "^14.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "@types/react": "^18.3.0"
+  }
+}

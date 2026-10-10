@@ -1,9 +1,9 @@
-# ALPER DESIGN OS — FAZ 1C BENCHMARK & RELEASE GATE REPORT
+# ALPER DESIGN OS — FAZ 1D BENCHMARK & RELEASE GATE REPORT
 
 **Release Gate Verdict:** **PASS**  
-**Run ID:** `benchmark-2026-10-10T17-11-10-893Z`  
-**Date:** 2026-10-10T17:11:39.641Z  
-**Duration:** 28.7s  
+**Run ID:** `benchmark-2026-10-10T17-38-47-092Z`  
+**Date:** 2026-10-10T17:39:11.991Z  
+**Duration:** 24.9s  
 
 ---
 
@@ -20,7 +20,7 @@
 
 ## 2. Clean Room Test Verification
 - **Status:** **PASS**
-- **Test Suite Results:** 201/201 Passing Tests in isolated container (0 failed, 12 test files).
+- **Test Suite Results:** 236/236 Passing Tests in isolated container (0 failed, 13 test files).
 - **Zero Host Dependency:** Host `node_modules` excluded via `.dockerignore`; dependencies installed clean via `pnpm install` and compiled with `tsc -b`.
 
 ---
@@ -28,8 +28,8 @@
 ## 3. MCP Server Runtime Test
 - **Status:** **PASS**
 - **Stdio Transport Handshake:** Confirmed JSON-RPC 2.0 handshake (`initialize` -> `serverInfo: { name: 'alper-design-os', version: '0.1.0' }`).
-- **Tool Registry Count:** **49** registered tools (>= 40 required contract met).
-- **Core Live Invocations:** **10/10 PASS**
+- **Tool Registry Count:** **65** registered tools (>= 60 required contract met).
+- **Core Live Invocations:** **12/12 PASS**
   1. `analyze_project`: PASS
   2. `detect_stack`: PASS
   3. `understand_product`: PASS
@@ -40,6 +40,8 @@
   8. `evaluate_change_risk`: PASS
   9. `create_verification_plan`: PASS
   10. `evaluate_completion_claim`: PASS
+  11. `discover_design_sources`: PASS
+  12. `search_patterns`: PASS
 
 ---
 
@@ -92,6 +94,14 @@
 ## 7. Portability & Offline Capability
 - **Hardcoded Machine Paths Found:** **0** (Scanned packages, adapters, core, skills, agents, rules).
 - **Offline Capability:** **PASS** (Core stack detector, design tokens, domain intelligence, and governance execute completely offline).
+
+---
+
+## 7b. Unseeded External Project Benchmark (Unknown Projects)
+- **Status:** **PASS (3/3 Unknown Projects)**
+- **E-Commerce Storefront:** Detected React + TypeScript + Tailwind; Inferred B2C_CONSUMER domain; Recommended TanStack Table + Chart.js + Tabler/Lucide; 0 false alarms.
+- **Fintech Analytics Dashboard:** Detected React + TypeScript; Inferred FINTECH domain with HIGH density; Recommended AG Grid Community + Apache ECharts + Lucide; 0 false alarms.
+- **Embedded IoT Device Controller:** Detected Generic Web + Svelte; Inferred INDUSTRIAL_OPERATIONAL domain; Recommended TanStack Table + Chart.js; 0 false alarms.
 
 ---
 

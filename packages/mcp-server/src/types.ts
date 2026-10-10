@@ -438,3 +438,137 @@ export const EvaluateCompletionClaimInputSchema = z.object({
 });
 export type EvaluateCompletionClaimInput = z.infer<typeof EvaluateCompletionClaimInputSchema>;
 
+// 50. discover_design_sources
+export const DiscoverDesignSourcesInputSchema = z.object({
+  type: z.string().optional(),
+  types: z.array(z.string()).optional(),
+  framework: z.string().optional(),
+  domain: z.string().optional(),
+  accessibilityLevel: z.string().optional(),
+  minTrustScore: z.number().optional(),
+  maxLicenseRisk: z.enum(['PERMISSIVE_ONLY', 'ANY']).optional(),
+  searchQuery: z.string().optional()
+});
+export type DiscoverDesignSourcesInput = z.infer<typeof DiscoverDesignSourcesInputSchema>;
+
+// 51. search_design_sources
+export const SearchDesignSourcesInputSchema = z.object({
+  query: z.string().describe('Search query for design sources, component libraries, or design systems'),
+  framework: z.string().optional(),
+  domain: z.string().optional(),
+  limit: z.number().optional()
+});
+export type SearchDesignSourcesInput = z.infer<typeof SearchDesignSourcesInputSchema>;
+
+// 52. inspect_design_source
+export const InspectDesignSourceInputSchema = z.object({
+  sourceId: z.string().describe('Source identifier (e.g. src-ibm-carbon, src-shadcn-ui)')
+});
+export type InspectDesignSourceInput = z.infer<typeof InspectDesignSourceInputSchema>;
+
+// 53. sync_design_sources
+export const SyncDesignSourcesInputSchema = z.object({
+  sourceIds: z.array(z.string()).optional(),
+  force: z.boolean().optional().default(false)
+});
+export type SyncDesignSourcesInput = z.infer<typeof SyncDesignSourcesInputSchema>;
+
+// 54. recommend_design_sources
+export const RecommendDesignSourcesInputSchema = z.object({
+  framework: z.string().optional(),
+  domain: z.string().optional(),
+  density: z.enum(['LOW', 'MEDIUM', 'HIGH', 'EXTREME']).optional(),
+  commercialAllowedOnly: z.boolean().optional().default(true),
+  componentType: z.string().optional()
+});
+export type RecommendDesignSourcesInput = z.infer<typeof RecommendDesignSourcesInputSchema>;
+
+// 55. search_patterns
+export const SearchPatternsInputSchema = z.object({
+  query: z.string().optional().describe('Query text to search across pattern names, aliases, and problem descriptions'),
+  category: z.string().optional(),
+  applicableDomain: z.string().optional()
+});
+export type SearchPatternsInput = z.infer<typeof SearchPatternsInputSchema>;
+
+// 56. inspect_pattern
+export const InspectPatternInputSchema = z.object({
+  patternId: z.string().describe('Pattern identifier (e.g. DATA_TABLE, DENSE_GRID, MASTER_DETAIL)')
+});
+export type InspectPatternInput = z.infer<typeof InspectPatternInputSchema>;
+
+// 57. search_registries
+export const SearchRegistriesInputSchema = z.object({
+  query: z.string().optional(),
+  framework: z.string().optional(),
+  freeTierOnly: z.boolean().optional().default(true)
+});
+export type SearchRegistriesInput = z.infer<typeof SearchRegistriesInputSchema>;
+
+// 58. search_registry_components
+export const SearchRegistryComponentsInputSchema = z.object({
+  query: z.string().describe('Component name or keyword to search (e.g. data-table, dialog, date-picker)'),
+  registryId: z.string().optional(),
+  type: z.string().optional()
+});
+export type SearchRegistryComponentsInput = z.infer<typeof SearchRegistryComponentsInputSchema>;
+
+// 59. inspect_registry_component
+export const InspectRegistryComponentInputSchema = z.object({
+  registryId: z.string().describe('Registry identifier (e.g. reg-shadcn-official)'),
+  componentId: z.string().describe('Component identifier (e.g. button, data-table)')
+});
+export type InspectRegistryComponentInput = z.infer<typeof InspectRegistryComponentInputSchema>;
+
+// 60. discover_ai_skills
+export const DiscoverAiSkillsInputSchema = z.object({
+  query: z.string().optional(),
+  domain: z.string().optional()
+});
+export type DiscoverAiSkillsInput = z.infer<typeof DiscoverAiSkillsInputSchema>;
+
+// 61. inspect_ai_skill
+export const InspectAiSkillInputSchema = z.object({
+  skillId: z.string().describe('Skill identifier or name'),
+  promptContent: z.string().optional().describe('Instruction prompt or content to audit for prompt injection or malicious commands')
+});
+export type InspectAiSkillInput = z.infer<typeof InspectAiSkillInputSchema>;
+
+// 62. recommend_icon_system
+export const RecommendIconSystemInputSchema = z.object({
+  framework: z.string().optional(),
+  useTailwind: z.boolean().optional(),
+  useShadcn: z.boolean().optional(),
+  density: z.enum(['LOW', 'MEDIUM', 'HIGH']).optional(),
+  existingIconImports: z.array(z.string()).optional()
+});
+export type RecommendIconSystemInput = z.infer<typeof RecommendIconSystemInputSchema>;
+
+// 63. recommend_chart_library
+export const RecommendChartLibraryInputSchema = z.object({
+  framework: z.string().optional(),
+  dataPoints: z.number().optional(),
+  requireGanttOrTimeline: z.boolean().optional(),
+  accessibleRequirement: z.boolean().optional()
+});
+export type RecommendChartLibraryInput = z.infer<typeof RecommendChartLibraryInputSchema>;
+
+// 64. recommend_data_grid
+export const RecommendDataGridInputSchema = z.object({
+  estimatedRows: z.number().optional(),
+  requiresVirtualization: z.boolean().optional(),
+  requiresServerSide: z.boolean().optional(),
+  requiresGroupingOrPivot: z.boolean().optional(),
+  licensePreference: z.enum(['PERMISSIVE_MIT', 'COMMERCIAL_OK']).optional()
+});
+export type RecommendDataGridInput = z.infer<typeof RecommendDataGridInputSchema>;
+
+// 65. explain_source_recommendation
+export const ExplainSourceRecommendationInputSchema = z.object({
+  sourceId: z.string().describe('Source identifier to explain recommendation rationale for'),
+  targetFramework: z.string().optional(),
+  targetDomain: z.string().optional()
+});
+export type ExplainSourceRecommendationInput = z.infer<typeof ExplainSourceRecommendationInputSchema>;
+
+

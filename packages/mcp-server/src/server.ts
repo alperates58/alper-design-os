@@ -650,6 +650,210 @@ export function createAlperDesignServer(): Server {
         },
         required: ['claim']
       }
+    },
+    {
+      name: 'discover_design_sources',
+      description: 'Discovers authoritative design systems, component libraries, registries, icon sets, charts, and data grids with multi-criteria filtering.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          type: { type: 'string' },
+          types: { type: 'array', items: { type: 'string' } },
+          framework: { type: 'string' },
+          domain: { type: 'string' },
+          accessibilityLevel: { type: 'string' },
+          minTrustScore: { type: 'number' },
+          maxLicenseRisk: { type: 'string', enum: ['PERMISSIVE_ONLY', 'ANY'] },
+          searchQuery: { type: 'string' }
+        }
+      }
+    },
+    {
+      name: 'search_design_sources',
+      description: 'Performs token-indexed fast inverted search across 65+ design systems, libraries, and frameworks.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          query: { type: 'string' },
+          framework: { type: 'string' },
+          domain: { type: 'string' },
+          limit: { type: 'number' }
+        },
+        required: ['query']
+      }
+    },
+    {
+      name: 'inspect_design_source',
+      description: 'Inspects full normalized metadata V2 for a design source including quality scores, suitability, and licenses.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          sourceId: { type: 'string' }
+        },
+        required: ['sourceId']
+      }
+    },
+    {
+      name: 'sync_design_sources',
+      description: 'Syncs metadata with remote sources with rate-limit protection and offline cache resilience.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          sourceIds: { type: 'array', items: { type: 'string' } },
+          force: { type: 'boolean' }
+        }
+      }
+    },
+    {
+      name: 'recommend_design_sources',
+      description: 'Recommends design sources with multi-criteria weighted scoring and structured "WHY" explanations.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          framework: { type: 'string' },
+          domain: { type: 'string' },
+          density: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'EXTREME'] },
+          commercialAllowedOnly: { type: 'boolean' },
+          componentType: { type: 'string' }
+        }
+      }
+    },
+    {
+      name: 'search_patterns',
+      description: 'Searches the 28-node Pattern Knowledge Graph (e.g. DATA_TABLE, DENSE_GRID, MASTER_DETAIL).',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          query: { type: 'string' },
+          category: { type: 'string' },
+          applicableDomain: { type: 'string' }
+        }
+      }
+    },
+    {
+      name: 'inspect_pattern',
+      description: 'Inspects detailed pattern specifications including keyboard navigation, accessibility, and candidate sources.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          patternId: { type: 'string' }
+        },
+        required: ['patternId']
+      }
+    },
+    {
+      name: 'search_registries',
+      description: 'Searches community and official UI component registries (shadcn/ui, Magic UI, Aceternity, Kokonut).',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          query: { type: 'string' },
+          framework: { type: 'string' },
+          freeTierOnly: { type: 'boolean' }
+        }
+      }
+    },
+    {
+      name: 'search_registry_components',
+      description: 'Searches components and blocks across discovered registries with dependency and file mapping.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          query: { type: 'string' },
+          registryId: { type: 'string' },
+          type: { type: 'string' }
+        },
+        required: ['query']
+      }
+    },
+    {
+      name: 'inspect_registry_component',
+      description: 'Inspects a specific registry component or block with full dependency manifests.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          registryId: { type: 'string' },
+          componentId: { type: 'string' }
+        },
+        required: ['registryId', 'componentId']
+      }
+    },
+    {
+      name: 'discover_ai_skills',
+      description: 'Discovers verified AI prompt skills and templates.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          query: { type: 'string' },
+          domain: { type: 'string' }
+        }
+      }
+    },
+    {
+      name: 'inspect_ai_skill',
+      description: 'Audits an AI skill or prompt for prompt injection and malicious shell command risks.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          skillId: { type: 'string' },
+          promptContent: { type: 'string' }
+        },
+        required: ['skillId']
+      }
+    },
+    {
+      name: 'recommend_icon_system',
+      description: 'Recommends optimal icon library (Lucide, Heroicons, Material Symbols, Tabler, Phosphor, Radix) preventing mixed icon aesthetics.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          framework: { type: 'string' },
+          useTailwind: { type: 'boolean' },
+          useShadcn: { type: 'boolean' },
+          density: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH'] },
+          existingIconImports: { type: 'array', items: { type: 'string' } }
+        }
+      }
+    },
+    {
+      name: 'recommend_chart_library',
+      description: 'Recommends chart library (ECharts, Recharts, Chart.js) based on data volume, interactivity, and rendering engine.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          framework: { type: 'string' },
+          dataPoints: { type: 'number' },
+          requireGanttOrTimeline: { type: 'boolean' },
+          accessibleRequirement: { type: 'boolean' }
+        }
+      }
+    },
+    {
+      name: 'recommend_data_grid',
+      description: 'Recommends data grid (AG Grid Community vs TanStack Table) with strict commercial paywall feature separation.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          estimatedRows: { type: 'number' },
+          requiresVirtualization: { type: 'boolean' },
+          requiresServerSide: { type: 'boolean' },
+          requiresGroupingOrPivot: { type: 'boolean' },
+          licensePreference: { type: 'string', enum: ['PERMISSIVE_MIT', 'COMMERCIAL_OK'] }
+        }
+      }
+    },
+    {
+      name: 'explain_source_recommendation',
+      description: 'Generates multi-dimensional "WHY" explanation for a design source recommendation.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          sourceId: { type: 'string' },
+          targetFramework: { type: 'string' },
+          targetDomain: { type: 'string' }
+        },
+        required: ['sourceId']
+      }
     }
   ];
 
@@ -810,6 +1014,54 @@ export function createAlperDesignServer(): Server {
           break;
         case 'evaluate_completion_claim':
           result = Tools.handleEvaluateCompletionClaim(T.EvaluateCompletionClaimInputSchema.parse(args));
+          break;
+        case 'discover_design_sources':
+          result = Tools.handleDiscoverDesignSources(T.DiscoverDesignSourcesInputSchema.parse(args));
+          break;
+        case 'search_design_sources':
+          result = Tools.handleSearchDesignSources(T.SearchDesignSourcesInputSchema.parse(args));
+          break;
+        case 'inspect_design_source':
+          result = Tools.handleInspectDesignSource(T.InspectDesignSourceInputSchema.parse(args));
+          break;
+        case 'sync_design_sources':
+          result = await Tools.handleSyncDesignSources(T.SyncDesignSourcesInputSchema.parse(args));
+          break;
+        case 'recommend_design_sources':
+          result = Tools.handleRecommendDesignSources(T.RecommendDesignSourcesInputSchema.parse(args));
+          break;
+        case 'search_patterns':
+          result = Tools.handleSearchPatterns(T.SearchPatternsInputSchema.parse(args));
+          break;
+        case 'inspect_pattern':
+          result = Tools.handleInspectPattern(T.InspectPatternInputSchema.parse(args));
+          break;
+        case 'search_registries':
+          result = Tools.handleSearchRegistries(T.SearchRegistriesInputSchema.parse(args));
+          break;
+        case 'search_registry_components':
+          result = Tools.handleSearchRegistryComponents(T.SearchRegistryComponentsInputSchema.parse(args));
+          break;
+        case 'inspect_registry_component':
+          result = Tools.handleInspectRegistryComponent(T.InspectRegistryComponentInputSchema.parse(args));
+          break;
+        case 'discover_ai_skills':
+          result = Tools.handleDiscoverAiSkills(T.DiscoverAiSkillsInputSchema.parse(args));
+          break;
+        case 'inspect_ai_skill':
+          result = Tools.handleInspectAiSkill(T.InspectAiSkillInputSchema.parse(args));
+          break;
+        case 'recommend_icon_system':
+          result = Tools.handleRecommendIconSystem(T.RecommendIconSystemInputSchema.parse(args));
+          break;
+        case 'recommend_chart_library':
+          result = Tools.handleRecommendChartLibrary(T.RecommendChartLibraryInputSchema.parse(args));
+          break;
+        case 'recommend_data_grid':
+          result = Tools.handleRecommendDataGrid(T.RecommendDataGridInputSchema.parse(args));
+          break;
+        case 'explain_source_recommendation':
+          result = Tools.handleExplainSourceRecommendation(T.ExplainSourceRecommendationInputSchema.parse(args));
           break;
         default:
           throw new Error(`Tool not found: ${name}`);

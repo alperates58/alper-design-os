@@ -26,11 +26,13 @@ ALPER DESIGN OS is not just a UI component library. It is an AI-native, technolo
    - `NEW`: Greenfield architecture from domain understanding and user ergonomics.
    - `REPAIR`: Surgical remediation preserving existing tech stack and styling.
    - `MODERNIZE`: Staged, non-destructive 4-phase modernization from legacy code to modern design tokens and accessible grids.
-4. **Engineering Guardrails Layer**: Technology-agnostic quality profiles, STRIDE threat models, stack-aware security policies (TS/JS, PHP, Laravel, ASP.NET), and strict release gates (blocking on CRITICAL/HIGH vulnerabilities, secret leaks, and exploitable dependencies).
-5. **Browser, QA & Verification Engine**: Official Chrome DevTools MCP & Microsoft Playwright MCP integration with role separation, resilient accessible-role locators, runtime console/network failure inspection, visual regression with human review gates, and transparent QA reporting.
-6. **Software Engineering Intelligence Layer**: Architecture style detection (11 styles), ADR generation, database migration safety (SAFE/REVIEW/DANGEROUS), N+1 query loop detection, OpenTelemetry observability with PII scrubbing, and OpenAPI/AsyncAPI breaking change evaluation.
-7. **Antigravity Native Plugin**: Ships complete with 38 `skills/`, `agents/`, `rules/`, `mcp_config.json`, and an official 29-tool TypeScript MCP server.
-8. **DTCG Design Tokens**: 100% compliant with the Design Tokens Community Group specification, compile-ready for Style Dictionary.
+4. **Agent Governance & Change Safety**: Standardized 17-step change lifecycle, typed `AgentActionPlan`, strict scope guard, 10-dimension blast radius evaluation, pre-change git checkpoints, independent reviewer gate, and evidence-backed completion claims.
+5. **Docker Runtime Validation & Clean Room**: Windows Docker Desktop containerized validation, dynamic localhost port discovery (banning 3000), 10/10 seeded defect detection, multi-viewport responsive testing, secret redaction, and release gate decision.
+6. **Design Source Intelligence V2**: Ingests, normalizes, and ranks 65+ design systems, headless primitives, component registries (shadcn, Magic UI, Aceternity, Kokonut), 28 technology-independent UX patterns, specialized icon/chart/grid engines, and automated AI skill prompt-injection security auditing.
+7. **Browser, QA & Verification Engine**: Official Chrome DevTools MCP & Microsoft Playwright MCP integration with role separation, resilient accessible-role locators, runtime console/network failure inspection, visual regression with human review gates, and transparent QA reporting.
+8. **Software Engineering Intelligence Layer**: Architecture style detection (11 styles), ADR generation, database migration safety (SAFE/REVIEW/DANGEROUS), N+1 query loop detection, OpenTelemetry observability with PII scrubbing, and OpenAPI/AsyncAPI breaking change evaluation.
+9. **Antigravity Native Plugin**: Complete with 46 `skills/`, `agents/`, `rules/`, `mcp_config.json`, and an official 65-tool TypeScript MCP server.
+10. **DTCG Design Tokens**: 100% compliant with the Design Tokens Community Group specification, compile-ready for Style Dictionary.
 
 ---
 
@@ -110,25 +112,33 @@ alper-design-os/
 │
 ├── packages/
 │   ├── analyzer/               # Read-Only Stack Detector & UI/A11y Auditor
-│   ├── source-intelligence/    # 48 Authoritative Sources & Multi-Criteria Ranking
+│   ├── agent-governance/       # 17-Step Pipeline, Scope Guard, Risk & Review Engine
+│   ├── source-intelligence/    # 65 Authoritative Sources, Patterns, Registries & Ingestion
 │   ├── engineering-guardrails/ # Quality Profiles, Threat Models & Safe Scanner
 │   ├── qa-engine/              # Playwright, DevTools, Visual Diff & QA Reporter
 │   ├── software-intelligence/  # Architecture, Database, Observability & API Governance
-│   └── mcp-server/             # TypeScript MCP Server with 29 Typed Tools
+│   └── mcp-server/             # TypeScript MCP Server with 65 Typed Tools
 │
-├── tests/                      # Automated Vitest Suite (130+ Tests across 11 Suites)
+├── tests/                      # Automated Vitest Suite (236 Tests across 13 Suites)
 │   ├── fixtures/domains/       # 15 Domain Benchmarks (APS, CRM, Hospital, PMS, POS, WMS, Fintech, etc.)
 │   ├── domain-benchmark-15.test.ts
 │   ├── source-intelligence.test.ts
+│   ├── source-intelligence-v2.test.ts
+│   ├── agent-governance.test.ts
 │   ├── engineering-guardrails.test.ts
 │   ├── qa-engine.test.ts
 │   ├── software-intelligence.test.ts
 │   └── mcp-server.test.ts
 │
 └── docs/                       # Architectural Documentation
-    ├── product-ux-profile.md   # Schema Specification & Theory
-    ├── adapter-contract.md     # Extension Guide for New Frameworks
-    └── mcp-tools.md            # MCP Tool Schemas & Input/Output Contracts
+    ├── product-ux-profile.md       # Schema Specification & Theory
+    ├── adapter-contract.md         # Extension Guide for New Frameworks
+    ├── mcp-tools.md                # MCP Tool Schemas & Input/Output Contracts
+    ├── source-intelligence.md      # Design Source Taxonomy & Ingestion V2
+    ├── pattern-knowledge-graph.md  # 28 Technology-Independent UX Patterns
+    ├── registry-intelligence.md     # Component Registry Discovery & Ecosystem
+    ├── source-scoring.md           # Multi-Dimensional Scoring & WHY Explanations
+    └── skill-security.md           # AI Skill Prompt Injection & Shell Auditing
 ```
 
 ---

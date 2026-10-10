@@ -1,0 +1,122 @@
+{
+  "totalProjects": 3,
+  "passedProjects": 3,
+  "timestamp": "2026-10-10T17:39:07.930Z",
+  "evaluations": [
+    {
+      "projectId": "ecommerce-storefront",
+      "name": "Unseeded E-Commerce Storefront",
+      "passed": true,
+      "stackAnalysis": {
+        "detectedPrimary": "React + TypeScript",
+        "stylingApproach": "Tailwind CSS",
+        "confidence": 0.95,
+        "pass": true
+      },
+      "domainAnalysis": {
+        "inferredDomain": "B2C_CONSUMER",
+        "density": "SPACIOUS",
+        "interactionStyle": "HYBRID_MOUSE_KEYBOARD",
+        "pass": true
+      },
+      "recommendations": {
+        "topSources": [
+          "src-radix-ui",
+          "src-material-design",
+          "src-material-symbols",
+          "src-lucide-icons",
+          "src-headless-ui"
+        ],
+        "recommendedIcon": "Tabler Icons",
+        "recommendedChart": "Chart.js",
+        "recommendedGrid": "TanStack Table (v8)"
+      },
+      "toolRouting": {
+        "chosenTool": "replace_file_content",
+        "rationale": "Surgical single-block editing has smaller blast radius than wholesale script rewrites.",
+        "pass": true
+      },
+      "securityEvaluation": {
+        "falseAlarms": 0,
+        "pass": true
+      }
+    },
+    {
+      "projectId": "fintech-analytics",
+      "name": "Unseeded Fintech Analytics Dashboard",
+      "passed": true,
+      "stackAnalysis": {
+        "detectedPrimary": "React + TypeScript",
+        "stylingApproach": "CSS Custom Properties",
+        "confidence": 0.95,
+        "pass": true
+      },
+      "domainAnalysis": {
+        "inferredDomain": "FINTECH",
+        "density": "HIGH",
+        "interactionStyle": "HYBRID_MOUSE_KEYBOARD",
+        "pass": true
+      },
+      "recommendations": {
+        "topSources": [
+          "src-radix-ui",
+          "src-react-aria",
+          "src-echarts",
+          "src-carbon-design-system",
+          "src-mui"
+        ],
+        "recommendedIcon": "Lucide Icons",
+        "recommendedChart": "Apache ECharts",
+        "recommendedGrid": "AG Grid (Community Edition)"
+      },
+      "toolRouting": {
+        "chosenTool": "replace_file_content",
+        "rationale": "Surgical single-block editing has smaller blast radius than wholesale script rewrites.",
+        "pass": true
+      },
+      "securityEvaluation": {
+        "falseAlarms": 0,
+        "pass": true
+      }
+    },
+    {
+      "projectId": "embedded-iot-controller",
+      "name": "Unseeded Embedded IoT Device Controller Web UI",
+      "passed": true,
+      "stackAnalysis": {
+        "detectedPrimary": "Generic Web",
+        "stylingApproach": "CSS Custom Properties",
+        "confidence": 0.8,
+        "pass": true
+      },
+      "domainAnalysis": {
+        "inferredDomain": "INDUSTRIAL_OPERATIONAL",
+        "density": "HIGH",
+        "interactionStyle": "HYBRID_MOUSE_KEYBOARD",
+        "pass": true
+      },
+      "recommendations": {
+        "topSources": [
+          "src-react-aria",
+          "src-echarts",
+          "src-carbon-design-system",
+          "src-ag-grid-community",
+          "src-microsoft-fluent"
+        ],
+        "recommendedIcon": "Lucide Icons",
+        "recommendedChart": "Chart.js",
+        "recommendedGrid": "TanStack Table (v8)"
+      },
+      "toolRouting": {
+        "chosenTool": "replace_file_content",
+        "rationale": "Surgical single-block editing has smaller blast radius than wholesale script rewrites.",
+        "pass": true
+      },
+      "securityEvaluation": {
+        "falseAlarms": 0,
+        "pass": true
+      }
+    }
+  ],
+  "success": true
+}

@@ -8,7 +8,7 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $RootDir = Split-Path -Parent $ScriptDir
 
 Write-Host "=======================================================" -ForegroundColor Cyan
-Write-Host "ALPER DESIGN OS - FAZ 1C DOCKER BENCHMARK ENTRYPOINT" -ForegroundColor Cyan
+Write-Host "ALPER DESIGN OS - FAZ 1D DOCKER BENCHMARK ENTRYPOINT" -ForegroundColor Cyan
 Write-Host "Root Directory: $RootDir" -ForegroundColor Gray
 Write-Host "=======================================================" -ForegroundColor Cyan
 

@@ -10,8 +10,17 @@ import {
 } from '@alper-design-os/design-core';
 import { AdapterRegistry } from '@alper-design-os/registry';
 import { auditAccessibility, auditExistingUI, auditResponsive, detectStack } from '@alper-design-os/analyzer';
-import { SourceIntelligenceEngine } from '@alper-design-os/source-intelligence';
 import { ProjectFile } from '@alper-design-os/adapter-contract';
+import {
+  SourceIntelligenceEngine,
+  patternKnowledgeGraph,
+  registryDiscoveryEngine,
+  specializedIntelligenceEngine,
+  auditSkillSecurity,
+  explainRecommendation,
+  sourceSyncEngine,
+  SourceSearchIndex
+} from '@alper-design-os/source-intelligence';
 import {
   generateEngineeringProfile,
   evaluateReleaseGates,
@@ -719,4 +728,269 @@ export function handleCreateExecutionJournal(input: T.CreateExecutionJournalInpu
 export function handleEvaluateCompletionClaim(input: T.EvaluateCompletionClaimInput) {
   return evaluateCompletionClaim(input.claim, input.evidences);
 }
+
+// 50. discover_design_sources
+export function handleDiscoverDesignSources(input: T.DiscoverDesignSourcesInput) {
+  const engine = SourceIntelligenceEngine.getInstance();
+  const sources = engine.discoverSources({
+    type: input.type as any,
+    types: input.types as any,
+    framework: input.framework,
+    domain: input.domain,
+    accessibilityLevel: input.accessibilityLevel as any,
+    minTrustScore: input.minTrustScore,
+    maxLicenseRisk: input.maxLicenseRisk === 'PERMISSIVE_ONLY' ? 'PERMISSIVE_ONLY' : undefined,
+    searchQuery: input.searchQuery
+  });
+
+  return {
+    totalSourcesFound: sources.length,
+    sources
+  };
+}
+
+// 51. search_design_sources
+export function handleSearchDesignSources(input: T.SearchDesignSourcesInput) {
+  const engine = SourceIntelligenceEngine.getInstance();
+  const searchIndex = new SourceSearchIndex(engine.getAllSources());
+  const indexedResults = searchIndex.search(input.query, input.limit || 20);
+
+  let filtered = indexedResults;
+  if (input.framework) {
+    const fw = input.framework.toLowerCase();
+    filtered = filtered.filter((s) =>
+      s.frameworks.some((f) => f.toLowerCase().includes(fw) || f.toLowerCase().includes('agnostic'))
+    );
+  }
+  if (input.domain) {
+    const dm = input.domain.toUpperCase();
+    filtered = filtered.filter((s) => s.domains.includes(dm) || s.domains.includes('GLOBAL_WEB'));
+  }
+
+  return {
+    query: input.query,
+    totalMatches: filtered.length,
+    rankedResults: filtered
+  };
+}
+
+// 52. inspect_design_source
+export function handleInspectDesignSource(input: T.InspectDesignSourceInput) {
+  const engine = SourceIntelligenceEngine.getInstance();
+  const source = engine.inspectSource(input.sourceId);
+
+  if (!source) {
+    throw new Error(`Design source with id '${input.sourceId}' was not found in catalog.`);
+  }
+
+  return source;
+}
+
+// 53. sync_design_sources
+export async function handleSyncDesignSources(input: T.SyncDesignSourcesInput) {
+  const engine = SourceIntelligenceEngine.getInstance();
+  let sourcesToSync = engine.getAllSources();
+
+  if (input.sourceIds && input.sourceIds.length > 0) {
+    sourcesToSync = sourcesToSync.filter((s) => input.sourceIds!.includes(s.id));
+  }
+
+  const result = await sourceSyncEngine.syncAllSources(sourcesToSync);
+  return {
+    totalChecked: result.total,
+    syncedCount: result.synced,
+    results: result.results
+  };
+}
+
+// 54. recommend_design_sources
+export function handleRecommendDesignSources(input: T.RecommendDesignSourcesInput) {
+  const engine = SourceIntelligenceEngine.getInstance();
+  const ranked = engine.rankSources({
+    framework: input.framework,
+    domain: input.domain,
+    commercialAllowedOnly: input.commercialAllowedOnly
+  });
+
+  const top = ranked.slice(0, 10);
+  const explanations = top.map((r) => explainRecommendation(r, {
+    framework: input.framework,
+    domain: input.domain
+  }));
+
+  return {
+    totalRanked: ranked.length,
+    recommendedSources: top.map((r, i) => ({
+      source: r.source,
+      compositeScore: r.compositeScore,
+      explanation: explanations[i]
+    }))
+  };
+}
+
+// 55. search_patterns
+export function handleSearchPatterns(input: T.SearchPatternsInput) {
+  const patterns = patternKnowledgeGraph.search(input.query || '');
+  let filtered = patterns;
+
+  if (input.category) {
+    filtered = filtered.filter((p) => p.category.toLowerCase() === input.category!.toLowerCase());
+  }
+
+  return {
+    query: input.query || '',
+    totalPatterns: filtered.length,
+    patterns: filtered
+  };
+}
+
+// 56. inspect_pattern
+export function handleInspectPattern(input: T.InspectPatternInput) {
+  const pattern = patternKnowledgeGraph.get(input.patternId as any);
+  if (!pattern) {
+    throw new Error(`Pattern '${input.patternId}' was not found in pattern knowledge graph.`);
+  }
+  return pattern;
+}
+
+// 57. search_registries
+export function handleSearchRegistries(input: T.SearchRegistriesInput) {
+  const registries = registryDiscoveryEngine.searchRegistries(input.query || '');
+  let filtered = registries;
+
+  if (input.freeTierOnly) {
+    filtered = filtered.filter((r) => r.freeTier);
+  }
+
+  return {
+    query: input.query || '',
+    totalRegistries: filtered.length,
+    registries: filtered
+  };
+}
+
+// 58. search_registry_components
+export function handleSearchRegistryComponents(input: T.SearchRegistryComponentsInput) {
+  const components = registryDiscoveryEngine.searchRegistryComponents(input.query, {
+    registryId: input.registryId,
+    type: input.type as any
+  });
+
+  return {
+    query: input.query,
+    totalComponents: components.length,
+    components
+  };
+}
+
+// 59. inspect_registry_component
+export function handleInspectRegistryComponent(input: T.InspectRegistryComponentInput) {
+  const component = registryDiscoveryEngine.inspectRegistryComponent(input.registryId, input.componentId);
+  if (!component) {
+    throw new Error(`Component '${input.componentId}' not found in registry '${input.registryId}'.`);
+  }
+  return component;
+}
+
+// 60. discover_ai_skills
+export function handleDiscoverAiSkills(input: T.DiscoverAiSkillsInput) {
+  const engine = SourceIntelligenceEngine.getInstance();
+  const all = engine.discoverSources({
+    type: 'AI_SKILL' as any,
+    searchQuery: input.query,
+    domain: input.domain
+  });
+
+  return {
+    totalSkillsFound: all.length,
+    skills: all
+  };
+}
+
+// 61. inspect_ai_skill
+export function handleInspectAiSkill(input: T.InspectAiSkillInput) {
+  const engine = SourceIntelligenceEngine.getInstance();
+  const source = engine.inspectSource(input.skillId);
+
+  const report = auditSkillSecurity({
+    skillId: input.skillId,
+    name: source ? source.name : input.skillId,
+    source: source ? source.homepage || source.repository || 'community' : 'user-submitted',
+    license: source ? source.license : 'UNKNOWN',
+    instructions: input.promptContent || (source ? source.description : '')
+  });
+
+  return {
+    skillId: input.skillId,
+    sourceMetadata: source,
+    auditReport: report
+  };
+}
+
+// 62. recommend_icon_system
+export function handleRecommendIconSystem(input: T.RecommendIconSystemInput) {
+  return specializedIntelligenceEngine.recommendIconSystem(input);
+}
+
+// 63. recommend_chart_library
+export function handleRecommendChartLibrary(input: T.RecommendChartLibraryInput) {
+  return specializedIntelligenceEngine.recommendChartLibrary(input);
+}
+
+// 64. recommend_data_grid
+export function handleRecommendDataGrid(input: T.RecommendDataGridInput) {
+  return specializedIntelligenceEngine.recommendDataGrid(input);
+}
+
+// 65. explain_source_recommendation
+export function handleExplainSourceRecommendation(input: T.ExplainSourceRecommendationInput) {
+  const engine = SourceIntelligenceEngine.getInstance();
+  const source = engine.inspectSource(input.sourceId);
+  if (!source) {
+    throw new Error(`Source with id '${input.sourceId}' was not found in catalog.`);
+  }
+
+  const rankedList = engine.rankSources({
+    framework: input.targetFramework,
+    domain: input.targetDomain
+  });
+  const foundRanked = rankedList.find((r) => r.source.id === source.id);
+  if (foundRanked) {
+    return explainRecommendation(foundRanked, {
+      framework: input.targetFramework,
+      domain: input.targetDomain
+    });
+  }
+
+  const defaultRanked = {
+    source,
+    compositeScore: source.trustScore || 80,
+    scoreBreakdown: {
+      trustScore: source.trustScore || 80,
+      documentationScore: 80,
+      accessibilityScore: 80,
+      maintenanceScore: 80,
+      stackCompatibilityScore: 80,
+      domainCompatibilityScore: 80,
+      licenseCompatibilityScore: 100,
+      finalWeightedScore: source.trustScore || 80
+    },
+    breakdown: {
+      trust: (source.trustScore || 80) / 100,
+      maintenance: 0.8,
+      documentation: 0.8,
+      accessibility: 0.8,
+      domainCompatibility: 0.8,
+      stackCompatibility: 0.8,
+      licenseCompatibility: 1.0
+    },
+    matchReasons: ['Default catalog profile match']
+  };
+
+  return explainRecommendation(defaultRanked as any, {
+    framework: input.targetFramework,
+    domain: input.targetDomain
+  });
+}
+
 
