@@ -444,6 +444,98 @@ describe('Alper Design MCP Tools Verification', () => {
     expect(result.componentsCount).toBe(15);
     expect(result.recipesCount).toBe(6);
   });
+
+  it('52. evaluate_truthful_ui evaluates UI truthfulness via MCP', () => {
+    const result = Tools.handleEvaluateTruthfulUi({
+      components: [
+        {
+          id: 'comp-1',
+          name: 'Realtime Latency',
+          type: 'telemetry',
+          hasLiveDataSource: false,
+          dataSourceUri: '/api/missing-telemetry-endpoint'
+        }
+      ]
+    });
+    expect(result.verdict).toBe('CONTENT_TRUTH_FAIL');
+  });
+
+  it('53. audit_data_provenance audits provenance via MCP', () => {
+    const result = Tools.handleAuditDataProvenance({
+      records: [
+        {
+          fieldOrComponentId: 'temp',
+          originType: 'AUTHORITATIVE_API',
+          endpointOrSource: 'https://api.domain.internal'
+        }
+      ]
+    });
+    expect(result.isCompliant).toBe(true);
+  });
+
+  it('54. evaluate_page_intent audits intent alignment via MCP', () => {
+    const result = Tools.handleEvaluatePageIntent({
+      intentType: 'OPERATIONAL_MONITORING',
+      primaryGoal: 'Observe industrial telemetry',
+      targetAudience: 'Technicians',
+      components: [
+        {
+          id: 'grid-1',
+          type: 'GRID',
+          role: 'telemetry-grid',
+          originType: 'TELEMETRY_STREAM'
+        }
+      ]
+    });
+    expect(result.matchesIntent).toBe(true);
+  });
+
+  it('55. audit_information_relevance evaluates signal to noise via MCP', () => {
+    const result = Tools.handleAuditInformationRelevance({
+      intentType: 'OPERATIONAL_MONITORING',
+      primaryGoal: 'Quick diagnostics',
+      elements: [
+        {
+          id: 'sensor-card',
+          title: 'Sensor Health',
+          role: 'sensor'
+        }
+      ]
+    });
+    expect(result.passed).toBe(true);
+  });
+
+  it('56. classify_source_authority categorizes source tier via MCP', () => {
+    const result = Tools.handleClassifySourceAuthority({
+      sourceId: 'src-gateway',
+      isProductionEndpoint: true,
+      hasAuthHeaders: true
+    });
+    expect(result.authorityTier).toBe('AUTHORITATIVE_SYSTEM');
+  });
+
+  it('57. evaluate_content_truth_gate evaluates content truth release gate via MCP', () => {
+    const result = Tools.handleEvaluateContentTruthGate({
+      components: [],
+      requireVisualApproval: false
+    });
+    expect(result.verdict).toBe('CONTENT_TRUTH_PASS');
+  });
+
+  it('58. manage_human_visual_approval manages approval workflow via MCP', () => {
+    const result = Tools.handleManageHumanVisualApproval({
+      action: 'GET_STATUS'
+    });
+    expect(result.record.status).toBe('NOT_REVIEWED');
+    expect(result.gateResult.gateStatus).toBe('PENDING');
+  });
+
+  it('59. audit_track_trace_telemetry performs static telemetry audit via MCP', () => {
+    const result = Tools.handleAuditTrackTraceTelemetry({});
+    expect(result.auditMode).toBe('STATIC_AUDIT_ONLY');
+    expect(result.liveContainersProbed).toBe(false);
+    expect(result.deferredItems.length).toBeGreaterThan(0);
+  });
 });
 
 

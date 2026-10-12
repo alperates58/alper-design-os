@@ -49,14 +49,47 @@ export function planPipeline(context: PipelinePlanningContext): PipelineExecutio
 
   activeStages.push('APPLY', 'BUILD', 'STATIC_VERIFY');
 
+  // Content Truth verification (Phase 1E.7)
+  const involvesDataOrUI =
+    context.uxProfile !== undefined ||
+    context.objective.toLowerCase().includes('ui') ||
+    context.objective.toLowerCase().includes('data') ||
+    context.objective.toLowerCase().includes('telemetry') ||
+    context.objective.toLowerCase().includes('screen');
+
+  if (involvesDataOrUI) {
+    activeStages.push('CONTENT_TRUTH_VERIFY');
+  } else {
+    skippedStages.push({
+      stage: 'CONTENT_TRUTH_VERIFY',
+      reason: 'No UI data presentation or telemetry stream present in current task scope'
+    });
+  }
+
   // Runtime and visual verification
   const isUI = context.uxProfile !== undefined || context.objective.toLowerCase().includes('ui') || context.objective.toLowerCase().includes('screen');
   if (isUI) {
     activeStages.push('RUNTIME_VERIFY', 'VISUAL_VERIFY');
+
+    // Human Visual Approval Gate (Mandatory for High/Critical or mission-critical UI)
+    const requiresVisualApproval =
+      risk === 'HIGH' ||
+      risk === 'CRITICAL' ||
+      context.qualityProfile?.isMissionCritical;
+
+    if (requiresVisualApproval) {
+      activeStages.push('HUMAN_VISUAL_APPROVAL');
+    } else {
+      skippedStages.push({
+        stage: 'HUMAN_VISUAL_APPROVAL',
+        reason: 'Low/Medium risk UI task does not require formal out-of-band visual sign-off gate'
+      });
+    }
   } else {
     skippedStages.push(
       { stage: 'RUNTIME_VERIFY', reason: 'Non-UI task; backend or pure logic modification' },
-      { stage: 'VISUAL_VERIFY', reason: 'No visual or layout changes in current task objective' }
+      { stage: 'VISUAL_VERIFY', reason: 'No visual or layout changes in current task objective' },
+      { stage: 'HUMAN_VISUAL_APPROVAL', reason: 'Non-UI task; visual approval not applicable' }
     );
   }
 

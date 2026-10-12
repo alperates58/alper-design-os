@@ -58,7 +58,19 @@ import {
   routeContext,
   routeTool,
   writeExecutionJournal,
-  evaluateCompletionClaim
+  evaluateCompletionClaim,
+  evaluateTruthfulUI,
+  auditDataProvenance,
+  createDataProvenanceRecord,
+  auditPageIntent,
+  createPageIntent,
+  auditInformationRelevance,
+  classifySourceAuthority,
+  evaluateContentTruthGate,
+  createVisualApprovalRecord,
+  recordVisualReview,
+  evaluateVisualApprovalGate,
+  auditTrackTraceTelemetryStatic
 } from '@alper-design-os/agent-governance';
 import {
   createDesignIntent,
@@ -1151,6 +1163,90 @@ export function handleInspectAlperRegistry(input: T.InspectAlperRegistryInput) {
     return { section: 'RECIPES', recipesCount: summary.recipesCount, recipes: summary.recipes };
   }
   return summary;
+}
+
+// 77. evaluate_truthful_ui
+export function handleEvaluateTruthfulUi(input: T.EvaluateTruthfulUiInput) {
+  return evaluateTruthfulUI({
+    components: input.components,
+    pageTitle: input.pageTitle,
+    cognitiveClutterScore: input.cognitiveClutterScore
+  });
+}
+
+// 78. audit_data_provenance
+export function handleAuditDataProvenance(input: T.AuditDataProvenanceInput) {
+  const records = input.records.map((r) =>
+    createDataProvenanceRecord({
+      fieldOrComponentId: r.fieldOrComponentId,
+      originType: r.originType,
+      endpointOrSource: r.endpointOrSource,
+      isSimulated: r.isSimulated,
+      isLabeledMock: r.isLabeledMock
+    })
+  );
+  return auditDataProvenance(records);
+}
+
+// 79. evaluate_page_intent
+export function handleEvaluatePageIntent(input: T.EvaluatePageIntentInput) {
+  const intent = createPageIntent({
+    intentType: input.intentType,
+    primaryGoal: input.primaryGoal,
+    targetAudience: input.targetAudience
+  });
+  return auditPageIntent(intent, input.components as any);
+}
+
+// 80. audit_information_relevance
+export function handleAuditInformationRelevance(input: T.AuditInformationRelevanceInput) {
+  const intent = createPageIntent({
+    intentType: input.intentType,
+    primaryGoal: input.primaryGoal,
+    targetAudience: 'General Users'
+  });
+  return auditInformationRelevance(intent, input.elements);
+}
+
+// 81. classify_source_authority
+export function handleClassifySourceAuthority(input: T.ClassifySourceAuthorityInput) {
+  return classifySourceAuthority(input);
+}
+
+// 82. evaluate_content_truth_gate
+export function handleEvaluateContentTruthGate(input: T.EvaluateContentTruthGateInput) {
+  return evaluateContentTruthGate({
+    components: input.components || [],
+    requireVisualApproval: input.requireVisualApproval
+  });
+}
+
+// 83. manage_human_visual_approval
+export function handleManageHumanVisualApproval(input: T.ManageHumanVisualApprovalInput) {
+  let record = createVisualApprovalRecord();
+
+  if (input.action === 'RECORD_REVIEW' && input.status) {
+    record = recordVisualReview(record, {
+      status: input.status,
+      reviewedBy: input.reviewedBy || 'human-evaluator',
+      notes: input.notes,
+      viewportsReviewed: input.viewports,
+      criteriaChecked: input.criteriaChecked
+    });
+  }
+
+  const gateResult = evaluateVisualApprovalGate(record, true);
+  return {
+    record,
+    gateResult
+  };
+}
+
+// 84. audit_track_trace_telemetry
+export function handleAuditTrackTraceTelemetry(input: T.AuditTrackTraceTelemetryInput) {
+  return auditTrackTraceTelemetryStatic({
+    sampleEndpoints: input.sampleEndpoints
+  });
 }
 
 

@@ -665,5 +665,147 @@ export const InspectAlperRegistryInputSchema = z.object({
 });
 export type InspectAlperRegistryInput = z.infer<typeof InspectAlperRegistryInputSchema>;
 
+// 77. evaluate_truthful_ui
+export const EvaluateTruthfulUiInputSchema = z.object({
+  components: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      type: z.string(),
+      statusBadge: z.string().optional(),
+      trendDirection: z.enum(['UP', 'DOWN', 'FLAT']).optional(),
+      semanticColor: z.string().optional(),
+      valueText: z.string().optional(),
+      isSimulated: z.boolean().optional(),
+      isLabeledMock: z.boolean().optional(),
+      hasLiveDataSource: z.boolean().optional(),
+      dataSourceUri: z.string().optional()
+    })
+  ),
+  pageTitle: z.string().optional(),
+  cognitiveClutterScore: z.number().optional()
+});
+export type EvaluateTruthfulUiInput = z.infer<typeof EvaluateTruthfulUiInputSchema>;
+
+// 78. audit_data_provenance
+export const AuditDataProvenanceInputSchema = z.object({
+  records: z.array(
+    z.object({
+      fieldOrComponentId: z.string(),
+      originType: z.enum([
+        'AUTHORITATIVE_API',
+        'TELEMETRY_STREAM',
+        'DATABASE_RECORD',
+        'DERIVED_COMPUTATION',
+        'CACHE_SNAPSHOT',
+        'SYNTHETIC_MOCK',
+        'STATIC_FIXTURE',
+        'USER_INPUT',
+        'UNVERIFIED_ESTIMATE',
+        'FABRICATED_UNGROUNDED'
+      ]),
+      endpointOrSource: z.string(),
+      isSimulated: z.boolean().optional(),
+      isLabeledMock: z.boolean().optional()
+    })
+  )
+});
+export type AuditDataProvenanceInput = z.infer<typeof AuditDataProvenanceInputSchema>;
+
+// 79. evaluate_page_intent
+export const EvaluatePageIntentInputSchema = z.object({
+  intentType: z.enum([
+    'OPERATIONAL_MONITORING',
+    'EXECUTIVE_DECISION',
+    'DATA_ENTRY_TRANSACTION',
+    'EXPLORATORY_ANALYTICS',
+    'CONFIGURATION_ADMIN',
+    'DIAGNOSTIC_INVESTIGATION',
+    'DEMO_SHOWCASE'
+  ]),
+  primaryGoal: z.string(),
+  targetAudience: z.string(),
+  components: z.array(
+    z.object({
+      id: z.string(),
+      type: z.string(),
+      role: z.string(),
+      originType: z.string().optional(),
+      isSimulated: z.boolean().optional(),
+      title: z.string().optional(),
+      visualGimmicks: z.array(z.string()).optional()
+    })
+  )
+});
+export type EvaluatePageIntentInput = z.infer<typeof EvaluatePageIntentInputSchema>;
+
+// 80. audit_information_relevance
+export const AuditInformationRelevanceInputSchema = z.object({
+  intentType: z.enum([
+    'OPERATIONAL_MONITORING',
+    'EXECUTIVE_DECISION',
+    'DATA_ENTRY_TRANSACTION',
+    'EXPLORATORY_ANALYTICS',
+    'CONFIGURATION_ADMIN',
+    'DIAGNOSTIC_INVESTIGATION',
+    'DEMO_SHOWCASE'
+  ]),
+  primaryGoal: z.string(),
+  elements: z.array(
+    z.object({
+      id: z.string(),
+      title: z.string(),
+      role: z.string(),
+      isDeceptive: z.boolean().optional(),
+      isContradictory: z.boolean().optional(),
+      isFiller: z.boolean().optional()
+    })
+  )
+});
+export type AuditInformationRelevanceInput = z.infer<typeof AuditInformationRelevanceInputSchema>;
+
+// 81. classify_source_authority
+export const ClassifySourceAuthorityInputSchema = z.object({
+  sourceId: z.string(),
+  urlOrPath: z.string().optional(),
+  type: z.string().optional(),
+  isProductionEndpoint: z.boolean().optional(),
+  hasAuthHeaders: z.boolean().optional(),
+  isMock: z.boolean().optional()
+});
+export type ClassifySourceAuthorityInput = z.infer<typeof ClassifySourceAuthorityInputSchema>;
+
+// 82. evaluate_content_truth_gate
+export const EvaluateContentTruthGateInputSchema = z.object({
+  components: z.array(z.any()).optional(),
+  requireVisualApproval: z.boolean().optional()
+});
+export type EvaluateContentTruthGateInput = z.infer<typeof EvaluateContentTruthGateInputSchema>;
+
+// 83. manage_human_visual_approval
+export const ManageHumanVisualApprovalInputSchema = z.object({
+  action: z.enum(['GET_STATUS', 'RECORD_REVIEW']),
+  reviewedBy: z.string().optional(),
+  status: z.enum(['NOT_REVIEWED', 'IN_REVIEW', 'APPROVED', 'REJECTED', 'CHANGES_REQUESTED']).optional(),
+  notes: z.string().optional(),
+  viewports: z.array(z.string()).optional(),
+  criteriaChecked: z
+    .object({
+      layoutStability: z.boolean().optional(),
+      typographyHierarchy: z.boolean().optional(),
+      colorContrast: z.boolean().optional(),
+      responsiveFidelity: z.boolean().optional(),
+      truthfulnessVisualAffordance: z.boolean().optional()
+    })
+    .optional()
+});
+export type ManageHumanVisualApprovalInput = z.infer<typeof ManageHumanVisualApprovalInputSchema>;
+
+// 84. audit_track_trace_telemetry
+export const AuditTrackTraceTelemetryInputSchema = z.object({
+  sampleEndpoints: z.array(z.string()).optional()
+});
+export type AuditTrackTraceTelemetryInput = z.infer<typeof AuditTrackTraceTelemetryInputSchema>;
+
 
 

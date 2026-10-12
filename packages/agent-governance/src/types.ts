@@ -14,8 +14,10 @@ export const PipelineStageSchema = z.enum([
   'APPLY',
   'BUILD',
   'STATIC_VERIFY',
+  'CONTENT_TRUTH_VERIFY',
   'RUNTIME_VERIFY',
   'VISUAL_VERIFY',
+  'HUMAN_VISUAL_APPROVAL',
   'SECURITY_VERIFY',
   'PERFORMANCE_VERIFY',
   'INDEPENDENT_REVIEW',
@@ -534,3 +536,286 @@ export const CompletionContractSchema = z.object({
   blockReason: z.string().optional()
 });
 export type CompletionContract = z.infer<typeof CompletionContractSchema>;
+
+// ==========================================
+// 19. Data Provenance & Source Authority (Phase 1E.7)
+// ==========================================
+export const DataOriginTypeSchema = z.enum([
+  'AUTHORITATIVE_API',
+  'TELEMETRY_STREAM',
+  'DATABASE_RECORD',
+  'DERIVED_COMPUTATION',
+  'CACHE_SNAPSHOT',
+  'SYNTHETIC_MOCK',
+  'STATIC_FIXTURE',
+  'USER_INPUT',
+  'UNVERIFIED_ESTIMATE',
+  'FABRICATED_UNGROUNDED'
+]);
+export type DataOriginType = z.infer<typeof DataOriginTypeSchema>;
+
+export const SourceAuthorityTierSchema = z.enum([
+  'AUTHORITATIVE_SYSTEM',
+  'VERIFIED_EXTERNAL',
+  'DERIVED_ANALYTICS',
+  'PROVISIONAL_CACHE',
+  'SYNTHETIC_MOCK',
+  'UNVERIFIED_USER_INPUT',
+  'HALLUCINATED_OR_FABRICATED'
+]);
+export type SourceAuthorityTier = z.infer<typeof SourceAuthorityTierSchema>;
+
+export const DataFreshnessStatusSchema = z.enum([
+  'LIVE',
+  'NEAR_REALTIME',
+  'CACHED',
+  'STALE',
+  'EXPIRED',
+  'SYNTHETIC'
+]);
+export type DataFreshnessStatus = z.infer<typeof DataFreshnessStatusSchema>;
+
+export const DataProvenanceRecordSchema = z.object({
+  provenanceId: z.string(),
+  fieldOrComponentId: z.string(),
+  originType: DataOriginTypeSchema,
+  authorityTier: SourceAuthorityTierSchema,
+  freshness: DataFreshnessStatusSchema,
+  endpointOrSource: z.string(),
+  timestamp: z.string(),
+  latencyMs: z.number().optional(),
+  confidenceScore: z.number().min(0).max(1),
+  isSimulated: z.boolean().default(false),
+  isLabeledMock: z.boolean().default(false),
+  verificationHash: z.string().optional()
+});
+export type DataProvenanceRecord = z.infer<typeof DataProvenanceRecordSchema>;
+
+export const DataProvenanceAuditResultSchema = z.object({
+  totalFieldsAudited: z.number().nonnegative(),
+  authoritativeCount: z.number().nonnegative(),
+  syntheticCount: z.number().nonnegative(),
+  fabricatedCount: z.number().nonnegative(),
+  isCompliant: z.boolean(),
+  violations: z.array(
+    z.object({
+      target: z.string(),
+      reason: z.string(),
+      severity: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'])
+    })
+  ),
+  summary: z.string()
+});
+export type DataProvenanceAuditResult = z.infer<typeof DataProvenanceAuditResultSchema>;
+
+// ==========================================
+// 20. Page Intent & Information Relevance (Phase 1E.7)
+// ==========================================
+export const PageIntentTypeSchema = z.enum([
+  'OPERATIONAL_MONITORING',
+  'EXECUTIVE_DECISION',
+  'DATA_ENTRY_TRANSACTION',
+  'EXPLORATORY_ANALYTICS',
+  'CONFIGURATION_ADMIN',
+  'DIAGNOSTIC_INVESTIGATION',
+  'DEMO_SHOWCASE'
+]);
+export type PageIntentType = z.infer<typeof PageIntentTypeSchema>;
+
+export const PageIntentSchema = z.object({
+  intentType: PageIntentTypeSchema,
+  primaryGoal: z.string(),
+  targetAudience: z.string(),
+  criticality: z.enum(['MISSION_CRITICAL', 'BUSINESS_CRITICAL', 'OPERATIONAL', 'INFORMATIONAL']),
+  dataFreshnessRequirement: z.enum(['REALTIME', 'NEAR_REALTIME', 'BATCH_HOURLY', 'STATIC']),
+  acceptableOrigins: z.array(DataOriginTypeSchema),
+  requiredActionPaths: z.array(z.string()),
+  forbiddenVisualGimmicks: z.array(z.string())
+});
+export type PageIntent = z.infer<typeof PageIntentSchema>;
+
+export const PageIntentAuditResultSchema = z.object({
+  matchesIntent: z.boolean(),
+  alignmentScore: z.number().min(0).max(100),
+  mismatchedComponents: z.array(
+    z.object({
+      componentId: z.string(),
+      reason: z.string()
+    })
+  ),
+  forbiddenGimmicksFound: z.array(z.string()),
+  summary: z.string()
+});
+export type PageIntentAuditResult = z.infer<typeof PageIntentAuditResultSchema>;
+
+export const InformationRelevanceImportanceSchema = z.enum([
+  'PRIMARY',
+  'SUPPORTING',
+  'CONTEXTUAL',
+  'NOISE',
+  'DECEPTIVE'
+]);
+export type InformationRelevanceImportance = z.infer<typeof InformationRelevanceImportanceSchema>;
+
+export const InformationRelevanceItemSchema = z.object({
+  elementId: z.string(),
+  elementTitle: z.string(),
+  importance: InformationRelevanceImportanceSchema,
+  relevanceScore: z.number().min(0).max(100),
+  signalToNoiseRatio: z.number().min(0).max(1),
+  cognitiveLoadImpact: z.enum(['LOW', 'MEDIUM', 'HIGH', 'EXCESSIVE']),
+  intentAlignment: z.boolean(),
+  redundancy: z.enum(['UNIQUE', 'COMPLEMENTARY', 'DUPLICATE', 'CONTRADICTORY']),
+  rationale: z.string()
+});
+export type InformationRelevanceItem = z.infer<typeof InformationRelevanceItemSchema>;
+
+export const InformationRelevanceAuditResultSchema = z.object({
+  overallRelevanceScore: z.number().min(0).max(100),
+  noiseCount: z.number().nonnegative(),
+  deceptiveCount: z.number().nonnegative(),
+  contradictionCount: z.number().nonnegative(),
+  passed: z.boolean(),
+  items: z.array(InformationRelevanceItemSchema),
+  recommendations: z.array(z.string())
+});
+export type InformationRelevanceAuditResult = z.infer<typeof InformationRelevanceAuditResultSchema>;
+
+// ==========================================
+// 21. Source Authority Classification (Phase 1E.7)
+// ==========================================
+export const SourceAuthorityRecordSchema = z.object({
+  sourceId: z.string(),
+  authorityTier: SourceAuthorityTierSchema,
+  trustScore: z.number().min(0).max(100),
+  isAuthoritative: z.boolean(),
+  allowedForProduction: z.boolean(),
+  rationale: z.string(),
+  verificationMethod: z.string()
+});
+export type SourceAuthorityRecord = z.infer<typeof SourceAuthorityRecordSchema>;
+
+// ==========================================
+// 22. Human Visual Approval Gate (Phase 1E.7)
+// ==========================================
+export const VisualApprovalStatusSchema = z.enum([
+  'NOT_REVIEWED',
+  'IN_REVIEW',
+  'APPROVED',
+  'REJECTED',
+  'CHANGES_REQUESTED'
+]);
+export type VisualApprovalStatus = z.infer<typeof VisualApprovalStatusSchema>;
+
+export const HumanVisualApprovalRecordSchema = z.object({
+  recordId: z.string(),
+  status: VisualApprovalStatusSchema.default('NOT_REVIEWED'),
+  reviewedBy: z.string().optional(),
+  timestamp: z.string().optional(),
+  viewportsReviewed: z.array(z.string()).default([]),
+  notes: z.string().optional(),
+  criteriaChecked: z
+    .object({
+      layoutStability: z.boolean().default(false),
+      typographyHierarchy: z.boolean().default(false),
+      colorContrast: z.boolean().default(false),
+      responsiveFidelity: z.boolean().default(false),
+      truthfulnessVisualAffordance: z.boolean().default(false)
+    })
+    .default({
+      layoutStability: false,
+      typographyHierarchy: false,
+      colorContrast: false,
+      responsiveFidelity: false,
+      truthfulnessVisualAffordance: false
+    }),
+  canRelease: z.boolean().default(false)
+});
+export type HumanVisualApprovalRecord = z.infer<typeof HumanVisualApprovalRecordSchema>;
+
+export const ApprovalGateCheckResultSchema = z.object({
+  gateStatus: z.enum(['PASSED', 'PENDING', 'BLOCKED']),
+  status: VisualApprovalStatusSchema,
+  message: z.string(),
+  requiresHumanAction: z.boolean()
+});
+export type ApprovalGateCheckResult = z.infer<typeof ApprovalGateCheckResultSchema>;
+
+// ==========================================
+// 23. Truthful UI Policy & Evaluation (Phase 1E.7)
+// ==========================================
+export const TruthfulUIPolicySchema = z.object({
+  requireDeclaredProvenance: z.boolean().default(true),
+  blockUngroundedTelemetry: z.boolean().default(true),
+  enforceVisualSemanticTruth: z.boolean().default(true),
+  requireStateHonesty: z.boolean().default(true),
+  disallowUnlabeledMocks: z.boolean().default(true),
+  maxPermissibleCognitiveClutterScore: z.number().min(0).max(100).default(40)
+});
+export type TruthfulUIPolicy = z.infer<typeof TruthfulUIPolicySchema>;
+
+export const TruthfulUIFindingSchema = z.object({
+  id: z.string(),
+  severity: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'INFO']),
+  category: z.enum([
+    'UNGROUNDED_TELEMETRY',
+    'PROVENANCE_MISSING',
+    'DECEPTIVE_VISUAL',
+    'SEMANTIC_MISMATCH',
+    'UNLABELED_MOCK',
+    'COGNITIVE_CLUTTER',
+    'INTENT_MISMATCH'
+  ]),
+  target: z.string(),
+  description: z.string(),
+  evidence: z.string(),
+  remediation: z.string()
+});
+export type TruthfulUIFinding = z.infer<typeof TruthfulUIFindingSchema>;
+
+export const ContentTruthVerdictSchema = z.enum([
+  'CONTENT_TRUTH_PASS',
+  'CONTENT_TRUTH_WARN',
+  'CONTENT_TRUTH_FAIL'
+]);
+export type ContentTruthVerdict = z.infer<typeof ContentTruthVerdictSchema>;
+
+export const TruthfulUIEvaluationSchema = z.object({
+  verdict: ContentTruthVerdictSchema,
+  overallScore: z.number().min(0).max(100),
+  findings: z.array(TruthfulUIFindingSchema),
+  ungroundedTelemetryCount: z.number().nonnegative(),
+  deceptiveElementsCount: z.number().nonnegative(),
+  unlabeledMockCount: z.number().nonnegative(),
+  summary: z.string()
+});
+export type TruthfulUIEvaluation = z.infer<typeof TruthfulUIEvaluationSchema>;
+
+// ==========================================
+// 24. Track Trace Direction B Static Telemetry Audit
+// ==========================================
+export const TrackTraceTelemetryAuditSchema = z.object({
+  auditMode: z.literal('STATIC_AUDIT_ONLY'),
+  targetPilot: z.string(),
+  liveContainersProbed: z.literal(false),
+  endpointsAudited: z.array(
+    z.object({
+      endpoint: z.string(),
+      status: z.enum(['FABRICATED_MISSING', 'UNVERIFIED_MOCK', 'STATIC_STUB', 'AUTHORITATIVE']),
+      detectedIssue: z.string(),
+      provenanceDeclared: z.boolean()
+    })
+  ),
+  findings: z.array(TruthfulUIFindingSchema),
+  deferredItems: z.array(
+    z.object({
+      item: z.string(),
+      category: z.enum(['DOCKER_RUNTIME', 'PLAYWRIGHT_SCREENSHOT', 'DEVTOOLS_NETWORK', 'LIVE_IOT_STREAM']),
+      tag: z.literal('DEFERRED_HOME_RUNTIME_VALIDATION'),
+      prerequisite: z.string()
+    })
+  ),
+  verdict: ContentTruthVerdictSchema,
+  summary: z.string()
+});
+export type TrackTraceTelemetryAudit = z.infer<typeof TrackTraceTelemetryAuditSchema>;

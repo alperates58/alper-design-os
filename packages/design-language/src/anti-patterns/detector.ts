@@ -166,6 +166,32 @@ export function evaluateDesignAntiPatterns(options: EvaluateAntiPatternsOptions)
     });
   }
 
+  // 9. Deceptive Telemetry without Provenance or Endpoint Binding
+  if (/missing-telemetry-endpoint/i.test(content) || /fake-telemetry/i.test(content)) {
+    issues.push({
+      id: 'AP-DECEPTIVE-TEL-01',
+      code: 'DECEPTIVE_TELEMETRY',
+      category: 'DECEPTIVE_TELEMETRY',
+      severity: 'CRITICAL',
+      location: 'Telemetry data binding',
+      message: 'Ungrounded or fabricated telemetry endpoint referenced without authentic data provider.',
+      remediation: 'Connect to verified live telemetry source or explicitly isolate as labeled test fixture.'
+    });
+  }
+
+  // 10. Semantic Color Inversion / Mismatch (e.g. Failure colored green)
+  if (/(?:error|failure|offline|critical).*color\s*:\s*(?:green|#00ff00|#0f0)/i.test(content)) {
+    issues.push({
+      id: 'AP-SEMANTIC-MISMATCH-01',
+      code: 'UNGROUNDED_DATA',
+      category: 'UNGROUNDED_DATA',
+      severity: 'CRITICAL',
+      location: 'Status indicator styles',
+      message: 'Visual semantic mismatch: degraded or error state styled with success green token.',
+      remediation: 'Use var(--alper-status-danger) semantic tokens for negative or error conditions.'
+    });
+  }
+
   const criticalCount = issues.filter((i) => i.severity === 'CRITICAL').length;
   const warningCount = issues.filter((i) => i.severity === 'WARNING').length;
   const criticScore = Math.max(0, 100 - criticalCount * 20 - warningCount * 5);

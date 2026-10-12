@@ -984,6 +984,109 @@ export function createAlperDesignServer(): Server {
           section: { type: 'string', enum: ['ALL', 'TOKENS', 'BLUEPRINTS', 'PATTERNS', 'RECIPES'] }
         }
       }
+    },
+    {
+      name: 'evaluate_truthful_ui',
+      description: 'Audits UI components and data bindings against Truthful UI Policy, detecting ungrounded telemetry, unlabeled mocks, and deceptive semantic colors.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          components: { type: 'array' },
+          pageTitle: { type: 'string' },
+          cognitiveClutterScore: { type: 'number' }
+        },
+        required: ['components']
+      }
+    },
+    {
+      name: 'audit_data_provenance',
+      description: 'Audits data provenance records across fields, classifying authority, verifying freshness, and flagging ungrounded or fabricated sources.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          records: { type: 'array' }
+        },
+        required: ['records']
+      }
+    },
+    {
+      name: 'evaluate_page_intent',
+      description: 'Audits whether page regions and components align with stated Page Intent, rejecting forbidden visual gimmicks.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          intentType: { type: 'string', enum: ['OPERATIONAL_MONITORING', 'EXECUTIVE_DECISION', 'DATA_ENTRY_TRANSACTION', 'EXPLORATORY_ANALYTICS', 'CONFIGURATION_ADMIN', 'DIAGNOSTIC_INVESTIGATION', 'DEMO_SHOWCASE'] },
+          primaryGoal: { type: 'string' },
+          targetAudience: { type: 'string' },
+          components: { type: 'array' }
+        },
+        required: ['intentType', 'primaryGoal', 'targetAudience', 'components']
+      }
+    },
+    {
+      name: 'audit_information_relevance',
+      description: 'Scores information relevance, signal-to-noise ratio, and cognitive load impact of elements on a page.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          intentType: { type: 'string' },
+          primaryGoal: { type: 'string' },
+          elements: { type: 'array' }
+        },
+        required: ['intentType', 'primaryGoal', 'elements']
+      }
+    },
+    {
+      name: 'classify_source_authority',
+      description: 'Classifies data sources into formal Source Authority Tiers (AUTHORITATIVE_SYSTEM, VERIFIED_EXTERNAL, SYNTHETIC_MOCK, etc.).',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          sourceId: { type: 'string' },
+          urlOrPath: { type: 'string' },
+          type: { type: 'string' },
+          isProductionEndpoint: { type: 'boolean' },
+          hasAuthHeaders: { type: 'boolean' },
+          isMock: { type: 'boolean' }
+        },
+        required: ['sourceId']
+      }
+    },
+    {
+      name: 'evaluate_content_truth_gate',
+      description: 'Evaluates the CONTENT_TRUTH_PASS governance release gate synthesizing UI truthfulness, provenance, and visual approval.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          components: { type: 'array' },
+          requireVisualApproval: { type: 'boolean' }
+        }
+      }
+    },
+    {
+      name: 'manage_human_visual_approval',
+      description: 'Inspects or records human visual sign-off with anti-tamper bot protection.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          action: { type: 'string', enum: ['GET_STATUS', 'RECORD_REVIEW'] },
+          reviewedBy: { type: 'string' },
+          status: { type: 'string', enum: ['NOT_REVIEWED', 'IN_REVIEW', 'APPROVED', 'REJECTED', 'CHANGES_REQUESTED'] },
+          notes: { type: 'string' },
+          viewports: { type: 'array', items: { type: 'string' } }
+        },
+        required: ['action']
+      }
+    },
+    {
+      name: 'audit_track_trace_telemetry',
+      description: 'Statically audits Track Trace Direction B telemetry specimens, detecting ungrounded endpoints and tagging deferred live validations.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          sampleEndpoints: { type: 'array', items: { type: 'string' } }
+        }
+      }
     }
   ];
 
@@ -1225,6 +1328,30 @@ export function createAlperDesignServer(): Server {
           break;
         case 'inspect_alper_registry':
           result = Tools.handleInspectAlperRegistry(T.InspectAlperRegistryInputSchema.parse(args));
+          break;
+        case 'evaluate_truthful_ui':
+          result = Tools.handleEvaluateTruthfulUi(T.EvaluateTruthfulUiInputSchema.parse(args));
+          break;
+        case 'audit_data_provenance':
+          result = Tools.handleAuditDataProvenance(T.AuditDataProvenanceInputSchema.parse(args));
+          break;
+        case 'evaluate_page_intent':
+          result = Tools.handleEvaluatePageIntent(T.EvaluatePageIntentInputSchema.parse(args));
+          break;
+        case 'audit_information_relevance':
+          result = Tools.handleAuditInformationRelevance(T.AuditInformationRelevanceInputSchema.parse(args));
+          break;
+        case 'classify_source_authority':
+          result = Tools.handleClassifySourceAuthority(T.ClassifySourceAuthorityInputSchema.parse(args));
+          break;
+        case 'evaluate_content_truth_gate':
+          result = Tools.handleEvaluateContentTruthGate(T.EvaluateContentTruthGateInputSchema.parse(args));
+          break;
+        case 'manage_human_visual_approval':
+          result = Tools.handleManageHumanVisualApproval(T.ManageHumanVisualApprovalInputSchema.parse(args));
+          break;
+        case 'audit_track_trace_telemetry':
+          result = Tools.handleAuditTrackTraceTelemetry(T.AuditTrackTraceTelemetryInputSchema.parse(args));
           break;
         default:
           throw new Error(`Tool not found: ${name}`);

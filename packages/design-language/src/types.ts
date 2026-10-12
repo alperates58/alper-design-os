@@ -435,7 +435,9 @@ export interface AntiPatternIssue {
     | 'RANDOM_RADIUS'
     | 'MIXED_ICON_SYSTEMS'
     | 'INCONSISTENT_SPACING'
-    | 'INCONSISTENT_DENSITY';
+    | 'INCONSISTENT_DENSITY'
+    | 'DECEPTIVE_TELEMETRY'
+    | 'UNGROUNDED_DATA';
   severity: AntiPatternSeverity;
   message: string;
   location: string;
