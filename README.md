@@ -1,212 +1,249 @@
 # ALPER DESIGN OS
 
-> **"Understand the product before designing the interface."**
+> **"Arayüzü tasarlamadan önce ürünü, alanı ve operasyonel bağlamı anla."**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE_POLICY.md)
+[![License: MIT](https://img.shields.io/badge/Lisans-MIT-blue.svg)](LICENSE_POLICY.md)
 [![TypeScript: Strict](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](tsconfig.json)
 [![Antigravity Plugin Ready](https://img.shields.io/badge/Antigravity-Native%20Plugin-emerald.svg)](plugin.json)
+[![Tests: 326 Passed](https://img.shields.io/badge/Tests-326%20Passed%20(16%20Suites)-brightgreen.svg)](tests/)
+[![MCP Server: 88 Tools](https://img.shields.io/badge/MCP%20Server-88%20Tools-purple.svg)](packages/mcp-server/)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](scripts/)
 
-ALPER DESIGN OS is not just a UI component library. It is an AI-native, technology-agnostic Design & UX Development Operating System designed to understand software domains, analyze user workflows and operational context, make world-class UX/UI architecture decisions, design new projects, and modernize legacy enterprise applications.
-
----
-
-## Core Pillars
-
-1. **Technology Agnostic**: Decouples design tokens, layout paradigms, UX patterns, and domain intelligence from framework code through a unified **Adapter Architecture** supporting:
-   - HTML / CSS / JavaScript
-   - JavaScript
-   - TypeScript
-   - React
-   - React + TypeScript
-   - PHP
-   - Laravel / Blade
-   - ASP.NET / Razor
-2. **Domain Intelligence First**: Never creates UI code blindly. Analyzes domain classification, operator personas, information density, interaction styles, and critical workflows to generate a typed `ProductUXProfile`.
-3. **Three Operating Modes**:
-   - `NEW`: Greenfield architecture from domain understanding and user ergonomics.
-   - `REPAIR`: Surgical remediation preserving existing tech stack and styling.
-   - `MODERNIZE`: Staged, non-destructive 4-phase modernization from legacy code to modern design tokens and accessible grids.
-4. **Agent Governance & Change Safety**: Standardized 17-step change lifecycle, typed `AgentActionPlan`, strict scope guard, 10-dimension blast radius evaluation, pre-change git checkpoints, independent reviewer gate, and evidence-backed completion claims.
-5. **Docker Runtime Validation & Clean Room**: Windows Docker Desktop containerized validation, dynamic localhost port discovery (banning 3000), 10/10 seeded defect detection, multi-viewport responsive testing, secret redaction, and release gate decision.
-6. **Design Source Intelligence V2**: Ingests, normalizes, and ranks 65+ design systems, headless primitives, component registries (shadcn, Magic UI, Aceternity, Kokonut), 28 technology-independent UX patterns, specialized icon/chart/grid engines, and automated AI skill prompt-injection security auditing.
-7. **Browser, QA & Verification Engine**: Official Chrome DevTools MCP & Microsoft Playwright MCP integration with role separation, resilient accessible-role locators, runtime console/network failure inspection, visual regression with human review gates, and transparent QA reporting.
-8. **Software Engineering Intelligence Layer**: Architecture style detection (11 styles), ADR generation, database migration safety (SAFE/REVIEW/DANGEROUS), N+1 query loop detection, OpenTelemetry observability with PII scrubbing, and OpenAPI/AsyncAPI breaking change evaluation.
-9. **Antigravity Native Plugin**: Complete with 46 `skills/`, `agents/`, `rules/`, `mcp_config.json`, and an official 65-tool TypeScript MCP server.
-10. **DTCG Design Tokens**: 100% compliant with the Design Tokens Community Group specification, compile-ready for Style Dictionary.
+**ALPER DESIGN OS**, sıradan bir arayüz bileşen kütüphanesi değildir. Yazılım alanlarını (domain) derinlemesine anlayan, kullanıcı iş akışlarını ve ergonomisini analiz eden, kurumsal seviyede mimari ve UX/UI kararları alan, sıfırdan ürün tasarlayan veya mevcut devasa sistemleri cerrahi/aşamalı olarak modernize eden **AI-Native, Teknoloji Bağımsız Tasarım ve UX Geliştirme İşletim Sistemi**'dir.
 
 ---
 
-## Directory Structure
+## 🌟 Temel Mimarî Sütunlar
+
+1. **Teknoloji Bağımsız Tasarım (Technology Agnostic):**
+   Tasarım tokenları, grid modelleri, erişilebilirlik ve UX desenleri framework kodundan tamamen ayrıştırılmıştır. Sözleşme tabanlı **Adaptör Mimarisi** ile tek bir mimari mantıktan 8 farklı teknolojiye derleme yapılır:
+   * **HTML5 / CSS3 / ES6+ JavaScript**
+   * **TypeScript**
+   * **React (JSX)**
+   * **React + TypeScript (Strict)**
+   * **PHP (Native View/Template)**
+   * **Laravel / Blade**
+   * **ASP.NET Core / Razor Pages & Blazor**
+   * **Generic Web (Vanilla Standartları)**
+
+2. **Domain Intelligence (Alan İstihbaratı İlk İlkedir):**
+   Asla körlemesine UI üretilmez. Ürünün alanı (APS Üretim Planlama, WMS Depo, Finans, Hastane vb.), operatör personelleri, bilgi yoğunluğu (Information Density) ve kritik iş akışları analiz edilerek tip güvenli bir `ProductUXProfile` oluşturulur.
+
+3. **Üç Farklı Çalışma Modu:**
+   * `NEW`: Alan istihbaratı ve operatör ergonomisi odaklı yeşil alan (greenfield) tasarımı.
+   * `REPAIR`: Mevcut teknoloji ve tasarım dilini koruyarak yapılan cerrahi onarım.
+   * `MODERNIZE`: Eski sistemleri bozmadan, 4 aşamalı aşamalı geçişle modern tasarım tokenlarına ve erişilebilir gridlere dönüştürme.
+
+4. **Kanonik Tasarım Dili & UI Blueprint DSL:**
+   Kullanıcı arayüzünü deklaratif JSON formatında tanımlayan `UI Blueprint DSL` ile tasarımlar modellenir; tek bir blueprint'ten farklı framework adaptörlerinde semantik eşdeğerlik (**Cross-Stack Parity**) garanti edilir.
+
+5. **Gerçekçi UI Politikası & Veri Kaynağı Kanıtı (Truthful UI & Data Provenance):**
+   Gerçek olmayan sahte telemetri, uydurma KPI veya kaynaksız metriklerin gösterilmesi engellenir. Veriler `PROVENANCE_SOURCE` (`AUTHORITATIVE`, `DERIVED`, `MOCK_SYNTHETIC`) seviyelerine göre açıkça etiketlenir ve `CONTENT_TRUTH_PASS` kapısı ile denetlenir.
+
+6. **Operatör Destekli Çalışma (Operator-Assisted Execution):**
+   Kurumsal güvenlik yazılımlarının (EDR/Xcitium) kısıtladığı ortamlarda agent-çocuk süreçlerini zorlamak yerine, güvenli `HUMAN_OPERATOR_EXECUTION` mimarisiyle PowerShell bundle'ları (`RUN.ps1`) üretir ve toplanan kanıtları matematiksel kesinlikle doğrular (`verifiedBy: ALPER_DESIGN_OS`).
+
+7. **Akıllı Tarayıcı Çözümleyicisi (Browser Fallback Chain):**
+   Kurumsal güvenlik politikalarının managed Chromium indirmelerini engellediği durumlarda otomatik olarak işletim sisteminde kurulu **Microsoft Edge** (`msedge`) veya Chrome'a düşer; Playwright E2E testlerini sıfır kesintiyle çalıştırır.
+
+8. **Ajan Yönetişimi & Değişiklik Güvenliği (Agent Governance):**
+   17 adımlı sıkı yaşam döngüsü, `AgentActionPlan`, etki alanı (blast radius) değerlendirmesi, yıkıcı komut koruması, bağımsız gözden geçirici kapısı ve kanıt temelli doğrulama.
+
+9. **Model Context Protocol (MCP) Sunucusu:**
+   Antigravity, Cursor, Claude Desktop ve VS Code ile entegre, **88 adet tip güvenli araç** barındıran resmi TypeScript MCP sunucusu.
+
+---
+
+## 📁 Proje Dizin Yapısı
 
 ```text
 alper-design-os/
-├── plugin.json                 # Antigravity Plugin Manifest (38 Skills Registered)
-├── mcp_config.json             # Local MCP Server Registration
-├── hooks.json                  # Antigravity Lifecycle Hooks
-├── pnpm-workspace.yaml         # Monorepo Workspace Configuration
+├── plugin.json                 # Antigravity Plugin Tanımı (38 Yetenek/Skill Kayıtlı)
+├── mcp_config.json             # MCP Sunucu Konfigürasyonu
+├── hooks.json                  # Yaşam Döngüsü Hook'ları
+├── pnpm-workspace.yaml         # Monorepo Workspace Konfigürasyonu
 │
-├── scripts/                    # Portable Automation & Health Scripts
-│   ├── install-windows.ps1     # Portable Windows Installer (alper + chrome-devtools + playwright)
-│   ├── update.ps1              # One-Click Git & Build Updater
-│   ├── doctor.ps1              # PowerShell System Diagnostics & Verification
-│   ├── doctor.js               # Node.js Cross-Platform Health Check
-│   └── register-mcp.js         # Cross-Platform MCP Server Registration
+├── scripts/                    # Otomasyon ve Sistem Sağlık Araçları
+│   ├── install-windows.ps1     # Otomatik Windows Kurulum Scripti
+│   ├── update.ps1              # Tek Tıkla Git & Derleme Güncelleyici
+│   ├── doctor.js               # Çapraz Platform Sağlık ve Tanı Motoru (Adım 1-9)
+│   ├── doctor.ps1              # PowerShell Sistem Tanı Scripti
+│   ├── register-mcp.js         # Antigravity MCP Konfigürasyon Kaydedici
+│   └── operator-runtime-check.js # Operatör Çalışma Zamanı Kanıt Toplayıcı
 │
-├── skills/                     # 38 Antigravity Skills
-│   ├── alper-design-new/       # Greenfield Product Design Workflow
-│   ├── alper-design-repair/    # Surgical UX/UI Repair Workflow
-│   ├── alper-design-modernize/ # 4-Phase Legacy Modernization Workflow
-│   ├── alper-domain-intelligence/ # Domain & Workflow Extraction
-│   ├── alper-secure-coding/    # OWASP ASVS & Top 10 Secure Coding
-│   ├── alper-security-audit/   # Passive Vulnerability Audit & Gates
-│   ├── alper-api-security/     # OWASP API Security Top 10
-│   ├── alper-ai-coding-safety/ # AI Coding Hallucination & Supply Chain Defense
-│   ├── alper-code-quality/     # Typed Linting & Complexity Controls
-│   ├── alper-performance-engineering/ # Core Web Vitals & Budgets
-│   ├── alper-reliability/      # SLI/SLO & Circuit Breakers
-│   ├── alper-supply-chain-security/   # NIST SSDF, SLSA & CycloneDX SBOM
-│   ├── alper-dependency-hygiene/      # CVE Audits & Lockfile Hygiene
-│   ├── alper-secret-management/       # Zero-Tolerance Secret Leak Scanning
-│   ├── alper-testing-strategy/ # Test Pyramid Synthesis
-│   ├── alper-observability/    # OpenTelemetry Traces, Metrics & PII Scrubbing
-│   ├── alper-browser-qa/       # Master Browser QA Orchestration
-│   ├── alper-playwright-testing/ # Role-Based Playwright E2E Tests
-│   ├── alper-runtime-debugging/ # Chrome DevTools Runtime Exception & Network Debugging
-│   ├── alper-visual-regression/ # Multi-Viewport & Theme Visual Diffing
-│   ├── alper-accessibility-testing/ # axe-core & Keyboard Operability Audits
-│   ├── alper-performance-testing/ # Lighthouse & Trace Bottleneck Profiling
-│   ├── alper-api-testing/      # Contract, Schema & Negative Testing
-│   ├── alper-contract-testing/ # Pact Consumer-Driven Contracts
-│   ├── alper-load-testing/     # Grafana k6 Throughput & Stress Testing
-│   ├── alper-regression-testing/ # Targeted Funnel Smoke & Regression Suites
-│   ├── alper-cross-browser-testing/ # Chromium, Firefox, WebKit & Mobile
-│   ├── alper-architecture/     # Style Discovery & Subsystem Boundaries
-│   ├── alper-architecture-audit/ # Coupling & Circular Dependency Detection
-│   ├── alper-refactoring-strategy/ # Strangler Fig & Branch-by-Abstraction
-│   ├── alper-database-engineering/ # Schema Design & Connection Pools
-│   ├── alper-sql-performance/  # N+1 Query & Keyset Pagination Diagnostics
-│   ├── alper-migration-safety/ # Expand/Contract & DDL Risk Analysis
-│   ├── alper-data-integrity/   # ACID & Idempotency Key Governance
-│   ├── alper-api-architecture/ # OpenAPI/AsyncAPI & Breaking Changes
-│   ├── alper-resilience/       # Bulkheads & Graceful Degradation
-│   ├── alper-release-safety/   # OpenFeature Flags & Zero-Downtime Rollouts
-│   └── alper-dependency-lifecycle/ # Renovate & Dependency Governance
+├── design-core/                # Teknoloji Bağımsız Tasarım Çekirdeği
+│   ├── src/domain/             # 15 Alan Benchmark'ı & ProductUXProfile
+│   ├── src/tokens/             # DTCG Tokenları (Style Dictionary Uyumlu)
+│   ├── src/layout/             # Multi-Pane Workbench & DataGrid Layoutları
+│   └── src/ux-patterns/        # 28 Kanonik UX Deseni (Gantt, SplitPane vb.)
 │
-├── design-core/                # Technology-Agnostic Design Engine
-│   ├── src/domain/             # 15 Domain Benchmarks & ProductUXProfile Engine
-│   ├── src/tokens/             # DTCG Tokens & Style Dictionary Compiler
-│   ├── src/layout/             # Multi-Pane Workbench & DataGrid Layouts
-│   ├── src/ux-patterns/        # Core UX Patterns (Gantt, DataGrid, SplitPane, etc.)
-│   ├── src/interactions/       # Keyboard Shortcuts & Navigation Ergonomics
-│   └── src/accessibility/      # WCAG 2.1 AA/AAA Rules & Screen Reader Specs
-│
-├── adapters/                   # Stack Adapters (Contract-Driven)
-│   ├── contract/               # Common AdapterContract & BaseAdapter Class
-│   ├── generic-web/            # Web Standards (Vanilla HTML5, CSS Variables)
-│   ├── html-css-js/            # Semantic HTML5 + CSS3 + ES6 JS
-│   ├── react/                  # React (JavaScript / JSX)
-│   ├── react-typescript/       # React + TypeScript (Strict Mode)
-│   ├── php/                    # Native PHP Views & Templates
-│   ├── laravel-blade/          # Laravel Blade Components & Alpine.js
+├── adapters/                   # Framework Adaptörleri (Sözleşme Tabanlı)
+│   ├── contract/               # Ortak AdapterContract & BaseAdapter
+│   ├── html-css-js/            # Semantik HTML5 + CSS3 + ES6 JS
+│   ├── react/                  # React (JSX)
+│   ├── react-typescript/       # React + Strict TypeScript
+│   ├── php/                    # Native PHP Şablonları
+│   ├── laravel-blade/          # Laravel Blade + Alpine.js
 │   └── aspnet-razor/           # ASP.NET Core Razor Pages & Blazor
 │
 ├── packages/
-│   ├── analyzer/               # Read-Only Stack Detector & UI/A11y Auditor
-│   ├── agent-governance/       # 17-Step Pipeline, Scope Guard, Risk & Review Engine
-│   ├── source-intelligence/    # 65 Authoritative Sources, Patterns, Registries & Ingestion
-│   ├── engineering-guardrails/ # Quality Profiles, Threat Models & Safe Scanner
-│   ├── qa-engine/              # Playwright, DevTools, Visual Diff & QA Reporter
-│   ├── software-intelligence/  # Architecture, Database, Observability & API Governance
-│   └── mcp-server/             # TypeScript MCP Server with 65 Typed Tools
+│   ├── analyzer/               # Kod ve Stack Algılama, UI/A11y Statik Denetleyici
+│   ├── agent-governance/       # 17 Adım Yaşam Döngüsü, Operatör Paketi, Truthful UI
+│   ├── design-language/        # Kanonik Tasarım Dili, UI Blueprint DSL, Cross-Stack Render
+│   ├── source-intelligence/    # 65+ Tasarım Sistemi, Registry Keşfi ve Skorlama
+│   ├── engineering-guardrails/ # Kalite Profilleri, STRIDE Tehdit Modeli, Güvenli Tarama
+│   ├── qa-engine/              # Playwright, DevTools, Görsel Regresyon, QA Raporlayıcı
+│   ├── software-intelligence/  # Mimari Stil Tespiti, DB Migrasyon Riski, ADR Üretimi
+│   └── mcp-server/             # 88 Tipli Araç İçeren Resmi MCP Sunucusu
 │
-├── tests/                      # Automated Vitest Suite (236 Tests across 13 Suites)
-│   ├── fixtures/domains/       # 15 Domain Benchmarks (APS, CRM, Hospital, PMS, POS, WMS, Fintech, etc.)
+├── tests/                      # 16 Test Süiti, 326 Otomatik Vitest Testi
 │   ├── domain-benchmark-15.test.ts
-│   ├── source-intelligence.test.ts
-│   ├── source-intelligence-v2.test.ts
-│   ├── agent-governance.test.ts
-│   ├── engineering-guardrails.test.ts
-│   ├── qa-engine.test.ts
-│   ├── software-intelligence.test.ts
-│   └── mcp-server.test.ts
+│   ├── design-language.test.ts
+│   ├── truthful-ui-governance.test.ts
+│   ├── operator-assisted-execution.test.ts
+│   ├── mcp-server.test.ts
+│   └── ...
 │
-└── docs/                       # Architectural Documentation
-    ├── product-ux-profile.md       # Schema Specification & Theory
-    ├── adapter-contract.md         # Extension Guide for New Frameworks
-    ├── mcp-tools.md                # MCP Tool Schemas & Input/Output Contracts
-    ├── source-intelligence.md      # Design Source Taxonomy & Ingestion V2
-    ├── pattern-knowledge-graph.md  # 28 Technology-Independent UX Patterns
-    ├── registry-intelligence.md     # Component Registry Discovery & Ecosystem
-    ├── source-scoring.md           # Multi-Dimensional Scoring & WHY Explanations
-    └── skill-security.md           # AI Skill Prompt Injection & Shell Auditing
+└── docs/                       # Mimari & Kullanım Dokümantasyonu
+    ├── operator-assisted-execution.md
+    ├── truthful-ui-policy.md
+    ├── canonical-design-language.md
+    └── product-ux-profile.md
 ```
 
 ---
 
-## Second PC Installation (İkinci Bilgisayara Kurulum)
+## 🚀 Kurulum (Adım Adım)
 
-Kurulum tamamen taşınabilir (portable) olarak tasarlanmıştır. Hiçbir script içinde kullanıcı adı veya sabit absolute path bulunmaz. `ALPER_DESIGN_OS_HOME` ortam değişkeni dinamik olarak çözülür.
+Proje tamamen taşınabilir (portable) olarak tasarlanmıştır. Hiçbir yerde sabit kullanıcı adı veya işletim sistemine bağımlı mutlak yol bulunmaz.
 
 ### 1. Ön Koşullar
-- **Windows 10 / 11**
-- **Node.js (v20 veya v24 LTS)**: [nodejs.org](https://nodejs.org/)
-- **Git for Windows**: [git-scm.com](https://git-scm.com/)
+* **İşletim Sistemi:** Windows 10/11, macOS veya Linux
+* **Node.js:** `v20.x` veya `v24.x LTS` ([nodejs.org](https://nodejs.org/))
+* **Git:** [git-scm.com](https://git-scm.com/)
+* *(İsteğe Bağlı)* Docker Desktop & Microsoft Edge (Playwright E2E testleri için)
 
 ### 2. Projeyi Klonlayın
-```powershell
-cd $env:USERPROFILE\Desktop
+```bash
 git clone https://github.com/alperates58/alper-design-os.git
 cd alper-design-os
 ```
 
-### 3. Tek Komutla Otomatik Kurulum
-PowerShell veya terminalinizi açıp kurulumu tamamlayın:
+### 3. Bağımlılıkları Yükleyin ve Derleyin
 ```bash
-npm run build && node scripts/register-mcp.js
+npm install
+npm run build
 ```
-Veya PowerShell kullanıcıları için:
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\install-windows.ps1
+*(Bu komut 19 monorepo paketini sırayla TypeScript ile derler ve `dist/` klasörlerini oluşturur).*
+
+### 4. MCP Sunucusunu IDE / Asistanınıza Kaydedin
+Antigravity veya MCP destekli araçlarınıza tek komutla bağlayın:
+```bash
+node scripts/register-mcp.js
 ```
+*(Windows kullanıcıları alternatif olarak `.\scripts\install-windows.ps1` dosyasını da çalıştırabilir).*
 
-Bu script otomatik olarak:
-1. `ALPER_DESIGN_OS_HOME` kullanıcı ortam değişkenini mevcut klasöre ayarlar.
-2. Node.js ve Git kontrollerini yapar; bağımlılıkları derler.
-3. `.env.example` dosyasından `.env` dosyasını oluşturur.
-4. Monorepo paket bağımlılıklarını kurar ve tüm TypeScript paketlerini derler (`npm run build`).
-5. Antigravity global MCP konfigürasyonunu (`~/.gemini/config/mcp_config.json`) otomatik olarak günceller ve 3 sunucuyu kaydeder:
-   - `alper-design-os` (29 typed tool içeren yerel mimari ve UX sunucusu)
-   - `chrome-devtools` (`chrome-devtools-mcp@latest`)
-   - `playwright` (`@playwright/mcp@latest`)
-
-### 4. Sağlık Taraması (Doctor)
-Kurulumun eksiksiz olduğunu doğrulamak için:
+### 5. Sistem Sağlık Taraması (Doctor)
+Tüm bileşenlerin, derleme çıktılarının ve araçların eksiksiz olduğunu doğrulamak için:
 ```bash
 npm run doctor
 ```
 
+### 6. Tüm Testleri Çalıştırın
+```bash
+npm test
+```
+Tüm 16 test dosyasında **326 testin tamamının eksiksiz geçtiğini** görmelisiniz.
+
 ---
 
-## Doğrulama & Test
+## 🛠️ MCP Sunucusu & 88 Güçlü Araç
 
-Vitest ile monorepo genelindeki 133+ testi çalıştırmak için:
-```bash
-npm run test
+`alper-design-os` MCP sunucusu 10 temel kategoride **88 adet tip güvenli araç** sunar:
+
+| Kategori | Araç Sayısı | Öne Çıkan Araçlar |
+| :--- | :---: | :--- |
+| **Ürün & Alan Analizi** | 4 | `understand_product`, `research_domain`, `recommend_ux_patterns`, `search_design_patterns` |
+| **Tasarım Token & Blueprint** | 9 | `get_design_tokens`, `create_page_blueprint`, `create_component_blueprint`, `create_app_shell_blueprint`, `render_blueprint`, `render_component`, `compare_renderer_parity` |
+| **Statik UI & Modernizasyon** | 5 | `analyze_project`, `detect_stack`, `audit_existing_ui`, `audit_accessibility`, `recommend_modernization` |
+| **Kaynak & Registry İstihbaratı** | 20 | `discover_design_sources`, `search_patterns`, `search_registries`, `recommend_chart_library`, `recommend_data_grid`, `explain_source_recommendation` |
+| **Mühendislik & Güvenlik** | 7 | `generate_engineering_policy`, `evaluate_release_gates`, `generate_threat_model`, `detect_tool_capabilities`, `run_safe_security_scan` |
+| **QA, Test & Playwright** | 4 | `generate_user_journeys`, `generate_playwright_test`, `generate_qa_report`, `generate_test_pyramid` |
+| **Yazılım & Veritabanı Mimarisi** | 5 | `analyze_architecture`, `generate_adr`, `analyze_database_schema`, `evaluate_api_compatibility`, `classify_code_paths` |
+| **Ajan Yönetişimi (Governance)** | 14 | `create_action_plan`, `evaluate_scope`, `evaluate_change_risk`, `create_checkpoint_plan`, `create_verification_plan`, `review_change`, `detect_regression` |
+| **Truthful UI & Kanıt Şeffaflığı** | 6 | `evaluate_truthful_ui`, `audit_data_provenance`, `evaluate_page_intent`, `audit_information_relevance`, `classify_source_authority`, `manage_human_visual_approval` |
+| **Operatör Yürütme Motoru** | 4 | `create_manual_run_bundle`, `verify_manual_run_evidence`, `resolve_browser_runtime`, `run_operator_doctor` |
+
+---
+
+## 💬 Örnek Promptlar (Kullanım Rehberi)
+
+Aşağıdaki hazır promptları Antigravity, Cursor veya Claude arayüzünde doğrudan kullanabilirsiniz:
+
+### 1. Yeni Ürün & Alan Analizi (NEW Modu)
+```text
+Yeni bir Endüstriyel Üretim Planlama Sistemi (APS - Advanced Planning & Scheduling) geliştiriyoruz.
+Operatörler fabrika sahasındaki 40 tezgahın iş sıralamasını ve darboğazlarını saniyelik takip ediyor.
+Lütfen 'understand_product' ve 'research_domain' araçlarını kullanarak:
+1. Alan sınıflandırmasını ve bilgi yoğunluğunu (information density) belirle.
+2. Bu operatörler için en uygun UX desenlerini (Gantt, Split Pane, Dense DataGrid) seç.
+3. React + TypeScript ve Tailwind için UI Blueprint DSL tanımını üret.
 ```
 
-Test kapsamı:
-- **15 Domain Benchmark**: APS, CRM, Hospital, Hotel PMS, Restaurant POS, Warehouse WMS, Banking, Streaming, E-commerce, School Management, Fleet Logistics, Legal Case Management, Accounting, Cybersecurity Dashboard, IoT Monitoring.
-- **Source Intelligence**: 48 yetkili kaynak (OWASP, NIST, CWE, OpenSSF, Google, Microsoft, PHP-FIG, Laravel, typescript-eslint, PHPStan, OpenTelemetry, CycloneDX, SLSA, Pact, k6 vb.) katalog araması, ağırlıklı skorlama ve lisans denetimi.
-- **Engineering Guardrails**: Stack-aware quality profilleri, STRIDE tehdit modelleme, pasif SAST/secret taraması ve release gate blocker kuralları.
-- **Browser & QA Engine**: Playwright test üretimi, Chrome DevTools runtime denetimi, görsel regresyon insan onayı ve eksik alanları şeffaf listeleyen `QA_REPORT.md` üretimi.
-- **Software Intelligence**: Mimari tip tespiti, ADR oluşturma, veritabanı N+1 tespiti, migrasyon risk sınıflandırması ve OpenAPI breaking change denetimi.
-- **MCP Sunucusu**: 29 aracın tamamının tip güvenli sözleşme testleri.
+### 2. Eski Kod Tabanını Aşamalı Modernleştirme (MODERNIZE Modu)
+```text
+Elimizde 2014 yılından kalma native PHP ve spaghetti jQuery ile yazılmış bir Müşteri Sipariş Yönetim ekranı var.
+'recommend_modernization' ve 'audit_existing_ui' araçlarını çalıştırarak:
+1. Mevcut ekranı bozmadan 4 aşamalı (Tokenization -> Layout Isolation -> Component Replacement -> Full Decoupling) geçiş planı hazırla.
+2. Form girdilerini ve tabloları DTCG uyumlu CSS değişkenleriyle eşleştir.
+3. Laravel Blade veya React TypeScript adaptörüne güvenli geçiş yol haritasını çıkar.
+```
+
+### 3. Cerrahi Arayüz Onarımı (REPAIR Modu)
+```text
+Mevcut projemizde mobil kırılma noktalarında (390px) veri tablomuz taşıyor ve form butonları ekran dışına kayıyor.
+'audit_responsive' ve 'audit_accessibility' araçlarını kullanarak:
+1. Yatay taşma (layout overflow) ve WCAG kontrast açıklarını tespit et.
+2. Projenin mevcut CSS/Tailwind yapısını bozmadan cerrahi bir düzeltme öner.
+3. Düzeltmenin yan etkilerini kontrol etmek için 'evaluate_scope' çalıştır.
+```
+
+### 4. Gerçekçi UI & Sahte Veri Tespiti (Truthful UI Audit)
+```text
+Projemizdeki lojistik takip panelinde gösterilen sıcaklık ve yakıt grafikleri gerçek sensör verisi mi yoksa uydurma random sayılar mı?
+'audit_data_provenance' ve 'evaluate_truthful_ui' araçlarını kullanarak:
+1. Tüm veri kaynaklarını (Authoritative, Derived, Mock Synthetic) sınıflandır.
+2. Canlı donanım bağlantısı olmayan metrikleri 'SIMULATED_ESTIMATE' olarak açıkça etiketle.
+3. 'CONTENT_TRUTH_PASS' onay kapısını çalıştırarak sahte telemetriyi engelle.
+```
+
+### 5. Veritabanı & Mimari Değişiklik Risk Denetimi
+```text
+Kullanıcı tablosuna 10 milyon kayıt içeren bir sistemde 'last_login_ip' kolonu eklemek ve indekslemek istiyoruz.
+'analyze_database_schema' ve 'evaluate_change_risk' araçlarını kullanarak:
+1. Bu DDL işleminin kilitlenme (table-lock) riskini ve geriye dönük uyumluluğunu değerlendir.
+2. Sıfır kesinti (Zero-Downtime Expand/Contract) migrasyon stratejisi için ADR oluştur.
+```
+
+### 6. Operatör Destekli Güvenli Çalıştırma (HUMAN_OPERATOR_EXECUTION)
+```text
+Kurumsal bilgisayarda güvenlik kısıtlamaları nedeniyle doğrudan child-process çalıştıramıyoruz.
+Lütfen 'create_manual_run_bundle' aracını kullanarak bir runtime doğrulama paketi hazırla:
+- Bana çalıştırmam gereken tek '.\.alper-design-os\manual-runs\<run-id>\RUN.ps1' komutunu ver.
+- Ben PowerShell'de çalıştırdıktan sonra 'verify_manual_run_evidence' ile toplanan gerçek Docker, Playwright Edge ve test kanıtlarını doğrula.
+```
 
 ---
 
-## Lisans & Güvenlik İlkeleri
-- Kod tabanı **MIT Lisansı** altındadır.
-- **Sır Güvenliği**: API anahtarları veya kişisel sırlar repository'ye commit edilmez (`.gitignore` korumalıdır).
-- **Tarama Güvenliği**: Aktif güvenlik taramaları (DAST) varsayılan olarak engellidir; yalnızca localhost/staging hedeflerinde ve açık kullanıcı onayı ile çalışabilir.
-- **Doğrulama Şeffaflığı**: Test edilmeyen hiçbir akış veya yetenek sahte olarak "PASS" raporlanmaz; QA raporlarında "UNVERIFIED" olarak açıkça listelenir.
+## 🔒 Güvenlik & Doğruluk Taahhüdü
 
+* **Sıfır Sahte Doğrulama (No Fake Pass):** Gerçek bir tarayıcı veya container üzerinde test edilmeyen hiçbir özellik geçerli ("PASS") kabul edilmez; açıkça `UNVERIFIED` veya `DEFERRED` olarak etiketlenir.
+* **Gizlilik ve Sır Maskeleme (Zero Secret Leak):** API anahtarları, JWT tokenlar, DB parolaları ve kurumsal veriler loglarda, testlerde ve commitlerde otomatik olarak `[REDACTED_*]` ile maskelenir.
+* **Kurumsal Uyumluluk (No Security Bypass):** Hiçbir güvenlik servisini devre dışı bırakmaz, antivirüs/EDR bypass etmez veya yetki yükseltme (privilege escalation) yapmaz.
+
+---
+
+## 📄 Lisans
+
+Bu proje [MIT Lisansı](LICENSE_POLICY.md) ile lisanslanmıştır.
+© 2026 Alper Ateş. Tüm hakları saklıdır.
