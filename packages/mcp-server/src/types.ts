@@ -833,6 +833,104 @@ export const RunOperatorDoctorInputSchema = z.object({
 });
 export type RunOperatorDoctorInput = z.infer<typeof RunOperatorDoctorInputSchema>;
 
+// ==========================================
+// FAZ 1F.0: Modernization Engine MCP Schemas
+// ==========================================
+
+// 89. profile_existing_project
+export const ProfileExistingProjectInputSchema = z.object({
+  projectPath: z.string().describe('Absolute or relative path to the existing project directory to profile'),
+  projectName: z.string().optional().describe('Optional human-readable project identity name')
+});
+export type ProfileExistingProjectInput = z.infer<typeof ProfileExistingProjectInputSchema>;
+
+// 90. create_behavioral_baseline
+export const CreateBehavioralBaselineInputSchema = z.object({
+  projectPath: z.string().describe('Directory path of existing project to scan and capture behavioral baseline'),
+  includeOpenApi: z.boolean().optional().describe('Whether to load OpenAPI spec file if detected')
+});
+export type CreateBehavioralBaselineInput = z.infer<typeof CreateBehavioralBaselineInputSchema>;
+
+// 91. create_preservation_contract
+export const CreatePreservationContractInputSchema = z.object({
+  contractId: z.string().optional(),
+  customInvariants: z.record(z.array(z.string())).optional()
+});
+export type CreatePreservationContractInput = z.infer<typeof CreatePreservationContractInputSchema>;
+
+// 92. classify_existing_elements
+export const ClassifyExistingElementsInputSchema = z.object({
+  elements: z.array(
+    z.object({
+      targetId: z.string(),
+      name: z.string(),
+      path: z.string(),
+      elementType: z.enum(['COMPONENT', 'STYLE', 'PAGE', 'ROUTE', 'API', 'DATA_ACCESS', 'STATE', 'DEPENDENCY', 'ASSET', 'CONFIG']),
+      proposedDecision: z.enum(['KEEP', 'IMPROVE', 'REPLACE', 'DEFER', 'REMOVE']).optional(),
+      reason: z.string().optional(),
+      migrationCost: z.enum(['TRIVIAL', 'LOW', 'MEDIUM', 'HIGH', 'PROHIBITIVE']).optional()
+    })
+  )
+});
+export type ClassifyExistingElementsInput = z.infer<typeof ClassifyExistingElementsInputSchema>;
+
+// 93. create_modernization_intent
+export const CreateModernizationIntentInputSchema = z.object({
+  why: z.string(),
+  targetOutcome: z.string().optional(),
+  primaryProblems: z.array(z.string()).optional(),
+  userPainPoints: z.array(z.string()).optional(),
+  visualGoals: z.array(z.string()).optional(),
+  uxGoals: z.array(z.string()).optional(),
+  technicalGoals: z.array(z.string()).optional(),
+  constraints: z.array(z.string()).optional(),
+  forbiddenChanges: z.array(z.string()).optional(),
+  successCriteria: z.array(z.string()).optional(),
+  autoSupplementFromProjectPath: z.string().optional()
+});
+export type CreateModernizationIntentInput = z.infer<typeof CreateModernizationIntentInputSchema>;
+
+// 94. create_modernization_plan
+export const CreateModernizationPlanInputSchema = z.object({
+  projectPath: z.string(),
+  why: z.string().optional(),
+  strategy: z.enum(['ADOPT', 'ADAPT', 'BRIDGE', 'MIGRATE', 'REBUILD_COMPONENT', 'REBUILD_PAGE', 'REBUILD_SHELL']).optional(),
+  scopeTarget: z.string().default('DashboardView'),
+  scopeLevel: z.enum(['COMPONENT', 'PAGE', 'FEATURE', 'SHELL', 'MODULE', 'APPLICATION']).default('PAGE')
+});
+export type CreateModernizationPlanInput = z.infer<typeof CreateModernizationPlanInputSchema>;
+
+// 95. select_modernization_strategy
+export const SelectModernizationStrategyInputSchema = z.object({
+  requestedStrategy: z.string(),
+  projectPath: z.string().optional(),
+  explicitUserRequest: z.boolean().optional(),
+  justification: z.string().optional()
+});
+export type SelectModernizationStrategyInput = z.infer<typeof SelectModernizationStrategyInputSchema>;
+
+// 96. create_modernization_stages
+export const CreateModernizationStagesInputSchema = z.object({
+  scopeLevel: z.enum(['COMPONENT', 'PAGE', 'FEATURE', 'SHELL', 'MODULE', 'APPLICATION']).default('PAGE'),
+  targetName: z.string().default('TargetComponent'),
+  strategy: z.enum(['ADOPT', 'ADAPT', 'BRIDGE', 'MIGRATE', 'REBUILD_COMPONENT', 'REBUILD_PAGE', 'REBUILD_SHELL']).default('BRIDGE')
+});
+export type CreateModernizationStagesInput = z.infer<typeof CreateModernizationStagesInputSchema>;
+
+// 97. evaluate_modernization_completion
+export const EvaluateModernizationCompletionInputSchema = z.object({
+  technical: z.enum(['PASS', 'FAIL', 'BLOCKED']),
+  visualAI: z.enum(['PASS', 'FAIL', 'HEURISTIC_ACCEPTABLE']),
+  ux: z.enum(['PASS', 'FAIL']),
+  accessibility: z.enum(['PASS', 'FAIL']),
+  security: z.enum(['PASS', 'FAIL']),
+  regression: z.enum(['PASS', 'FAIL']),
+  contentTruth: z.enum(['PASS', 'FAIL']),
+  humanVisualApproval: z.enum(['APPROVED', 'PENDING', 'REJECTED'])
+});
+export type EvaluateModernizationCompletionInput = z.infer<typeof EvaluateModernizationCompletionInputSchema>;
+
+
 
 
 

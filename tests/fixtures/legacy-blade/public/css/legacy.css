@@ -1,0 +1,20 @@
+/* Legacy custom overrides for Blade fixture */
+.panel {
+  border-radius: 0px !important;
+  box-shadow: none !important;
+}
+
+.panel-heading {
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.btn-primary {
+  background-color: #337ab7;
+  border-color: #2e6da4;
+}
+
+.control-label {
+  color: #444444;
+  font-weight: 600;
+}

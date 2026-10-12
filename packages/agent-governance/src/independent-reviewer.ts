@@ -17,6 +17,15 @@ export interface IndependentReviewInput {
   securityFindings?: Array<{ severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'; title: string }>;
   performanceMetrics?: { lcpMs?: number; inpMs?: number; cls?: number };
   scopeAudit?: { isClean: boolean; violations: Array<{ file: string; reason: string }> };
+  // Modernization-specific criteria (Section 22)
+  isModernizationTask?: boolean;
+  behavioralRegressionAudit?: { passed: boolean; breaks: string[] };
+  preservationAudit?: { compliant: boolean; violations: string[] };
+  dependencyCreepAudit?: { hasUnjustifiedDeps: boolean; rejectedDependencies: string[] };
+  truthfulnessAudit?: { passed: boolean; fabricatedTelemetryDetected: boolean };
+  unnecessaryRewriteDetected?: boolean;
+  rollbackPlanAttached?: boolean;
+  humanVisualApprovalStatus?: 'APPROVED' | 'PENDING' | 'REJECTED';
 }
 
 export function performIndependentReview(input: IndependentReviewInput): IndependentReviewResult {
@@ -176,6 +185,88 @@ export function performIndependentReview(input: IndependentReviewInput): Indepen
         category: 'CODE_QUALITY',
         description: `Diff contains ${todoMatches} new TODO/FIXME markers.`,
         suggestion: 'Track unfinished work in backlog or resolve before merge.'
+      });
+    }
+  }
+
+  // 8. Modernization-Specific Review Checks (Section 22)
+  if (input.isModernizationTask) {
+    evidenceInspected.push('MODERNIZATION_GOVERNANCE');
+
+    // Behavior preservation
+    if (input.behavioralRegressionAudit && !input.behavioralRegressionAudit.passed) {
+      checks.regressionRisk = false;
+      findings.push({
+        severity: 'CRITICAL',
+        category: 'BEHAVIORAL_REGRESSION',
+        description: `Behavioral baseline broken: ${input.behavioralRegressionAudit.breaks.join('; ')}`,
+        suggestion: 'Restore missing baseline routes, auth flows, and form actions before release.'
+      });
+    }
+
+    // Preservation contract compliance
+    if (input.preservationAudit && !input.preservationAudit.compliant) {
+      checks.architecture = false;
+      findings.push({
+        severity: 'CRITICAL',
+        category: 'PRESERVATION_CONTRACT_VIOLATION',
+        description: `Preservation contract violated: ${input.preservationAudit.violations.join('; ')}`,
+        suggestion: 'Ensure backend business logic, database, and auth invariants remain untouched.'
+      });
+    }
+
+    // Unnecessary rewrite
+    if (input.unnecessaryRewriteDetected) {
+      checks.architecture = false;
+      findings.push({
+        severity: 'HIGH',
+        category: 'UNNECESSARY_REWRITE',
+        description: 'Unnecessary full rewrite detected where incremental adapter/bridge modernization was feasible.',
+        suggestion: 'Adopt incremental component or shell modernization strategy instead of big-bang rewrite.'
+      });
+    }
+
+    // Dependency creep
+    if (input.dependencyCreepAudit?.hasUnjustifiedDeps) {
+      checks.codeQuality = false;
+      findings.push({
+        severity: 'HIGH',
+        category: 'DEPENDENCY_CREEP',
+        description: `Dependency creep detected: Rejected unjustified dependencies: ${input.dependencyCreepAudit.rejectedDependencies.join(', ')}`,
+        suggestion: 'Use existing project libraries or native CSS/JS instead of adding unjustified runtime packages.'
+      });
+    }
+
+    // Truthful UI / Telemetry
+    if (input.truthfulnessAudit && (!input.truthfulnessAudit.passed || input.truthfulnessAudit.fabricatedTelemetryDetected)) {
+      checks.requirementCoverage = false;
+      findings.push({
+        severity: 'CRITICAL',
+        category: 'TRUTHFUL_UI_VIOLATION',
+        description: 'Truthful UI violation: Fabricated telemetry, status, or provenance-less KPI elements detected.',
+        suggestion: 'Remove fake operational metrics and attach verified data provenance sources.'
+      });
+    }
+
+    // Rollback feasibility
+    if (input.rollbackPlanAttached === false) {
+      checks.architecture = false;
+      findings.push({
+        severity: 'HIGH',
+        category: 'ROLLBACK_INFEASIBILITY',
+        description: 'Missing verified rollback checkpoint plan or rollback script in modernization plan.',
+        suggestion: 'Attach git checkpoint tag and automated rollback instructions before proceeding.'
+      });
+    }
+
+    // Human Visual Approval check
+    if (input.humanVisualApprovalStatus && input.humanVisualApprovalStatus !== 'APPROVED') {
+      checks.visualConsistency = false;
+      findings.push({
+        severity: 'HIGH',
+        category: 'HUMAN_VISUAL_APPROVAL_PENDING',
+        description: `Visual release blocked: HUMAN_VISUAL_APPROVAL is ${input.humanVisualApprovalStatus}.`,
+        suggestion: 'Obtain explicit human sign-off on design direction candidate before releasing modernization.'
       });
     }
   }

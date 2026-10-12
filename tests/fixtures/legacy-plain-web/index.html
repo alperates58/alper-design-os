@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Legacy Plain Web System</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="container">
+        <div id="header">
+            <h1>Industrial Dispatch Control</h1>
+            <div id="auth-status">Operator Logged In</div>
+        </div>
+
+        <div id="main-content">
+            <form id="dispatch-form" action="/api/v1/dispatch" method="POST">
+                <input type="hidden" name="csrf_token" value="static-token-abc" />
+                
+                <table width="100%" border="0" cellpadding="5">
+                    <tr>
+                        <td width="30%">Target Route:</td>
+                        <td>
+                            <input type="text" name="routeCode" value="TR-102" style="width: 200px;" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Operator Password (Authorize):</td>
+                        <td>
+                            <input type="password" name="authCode" style="width: 200px;" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <input type="submit" value="Dispatch Order" id="btn-submit" />
+                        </td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>

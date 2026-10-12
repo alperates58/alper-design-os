@@ -35,7 +35,7 @@ pnpm install
 ## 3. Çalıştırılacak Doğrulama Adımları
 
 ### Adım 3.1: Tüm Test Paketini Çalıştırın
-Tüm 15 test dosyasının (295+ test) geçtiğini doğrulayın:
+Tüm 17 test dosyasının (330+ test) geçtiğini doğrulayın:
 ```bash
 npm test
 ```
@@ -124,8 +124,18 @@ const approval = recordVisualReview(currentRecord, {
 | Source Authority Classification | **PASS** | PASS (Entegre) |
 | Human Visual Approval Gate Kodları | **PASS** | Gerçek İnsan İncelemesi Bekliyor |
 | CONTENT_TRUTH_PASS Gate Entegrasyonu | **PASS** | PASS |
-| MCP Tool Sözleşmeleri (8 Yeni Tool) | **PASS (59 Tests)** | PASS |
+| MCP Tool Sözleşmeleri (97 Tool) | **PASS (72 Tests)** | PASS |
+| Faz 1F.0 Modernization Engine Foundation | **PASS (20 Tests)** | PASS (Entegre) |
+| Behavioral Baseline & Regression Guard | **PASS** | PASS (Entegre) |
+| Preservation Contract Engine | **PASS** | PASS (Entegre) |
+| Change Classification (KEEP/IMPROVE/REPLACE/DEFER/REMOVE) | **PASS** | PASS (Entegre) |
+| Modernization Strategy (Bridge first-class, no Big Bang) | **PASS** | PASS (Entegre) |
+| Scope Guard & Boundary (Page cannot silently expand to App) | **PASS** | PASS (Entegre) |
+| Existing Design System & Duplicate Detection | **PASS** | PASS (Entegre) |
+| Dependency Governance (Anti-Creep) | **PASS** | PASS (Entegre) |
+| Legacy Fixtures (React, Blade, Razor, Plain-Web) | **PASS** | PASS (Entegre) |
 | Statik Telemetry Audit (Direction B) | **PASS (Statik)** | Canlı Endpoint Doğrulaması |
 | Track Trace Docker Pilotu | `DEFERRED_HOME_RUNTIME_VALIDATION` | Canlı Container Çalıştırma |
 | Playwright Gerçek Ekran Görüntüleri | `DEFERRED_HOME_RUNTIME_VALIDATION` | Canlı Screenshot Üretimi |
 | Chrome DevTools Remote Debugging | `DEFERRED_HOME_RUNTIME_VALIDATION` | Canlı CDP İncelemesi |
+

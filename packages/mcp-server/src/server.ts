@@ -1117,6 +1117,125 @@ export const TOOL_DEFINITIONS: Tool[] = [
           overrideBrowserCapability: { type: 'string', enum: ['AVAILABLE', 'UNAVAILABLE'] }
         }
       }
+    },
+    {
+      name: 'profile_existing_project',
+      description: 'Profiles an existing legacy project: detects stack, styling, architecture, auth, database, routing, and debt heuristics.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          projectPath: { type: 'string', description: 'Path to project directory' },
+          projectName: { type: 'string', description: 'Optional project name' }
+        },
+        required: ['projectPath']
+      }
+    },
+    {
+      name: 'create_behavioral_baseline',
+      description: 'Scans existing project files and captures behavioral baseline (routes, auth flows, db invariants, forms, external integrations).',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          projectPath: { type: 'string', description: 'Path to project directory' },
+          includeOpenApi: { type: 'boolean' }
+        },
+        required: ['projectPath']
+      }
+    },
+    {
+      name: 'create_preservation_contract',
+      description: 'Creates a strict PreservationContract establishing MUST_PRESERVE boundaries for backend, database, and auth.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          contractId: { type: 'string' },
+          customInvariants: { type: 'object' }
+        }
+      }
+    },
+    {
+      name: 'classify_existing_elements',
+      description: 'Classifies existing components, routes, and styles into KEEP, IMPROVE, REPLACE, DEFER, or high-risk REMOVE decisions.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          elements: { type: 'array' }
+        },
+        required: ['elements']
+      }
+    },
+    {
+      name: 'create_modernization_intent',
+      description: 'Validates and structures modernization goals, rejecting vague inputs like "make it modern" without concrete criteria.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          why: { type: 'string' },
+          targetOutcome: { type: 'string' },
+          primaryProblems: { type: 'array', items: { type: 'string' } },
+          autoSupplementFromProjectPath: { type: 'string' }
+        },
+        required: ['why']
+      }
+    },
+    {
+      name: 'create_modernization_plan',
+      description: 'Creates a comprehensive staged modernization plan with preservation contracts, checkpoints, and rollback strategies.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          projectPath: { type: 'string' },
+          why: { type: 'string' },
+          strategy: { type: 'string', enum: ['ADOPT', 'ADAPT', 'BRIDGE', 'MIGRATE', 'REBUILD_COMPONENT', 'REBUILD_PAGE', 'REBUILD_SHELL'] },
+          scopeTarget: { type: 'string' },
+          scopeLevel: { type: 'string', enum: ['COMPONENT', 'PAGE', 'FEATURE', 'SHELL', 'MODULE', 'APPLICATION'] }
+        },
+        required: ['projectPath']
+      }
+    },
+    {
+      name: 'select_modernization_strategy',
+      description: 'Evaluates and selects an appropriate modernization strategy, strictly blocking unapproved Big Bang rewrites.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          requestedStrategy: { type: 'string' },
+          projectPath: { type: 'string' },
+          explicitUserRequest: { type: 'boolean' },
+          justification: { type: 'string' }
+        },
+        required: ['requestedStrategy']
+      }
+    },
+    {
+      name: 'create_modernization_stages',
+      description: 'Generates scope-tailored implementation stages (Foundation, Shell, Page, Shared Components, Refinement) with checkpoints.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          scopeLevel: { type: 'string', enum: ['COMPONENT', 'PAGE', 'FEATURE', 'SHELL', 'MODULE', 'APPLICATION'] },
+          targetName: { type: 'string' },
+          strategy: { type: 'string', enum: ['ADOPT', 'ADAPT', 'BRIDGE', 'MIGRATE', 'REBUILD_COMPONENT', 'REBUILD_PAGE', 'REBUILD_SHELL'] }
+        }
+      }
+    },
+    {
+      name: 'evaluate_modernization_completion',
+      description: 'Evaluates completion gates: technical, visual AI, UX, a11y, security, regression, content truth, and mandatory human visual approval.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          technical: { type: 'string', enum: ['PASS', 'FAIL', 'BLOCKED'] },
+          visualAI: { type: 'string', enum: ['PASS', 'FAIL', 'HEURISTIC_ACCEPTABLE'] },
+          ux: { type: 'string', enum: ['PASS', 'FAIL'] },
+          accessibility: { type: 'string', enum: ['PASS', 'FAIL'] },
+          security: { type: 'string', enum: ['PASS', 'FAIL'] },
+          regression: { type: 'string', enum: ['PASS', 'FAIL'] },
+          contentTruth: { type: 'string', enum: ['PASS', 'FAIL'] },
+          humanVisualApproval: { type: 'string', enum: ['APPROVED', 'PENDING', 'REJECTED'] }
+        },
+        required: ['technical', 'visualAI', 'ux', 'accessibility', 'security', 'regression', 'contentTruth', 'humanVisualApproval']
+      }
     }
   ];
 
@@ -1417,6 +1536,33 @@ export function createAlperDesignServer(): Server {
           break;
         case 'run_operator_doctor':
           result = Tools.handleRunOperatorDoctor(T.RunOperatorDoctorInputSchema.parse(args));
+          break;
+        case 'profile_existing_project':
+          result = Tools.handleProfileExistingProject(T.ProfileExistingProjectInputSchema.parse(args));
+          break;
+        case 'create_behavioral_baseline':
+          result = Tools.handleCreateBehavioralBaseline(T.CreateBehavioralBaselineInputSchema.parse(args));
+          break;
+        case 'create_preservation_contract':
+          result = Tools.handleCreatePreservationContract(T.CreatePreservationContractInputSchema.parse(args));
+          break;
+        case 'classify_existing_elements':
+          result = Tools.handleClassifyExistingElements(T.ClassifyExistingElementsInputSchema.parse(args));
+          break;
+        case 'create_modernization_intent':
+          result = Tools.handleCreateModernizationIntent(T.CreateModernizationIntentInputSchema.parse(args));
+          break;
+        case 'create_modernization_plan':
+          result = Tools.handleCreateModernizationPlan(T.CreateModernizationPlanInputSchema.parse(args));
+          break;
+        case 'select_modernization_strategy':
+          result = Tools.handleSelectModernizationStrategy(T.SelectModernizationStrategyInputSchema.parse(args));
+          break;
+        case 'create_modernization_stages':
+          result = Tools.handleCreateModernizationStages(T.CreateModernizationStagesInputSchema.parse(args));
+          break;
+        case 'evaluate_modernization_completion':
+          result = Tools.handleEvaluateModernizationCompletion(T.EvaluateModernizationCompletionInputSchema.parse(args));
           break;
         default:
           throw new Error(`Tool not found: ${name}`);

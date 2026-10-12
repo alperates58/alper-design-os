@@ -1,0 +1,56 @@
+/* Legacy CSS with inconsistent spacing, hardcoded colors and !important */
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  color: #222222;
+  background-color: #ffffff;
+}
+
+.legacy-container {
+  padding: 12px !important;
+}
+
+.sidebar {
+  padding: 15px;
+  border-right: 1px solid #cccccc;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar li a {
+  color: #0066cc;
+  text-decoration: none;
+  display: block;
+  padding: 6px 0px;
+}
+
+.content-pane {
+  background: #fdfdfd;
+}
+
+.btn-legacy-logout {
+  background-color: #cc0000 !important;
+  color: #ffffff;
+  border: 1px solid #990000;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.user-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.user-table th, .user-table td {
+  border: 1px solid #dddddd;
+  padding: 7px 11px; /* Inconsistent non-modular spacing */
+}
+
+.user-table th {
+  background-color: #f2f2f2;
+  text-align: left;
+}

@@ -74,7 +74,16 @@ import {
   createManualRunBundle,
   verifyManualRunEvidence,
   resolveBrowserRuntime,
-  diagnoseOperatorExecutionEnvironment
+  diagnoseOperatorExecutionEnvironment,
+  profileExistingProject,
+  createBehavioralBaseline,
+  createPreservationContract,
+  classifyExistingElements,
+  createModernizationIntent,
+  createModernizationPlan,
+  selectModernizationStrategy,
+  createModernizationStages,
+  evaluateModernizationCompletion
 } from '@alper-design-os/agent-governance';
 import {
   createDesignIntent,
@@ -1281,9 +1290,125 @@ export function handleRunOperatorDoctor(input: T.RunOperatorDoctorInput) {
   });
 }
 
+// 89. profile_existing_project
+export function handleProfileExistingProject(input: T.ProfileExistingProjectInput) {
+  const files = collectProjectFiles(input.projectPath);
+  return profileExistingProject({
+    rootDir: input.projectPath,
+    files,
+    projectIdentity: input.projectName ? { name: input.projectName, rootDir: input.projectPath } : undefined
+  });
+}
+
+// 90. create_behavioral_baseline
+export function handleCreateBehavioralBaseline(input: T.CreateBehavioralBaselineInput) {
+  const files = collectProjectFiles(input.projectPath);
+  return createBehavioralBaseline(files);
+}
+
+// 91. create_preservation_contract
+export function handleCreatePreservationContract(input: T.CreatePreservationContractInput) {
+  return createPreservationContract({
+    contractId: input.contractId,
+    specificInvariants: input.customInvariants
+  });
+}
+
+// 92. classify_existing_elements
+export function handleClassifyExistingElements(input: T.ClassifyExistingElementsInput) {
+  return classifyExistingElements(input.elements);
+}
+
+// 93. create_modernization_intent
+export function handleCreateModernizationIntent(input: T.CreateModernizationIntentInput) {
+  let projectProfile: any;
+  if (input.autoSupplementFromProjectPath) {
+    const files = collectProjectFiles(input.autoSupplementFromProjectPath);
+    projectProfile = profileExistingProject({ rootDir: input.autoSupplementFromProjectPath, files });
+  }
+
+  const result = createModernizationIntent(input, projectProfile);
+  if (!result.isValid) {
+    throw new Error(result.rejectionReason || "Invalid modernization intent: insufficient context.");
+  }
+  return result.intent;
+}
+
+// 94. create_modernization_plan
+export function handleCreateModernizationPlan(input: T.CreateModernizationPlanInput) {
+  const files = collectProjectFiles(input.projectPath);
+  const profile = profileExistingProject({ rootDir: input.projectPath, files });
+  const baseline = createBehavioralBaseline(files);
+  const intentResult = createModernizationIntent({ why: input.why || 'Modernize legacy presentation layer' }, profile);
+  const intent = intentResult.intent!;
+
+  const scope = {
+    level: input.scopeLevel,
+    targetName: input.scopeTarget,
+    allowedPaths: [input.scopeTarget.toLowerCase()],
+    prohibitedPaths: ['**/migrations/**', '**/schema.sql'],
+    canModifySharedComponents: input.scopeLevel === 'MODULE' || input.scopeLevel === 'APPLICATION',
+    canModifyGlobalShell: input.scopeLevel === 'SHELL' || input.scopeLevel === 'APPLICATION',
+    canModifyBackend: false,
+    canModifyDatabase: false
+  };
+
+  return createModernizationPlan({
+    profile,
+    intent,
+    baseline,
+    scope,
+    strategy: input.strategy || 'BRIDGE'
+  });
+}
+
+// 95. select_modernization_strategy
+export function handleSelectModernizationStrategy(input: T.SelectModernizationStrategyInput) {
+  let profile: any;
+  if (input.projectPath) {
+    const files = collectProjectFiles(input.projectPath);
+    profile = profileExistingProject({ rootDir: input.projectPath, files });
+  } else {
+    profile = profileExistingProject({ rootDir: '.', files: [] });
+  }
+
+  return selectModernizationStrategy({
+    requestedStrategy: input.requestedStrategy as any,
+    projectProfile: profile,
+    explicitUserRequest: input.explicitUserRequest,
+    justification: input.justification
+  });
+}
+
+// 96. create_modernization_stages
+export function handleCreateModernizationStages(input: T.CreateModernizationStagesInput) {
+  const scope = {
+    level: input.scopeLevel,
+    targetName: input.targetName,
+    allowedPaths: [input.targetName.toLowerCase()],
+    prohibitedPaths: ['**/migrations/**'],
+    canModifySharedComponents: true,
+    canModifyGlobalShell: input.scopeLevel === 'SHELL' || input.scopeLevel === 'APPLICATION',
+    canModifyBackend: false,
+    canModifyDatabase: false
+  };
+
+  const strategy = selectModernizationStrategy({
+    requestedStrategy: input.strategy,
+    projectProfile: profileExistingProject({ rootDir: '.', files: [] })
+  });
+
+  return createModernizationStages(scope, strategy, []);
+}
+
+// 97. evaluate_modernization_completion
+export function handleEvaluateModernizationCompletion(input: T.EvaluateModernizationCompletionInput) {
+  return evaluateModernizationCompletion(input);
+}
+
 /**
  * Canonical Tool Registry Map:
- * Complete, typed mapping of all 88 registered Alper Design OS MCP tools to their handler functions.
+ * Complete, typed mapping of all 97 registered Alper Design OS MCP tools to their handler functions.
  */
 export const toolRegistry = new Map<string, Function>([
   ['analyze_project', handleAnalyzeProject],
@@ -1373,8 +1498,18 @@ export const toolRegistry = new Map<string, Function>([
   ['create_manual_run_bundle', handleCreateManualRunBundle],
   ['verify_manual_run_evidence', handleVerifyManualRunEvidence],
   ['resolve_browser_runtime', handleResolveBrowserRuntime],
-  ['run_operator_doctor', handleRunOperatorDoctor]
+  ['run_operator_doctor', handleRunOperatorDoctor],
+  ['profile_existing_project', handleProfileExistingProject],
+  ['create_behavioral_baseline', handleCreateBehavioralBaseline],
+  ['create_preservation_contract', handleCreatePreservationContract],
+  ['classify_existing_elements', handleClassifyExistingElements],
+  ['create_modernization_intent', handleCreateModernizationIntent],
+  ['create_modernization_plan', handleCreateModernizationPlan],
+  ['select_modernization_strategy', handleSelectModernizationStrategy],
+  ['create_modernization_stages', handleCreateModernizationStages],
+  ['evaluate_modernization_completion', handleEvaluateModernizationCompletion]
 ]);
+
 
 
 

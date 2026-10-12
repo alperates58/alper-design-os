@@ -4,14 +4,15 @@
 
 [![License: MIT](https://img.shields.io/badge/Lisans-MIT-blue.svg)](LICENSE_POLICY.md)
 [![TypeScript: Strict](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](tsconfig.json)
-[![Antigravity Plugin Ready](https://img.shields.io/badge/Antigravity-57%20Skills%20Registered-emerald.svg)](plugin.json)
-[![Tests: 326 Passed](https://img.shields.io/badge/Tests-326%20Passed%20(16%20Suites)-brightgreen.svg)](tests/)
-[![MCP Server: 88 Tools](https://img.shields.io/badge/MCP%20Server-88%20Tools-purple.svg)](packages/mcp-server/)
+[![Antigravity Plugin Ready](https://img.shields.io/badge/Antigravity-61%20Skills%20Registered-emerald.svg)](plugin.json)
+[![Tests: 345+ Passed](https://img.shields.io/badge/Tests-345%2B%20Passed%20(17%20Suites)-brightgreen.svg)](tests/)
+[![MCP Server: 97 Tools](https://img.shields.io/badge/MCP%20Server-97%20Tools-purple.svg)](packages/mcp-server/)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](scripts/)
 
 **ALPER DESIGN OS**, sıradan bir bileşen veya UI kütüphanesi değildir. Yazılım alanlarını (domain) derinlemesine anlayan, kullanıcı iş akışlarını ve ergonomisini analiz eden, kurumsal seviyede mimari ve UX/UI kararları alan, sıfırdan ürün tasarlayan veya mevcut devasa sistemleri cerrahi/aşamalı olarak modernize eden **AI-Native, Teknoloji Bağımsız Tasarım ve UX Geliştirme İşletim Sistemi**'dir.
 
-Bünyesinde **57 adet Antigravity Yeteneği (Skill)**, **88 adet tip güvenli MCP Aracı** ve **8 farklı frontend/backend adaptörü** barındırır.
+Bünyesinde **61 adet Antigravity Yeteneği (Skill)**, **97 adet tip güvenli MCP Aracı**, **8 farklı frontend/backend adaptörü** ve **Mevcut Proje Modernizasyon Motoru (Phase 1F.0)** barındırır.
+
 
 ---
 
@@ -51,9 +52,17 @@ Bünyesinde **57 adet Antigravity Yeteneği (Skill)**, **88 adet tip güvenli MC
 8. **Ajan Yönetişimi & Değişiklik Güvenliği (Agent Governance):**
    17 adımlı sıkı yaşam döngüsü, `AgentActionPlan`, etki alanı (blast radius) değerlendirmesi, yıkıcı komut koruması, bağımsız gözden geçirici kapısı ve kanıt temelli doğrulama.
 
+9. **Mevcut Proje Modernizasyon Motoru (Phase 1F.0 Modernization Engine Foundation):**
+   Mevcut kurumsal projeleri güvenli şekilde anlama ve cerrahi modernizasyon planı çıkarma yeteneği. Standardize pipeline:
+   `EXISTING PROJECT -> UNDERSTAND -> BASELINE -> PRESERVE -> CLASSIFY -> PLAN -> PROPOSE -> HUMAN SELECT -> APPLY -> VERIFY`
+   * **Big Bang Rewrite Varsayılan Olarak Yasak:** Yalnızca açık kullanıcı talebi ve yüksek gerekçeyle kontrollü shell rebuild'e izin verilir; güvenli `BRIDGE` yaklaşımı önceliklidir.
+   * **Preservation Contract (Koruma Sözleşmesi):** Backend mantığı, DB şeması, API ve Auth katmanları `MUST_PRESERVE` ile kilitlenir.
+   * **Scope Guard:** Sayfa seviyesi görevler asla sessizce uygulama geneline veya veritabanına genişleyemez.
+   * **Human Visual Approval:** Tasarım yönü adayları (A: High-Density Workbench, B: Modular Cards, C: Streamlined Stepper) insan görsel onayı olmadan yayına alınamaz.
+
 ---
 
-## 🧠 57 Uzmanlaşmış Yetenek (Antigravity Skills)
+## 🧠 61 Uzmanlaşmış Yetenek (Antigravity Skills)
 
 ### Yetenek (Skill) Nedir ve Nasıl Çalışır?
 Alper Design OS içerisindeki **Skill'ler**, yapay zeka ajanının sıradan bir metin tamamlayıcı gibi değil; **kıdemli bir baş mimar, güvenlik denetçisi veya UX araştırmacısı** gibi hareket etmesini sağlayan kurallar, kılavuzlar ve iş akışları paketidir.
@@ -161,26 +170,34 @@ graph TD
 | `alper-contract-testing` | **Sözleşme Testi:** Servisler arası API entegrasyonlarını Pact tüketici odaklı sözleşmelerle kilitler. |
 | `alper-load-testing` | **Yük & Stres Testi:** Grafana k6 kullanarak kontrollü eşzamanlı kullanıcı trafiği altında verimlilik testi yapar. |
 
+### 9. Mevcut Proje Modernizasyonu (Modernization Engine Foundation — Phase 1F.0)
+| Yetenek | Rolü ve Açıklaması |
+| :--- | :--- |
+| `alper-existing-project-analysis` | **Mevcut Proje Analizi:** Stack, mimari stil, teknik/görsel/UX borç heuristiği ve kritik iş akışlarını çıkarır. |
+| `alper-modernization-planner` | **Modernizasyon Planlayıcı:** Aşamalı plan (Stage 1-5), KEEP/IMPROVE/REPLACE/DEFER/REMOVE sınıflandırması ve tasarım adayları (A/B/C) üretir. |
+| `alper-behavior-preservation` | **Davranış Koruma & Sözleşme:** Rotaları, API sözleşmelerini, DB invariantlarını ve auth mekanizmalarını dondurur; regresyonu önler. |
+| `alper-modernization-review` | **Modernizasyon Gözden Geçirici:** Kapsam sadakati, gereksiz rewrite önleme, bağımlılık kontrolü ve görsel onay kapısını denetler. |
+
 ---
 
 ## 📁 Proje Dizin Yapısı
 
 ```text
 alper-design-os/
-├── plugin.json                 # Antigravity Plugin Tanımı (57 Yetenek Kayıtlı)
+├── plugin.json                 # Antigravity Plugin Tanımı (61 Yetenek Kayıtlı)
 ├── mcp_config.json             # MCP Sunucu Konfigürasyonu
 ├── hooks.json                  # Yaşam Döngüsü Hook'ları
 ├── pnpm-workspace.yaml         # Monorepo Workspace Konfigürasyonu
 │
-├── skills/                     # 57 Uzmanlaşmış Antigravity Yeteneği
+├── skills/                     # 61 Uzmanlaşmış Antigravity Yeteneği
 │   ├── alper-design-new/       # Sıfırdan Ürün Tasarım Akışı
 │   ├── alper-design-repair/    # Cerrahi Arayüz Onarım Akışı
 │   ├── alper-design-modernize/ # 4 Aşamalı Modernizasyon Akışı
-│   ├── alper-domain-intelligence/ # Alan & Operatör İstihbaratı
-│   ├── alper-ui-blueprint/     # UI Blueprint DSL
-│   ├── alper-playwright-testing/ # Rol Tabanlı Playwright E2E Testi
-│   ├── alper-change-planner/   # 17 Adımlı Değişiklik Yaşam Döngüsü
-│   └── ...                     # (Toplam 57 adet yetenek klasörü)
+│   ├── alper-existing-project-analysis/ # Mevcut Proje Analizi (Phase 1F.0)
+│   ├── alper-modernization-planner/     # Modernizasyon Planlayıcı (Phase 1F.0)
+│   ├── alper-behavior-preservation/     # Davranış Koruma Sözleşmesi (Phase 1F.0)
+│   ├── alper-modernization-review/      # Modernizasyon İnceleme Kapısı (Phase 1F.0)
+│   └── ...                     # (Toplam 61 adet yetenek klasörü)
 │
 ├── scripts/                    # Otomasyon ve Sistem Sağlık Araçları
 │   ├── install-windows.ps1     # Otomatik Windows Kurulum Scripti
@@ -214,9 +231,10 @@ alper-design-os/
 │   ├── engineering-guardrails/ # Kalite Profilleri, STRIDE Tehdit Modeli, Güvenli Tarama
 │   ├── qa-engine/              # Playwright, DevTools, Görsel Regresyon, QA Raporlayıcı
 │   ├── software-intelligence/  # Mimari Stil Tespiti, DB Migrasyon Riski, ADR Üretimi
-│   └── mcp-server/             # 88 Tipli Araç İçeren Resmi MCP Sunucusu
+│   └── mcp-server/             # 97 Tipli Araç İçeren Resmi MCP Sunucusu
 │
-├── tests/                      # 16 Test Süiti, 326 Otomatik Vitest Testi
+├── tests/                      # 17 Test Süiti, 345+ Otomatik Vitest Testi
+│   ├── modernization-engine.test.ts # Faz 1F.0 Modernizasyon Motoru Süiti
 │   ├── domain-benchmark-15.test.ts
 │   ├── design-language.test.ts
 │   ├── truthful-ui-governance.test.ts

@@ -1,0 +1,37 @@
+@model dynamic
+@{
+    ViewData["Title"] = "Operations Home";
+}
+
+<div class="razor-data-wrapper">
+    <h2 style="color: #333; margin-top: 0;">Active Work Orders</h2>
+    <form asp-controller="Home" asp-action="UpdateStatus" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="recordId" value="WO-994" />
+        <table class="table-striped" width="100%" cellpadding="6" cellspacing="0" border="1">
+            <thead>
+                <tr bgcolor="#f5f5f5">
+                    <th>Order #</th>
+                    <th>Equipment</th>
+                    <th>Priority</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>WO-994</td>
+                    <td>CNC Milling Machine 4</td>
+                    <td><font color="red">HIGH</font></td>
+                    <td>
+                        <select name="status">
+                            <option value="QUEUED">QUEUED</option>
+                            <option value="IN_PROGRESS" selected>IN_PROGRESS</option>
+                            <option value="COMPLETED">COMPLETED</option>
+                        </select>
+                        <input type="submit" value="Save" class="btn-save" />
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+</div>

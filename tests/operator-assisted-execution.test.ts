@@ -268,10 +268,12 @@ describe('Phase 1E.7.1: Operator-Assisted Execution Hotfix', () => {
   // 10. Operator Execution Bug Fixes & Governance Regression Suite
   describe('Operator Execution Bug Fixes & Governance Regression Suite', () => {
     // 1. MCP runtime check import success
-    it('1. MCP runtime check import success: canonical toolRegistry exported with 88 tools', () => {
+    it('1. MCP runtime check import success: canonical toolRegistry exported with registered tools', () => {
       expect(MCPTools.toolRegistry).toBeDefined();
-      expect(MCPTools.toolRegistry.size).toBe(88);
+      expect(MCPTools.toolRegistry.size).toBeGreaterThanOrEqual(88);
+      expect(MCPTools.toolRegistry.size).toBe(97);
       expect(MCPTools.toolRegistry.has('run_operator_doctor')).toBe(true);
+      expect(MCPTools.toolRegistry.has('profile_existing_project')).toBe(true);
       expect(MCPTools.toolRegistry.has('create_manual_run_bundle')).toBe(true);
       expect(MCPTools.toolRegistry.has('verify_manual_run_evidence')).toBe(true);
     });

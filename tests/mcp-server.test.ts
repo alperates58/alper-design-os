@@ -568,6 +568,100 @@ describe('Alper Design MCP Tools Verification', () => {
     expect(result.recommendedMode).toBe('HUMAN_OPERATOR_EXECUTION');
     expect(result.formattedReport).toContain('Recommended Mode');
   });
+
+  it('64. profile_existing_project profiles legacy project via MCP', () => {
+    const result = Tools.handleProfileExistingProject({
+      projectPath: 'tests/fixtures/legacy-react',
+      projectName: 'LegacyReactPortal'
+    });
+    expect(result.projectIdentity.name).toBe('LegacyReactPortal');
+    expect(result.detectedStack.primaryStack).toContain('React');
+    expect(result.criticalRoutes.length).toBeGreaterThan(0);
+  });
+
+  it('65. create_behavioral_baseline captures baseline routes and invariants via MCP', () => {
+    const result = Tools.handleCreateBehavioralBaseline({
+      projectPath: 'tests/fixtures/legacy-blade'
+    });
+    expect(result.routes.length).toBeGreaterThan(0);
+    expect(result.criticalWorkflows.length).toBeGreaterThan(0);
+  });
+
+  it('66. create_preservation_contract produces preservation contract via MCP', () => {
+    const result = Tools.handleCreatePreservationContract({
+      contractId: 'contract-custom-01'
+    });
+    expect(result.contractId).toBe('contract-custom-01');
+    expect(result.backendBusinessLogic).toBe('MUST_PRESERVE');
+    expect(result.databaseSchema).toBe('MUST_PRESERVE');
+  });
+
+  it('67. classify_existing_elements classifies elements into decisions via MCP', () => {
+    const result = Tools.handleClassifyExistingElements({
+      elements: [
+        { targetId: 'C1', name: 'LegacyTable', path: 'views/table.blade.php', elementType: 'COMPONENT', proposedDecision: 'REPLACE' },
+        { targetId: 'C2', name: 'OldButton', path: 'views/btn.blade.php', elementType: 'COMPONENT', proposedDecision: 'REMOVE' }
+      ]
+    });
+    expect(result.length).toBe(2);
+    expect(result.find(r => r.targetId === 'C2')?.risk).toBe('HIGH');
+  });
+
+  it('68. create_modernization_intent structures intent and supplements missing context via MCP', () => {
+    const result = Tools.handleCreateModernizationIntent({
+      why: 'Make it modern',
+      autoSupplementFromProjectPath: 'tests/fixtures/legacy-react'
+    });
+    expect(result.why).toContain('Modernize legacy presentation layer');
+    expect(result.primaryProblems.length).toBeGreaterThan(0);
+  });
+
+  it('69. create_modernization_plan generates full staged plan via MCP', () => {
+    const result = Tools.handleCreateModernizationPlan({
+      projectPath: 'tests/fixtures/legacy-blade',
+      why: 'Modernize blade views with DTCG design tokens',
+      scopeTarget: 'DashboardView',
+      scopeLevel: 'PAGE'
+    });
+    expect(result.implementationStages.length).toBeGreaterThanOrEqual(4);
+    expect(result.rollbackPlan.rollbackSteps.length).toBeGreaterThan(0);
+  });
+
+  it('70. select_modernization_strategy evaluates strategy and blocks rewrite via MCP', () => {
+    const result = Tools.handleSelectModernizationStrategy({
+      requestedStrategy: 'BIG_BANG_REWRITE',
+      projectPath: 'tests/fixtures/legacy-razor',
+      explicitUserRequest: false
+    });
+    expect(result.blocked).toBe(true);
+    expect(result.strategy).toBe('BRIDGE');
+  });
+
+  it('71. create_modernization_stages dynamically generates stages via MCP', () => {
+    const result = Tools.handleCreateModernizationStages({
+      scopeLevel: 'SHELL',
+      targetName: 'GlobalAppShell',
+      strategy: 'REBUILD_SHELL'
+    });
+    expect(result.length).toBeGreaterThanOrEqual(4);
+    expect(result.some(s => s.stageId === 'STAGE_2_SHELL')).toBe(true);
+  });
+
+  it('72. evaluate_modernization_completion validates gated completion via MCP', () => {
+    const result = Tools.handleEvaluateModernizationCompletion({
+      technical: 'PASS',
+      visualAI: 'PASS',
+      ux: 'PASS',
+      accessibility: 'PASS',
+      security: 'PASS',
+      regression: 'PASS',
+      contentTruth: 'PASS',
+      humanVisualApproval: 'APPROVED'
+    });
+    expect(result.isComplete).toBe(true);
+    expect(result.verdict).toBe('COMPLETE');
+  });
 });
+
 
 

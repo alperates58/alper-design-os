@@ -1,0 +1,9 @@
+{
+  "name": "laravel/legacy-blade-fixture",
+  "type": "project",
+  "description": "Legacy Laravel Blade application fixture.",
+  "require": {
+    "php": "^8.0",
+    "laravel/framework": "^8.0"
+  }
+}
