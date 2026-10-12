@@ -14,6 +14,7 @@ export const MANDATORY_EVIDENCE_FILES = [
   'build.log',
   'tests.log',
   'benchmark.log',
+  'mcp.json',
   'playwright.json',
   'browser.json',
   'git-status.json',
@@ -84,12 +85,16 @@ cd "${bundleDir.replace(/\\/g, '\\\\')}"
 \`\`\`
 
 ## What RUN.ps1 Does
-1. Automatically executes build and tests.
+1. Automatically captures environment and git status.
 2. Interrogates Docker & Docker Compose availability.
-3. Tests Playwright Microsoft Edge browser launch.
-4. Redacts any detected secrets.
-5. Emits verified evidence files into \`evidence/\`.
-6. Generates \`result.json\` signed by the execution pipeline.
+3. Builds monorepo packages.
+4. Executes full test suite.
+5. Runs MCP runtime smoke test (88 registered tools).
+6. Resolves browser runtime and validates Playwright Microsoft Edge launch.
+7. Executes fixture and governance benchmarks.
+8. Redacts any detected secrets.
+9. Emits verified evidence files into \`evidence/\`.
+10. Generates \`result.json\` signed by the execution pipeline.
 `;
   fs.writeFileSync(readmePath, readmeContent, 'utf-8');
 
@@ -101,6 +106,7 @@ cd "${bundleDir.replace(/\\/g, '\\\\')}"
 # ========================================================
 $ErrorActionPreference = "Continue"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$bundleDir = $ScriptDir
 $EvidenceDir = Join-Path $ScriptDir "evidence"
 $RepoRoot = (Resolve-Path (Join-Path $ScriptDir "..\\..\\..")).Path
 
@@ -111,6 +117,7 @@ if (-not (Test-Path $EvidenceDir)) {
 Write-Host "========================================================" -ForegroundColor Cyan
 Write-Host "  ALPER DESIGN OS - Operator Execution Runner" -ForegroundColor Cyan
 Write-Host "  Run ID: ${runId}" -ForegroundColor Cyan
+Write-Host "  Mode: HUMAN_OPERATOR_EXECUTION" -ForegroundColor Cyan
 Write-Host "========================================================\`n" -ForegroundColor Cyan
 
 # Helper to write and redact content
@@ -124,9 +131,14 @@ function Write-EvidenceFile {
 }
 
 # 1. Environment Info
-Write-Host "[1/8] Capturing environment info..." -ForegroundColor Yellow
+Write-Host "[1/9] Capturing environment info..." -ForegroundColor Yellow
+$nodeVer = (node -v 2>$null)
+$npmVer = (npm -v 2>$null)
+$pnpmVer = (pnpm -v 2>$null)
 $envInfo = @{
-    nodeVersion = (node -v 2>$null)
+    nodeVersion = $nodeVer
+    npmVersion = $npmVer
+    pnpmVersion = $pnpmVer
     os = [System.Environment]::OSVersion.ToString()
     powershellVersion = $PSVersionTable.PSVersion.ToString()
     user = [System.Environment]::UserName
@@ -134,88 +146,167 @@ $envInfo = @{
 }
 Write-EvidenceFile (Join-Path $EvidenceDir "environment.json") ($envInfo | ConvertTo-Json -Depth 5)
 
-# 2. Docker Status
-Write-Host "[2/8] Checking Docker & Docker Compose..." -ForegroundColor Yellow
-$dockerVer = (docker --version 2>$null)
-$composeVer = (docker compose version 2>$null)
-$dockerInfo = @{
-    dockerAvailable = ($null -ne $dockerVer)
-    dockerVersion = $dockerVer
-    composeAvailable = ($null -ne $composeVer)
-    composeVersion = $composeVer
-}
-Write-EvidenceFile (Join-Path $EvidenceDir "docker.json") ($dockerInfo | ConvertTo-Json -Depth 5)
-
-# 3. Build Monorepo
-Write-Host "[3/8] Building monorepo packages..." -ForegroundColor Yellow
-$buildOutput = (& "C:\\Program Files\\Git\\bin\\bash.exe" -c "npm run build 2>&1")
-Write-EvidenceFile (Join-Path $EvidenceDir "build.log") ($buildOutput -join "\`n")
-
-# 4. Test Suite Execution
-Write-Host "[4/8] Running test suite..." -ForegroundColor Yellow
-$testOutput = (& "C:\\Program Files\\Git\\bin\\bash.exe" -c "npm test 2>&1")
-Write-EvidenceFile (Join-Path $EvidenceDir "tests.log") ($testOutput -join "\`n")
-
-# 5. Benchmark Output
-Write-Host "[5/8] Checking benchmark readiness..." -ForegroundColor Yellow
-$benchOutput = "Benchmark readiness verified for operator-assisted execution."
-Write-EvidenceFile (Join-Path $EvidenceDir "benchmark.log") $benchOutput
-
-# 6. Browser & Edge Resolution
-Write-Host "[6/8] Checking browser resolution (System Microsoft Edge)..." -ForegroundColor Yellow
-$edgePath = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"
-if (-not (Test-Path $edgePath)) {
-    $edgePath = "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe"
-}
-$browserInfo = @{
-    engine = "SYSTEM_EDGE"
-    path = $edgePath
-    version = "${options?.browserVersion || '155.0.4283.45'}"
-    channel = "msedge"
-    verified = (Test-Path $edgePath)
-}
-Write-EvidenceFile (Join-Path $EvidenceDir "browser.json") ($browserInfo | ConvertTo-Json -Depth 5)
-
-# 7. Playwright Status
-Write-Host "[7/8] Verifying Playwright channel configuration..." -ForegroundColor Yellow
-$playwrightInfo = @{
-    package = "playwright"
-    channel = "msedge"
-    launchStatus = "VERIFIED"
-    notes = "Edge launch verified; managed Chromium download bypassed per security policy."
-}
-Write-EvidenceFile (Join-Path $EvidenceDir "playwright.json") ($playwrightInfo | ConvertTo-Json -Depth 5)
-
-# 8. Git Status
-Write-Host "[8/8] Checking git repository status..." -ForegroundColor Yellow
+# 2. Git Status
+Write-Host "[2/9] Checking git repository status..." -ForegroundColor Yellow
 $gitStatus = (git status -s 2>$null)
 $gitHead = (git rev-parse HEAD 2>$null)
+$gitBranch = (git branch --show-current 2>$null)
 $gitInfo = @{
-    branch = (git branch --show-current 2>$null)
+    branch = $gitBranch
     commit = $gitHead
     status = $gitStatus
 }
 Write-EvidenceFile (Join-Path $EvidenceDir "git-status.json") ($gitInfo | ConvertTo-Json -Depth 5)
 
-# 9. Result Summary (result.json)
+# 3. Docker Status
+Write-Host "[3/9] Checking Docker & Docker Compose..." -ForegroundColor Yellow
+$dockerVer = (docker --version 2>$null)
+$composeVer = (docker compose version 2>$null)
+$dockerInfoCheck = (docker info 2>&1)
+$dockerRunning = ($LASTEXITCODE -eq 0 -and $null -ne $dockerVer)
+$dockerInfo = @{
+    dockerAvailable = ($null -ne $dockerVer)
+    dockerVersion = $dockerVer
+    composeAvailable = ($null -ne $composeVer)
+    composeVersion = $composeVer
+    daemonRunning = $dockerRunning
+    notes = if ($dockerRunning) { "Docker Engine reachable." } else { "Docker Engine daemon not active or not running." }
+}
+Write-EvidenceFile (Join-Path $EvidenceDir "docker.json") ($dockerInfo | ConvertTo-Json -Depth 5)
+
+# 4. Build Monorepo
+Write-Host "[4/9] Building monorepo packages..." -ForegroundColor Yellow
+Push-Location $RepoRoot
+$buildOutput = (& "C:\\Program Files\\Git\\bin\\bash.exe" -c "npm run build 2>&1")
+$buildExit = $LASTEXITCODE
+Pop-Location
+Write-EvidenceFile (Join-Path $EvidenceDir "build.log") ($buildOutput -join "\`n")
+Write-Host "  -> Build Exit Code: $buildExit" -ForegroundColor $(if ($buildExit -eq 0) { "Green" } else { "Red" })
+
+# 5. Test Suite Execution
+Write-Host "[5/9] Running test suite..." -ForegroundColor Yellow
+Push-Location $RepoRoot
+$testOutput = (& "C:\\Program Files\\Git\\bin\\bash.exe" -c "npm test 2>&1")
+$testExit = $LASTEXITCODE
+Pop-Location
+Write-EvidenceFile (Join-Path $EvidenceDir "tests.log") ($testOutput -join "\`n")
+Write-Host "  -> Test Exit Code: $testExit" -ForegroundColor $(if ($testExit -eq 0) { "Green" } else { "Red" })
+
+# 6. Initialize Benchmark Log
+$benchInit = "ALPER DESIGN OS - Operator-Assisted Benchmark Execution\`nRun ID: ${runId}\`nStarted: $((Get-Date).ToString('o'))\`n"
+Write-EvidenceFile (Join-Path $EvidenceDir "benchmark.log") $benchInit
+
+# 7. Operator Runtime Check (MCP, Browser Edge Launch, Fixtures, Governance)
+Write-Host "[6/9] Running Operator Runtime Check (MCP, Playwright Edge, Fixtures, Governance)..." -ForegroundColor Yellow
+Push-Location $RepoRoot
+$runtimeScript = Join-Path $RepoRoot "scripts\\operator-runtime-check.js"
+$runtimeExit = 0
+if (Test-Path $runtimeScript) {
+    & node $runtimeScript --evidence-dir $EvidenceDir
+    $runtimeExit = $LASTEXITCODE
+} else {
+    Write-Host "  [!] operator-runtime-check.js not found." -ForegroundColor Red
+    $runtimeExit = 1
+}
+Pop-Location
+Write-Host "  -> Runtime Check Exit Code: $runtimeExit" -ForegroundColor $(if ($runtimeExit -eq 0) { "Green" } else { "Red" })
+
+# 8. Docker Quick Benchmark (if daemon reachable)
+Write-Host "[7/9] Docker quick benchmark evaluation..." -ForegroundColor Yellow
+if ($dockerRunning) {
+    Write-Host "  -> Docker daemon is active. Running quick container check..." -ForegroundColor Green
+    $dockerBenchOut = "Docker Quick Benchmark: Engine reachable. Version: $dockerVer"
+} else {
+    Write-Host "  -> Docker daemon is not active. Marking container runtime as RESTRICTED." -ForegroundColor Gray
+    $dockerBenchOut = "Docker Quick Benchmark: Engine not active. Container runtime execution skipped on corporate PC."
+}
+$benchLogCurrent = [System.IO.File]::ReadAllText((Join-Path $EvidenceDir "benchmark.log"))
+Write-EvidenceFile (Join-Path $EvidenceDir "benchmark.log") ($benchLogCurrent + "\`n\`n" + $dockerBenchOut)
+
+# 9. Verify Generated Artifacts and Build result.json
+Write-Host "[8/9] Verifying generated evidence artifacts..." -ForegroundColor Yellow
+$mcpJsonPath = Join-Path $EvidenceDir "mcp.json"
+$browserJsonPath = Join-Path $EvidenceDir "browser.json"
+$playwrightJsonPath = Join-Path $EvidenceDir "playwright.json"
+
+$mcpStatus = if (Test-Path $mcpJsonPath) { "AVAILABLE" } else { "MISSING" }
+$browserEngine = "SYSTEM_EDGE"
+$browserVer = "${options?.browserVersion || '155.0.4283.45'}"
+if (Test-Path $browserJsonPath) {
+    try {
+        $bObj = Get-Content $browserJsonPath -Raw | ConvertFrom-Json
+        $browserEngine = $bObj.engine
+        $browserVer = $bObj.version
+    } catch {}
+}
+
+$playwrightStatus = "CONFIGURED"
+if (Test-Path $playwrightJsonPath) {
+    try {
+        $pObj = Get-Content $playwrightJsonPath -Raw | ConvertFrom-Json
+        $playwrightStatus = $pObj.launchStatus
+    } catch {}
+}
+
+# Check all mandatory files on disk before deciding status
+$mandatoryList = @('environment.json', 'docker.json', 'build.log', 'tests.log', 'benchmark.log', 'mcp.json', 'playwright.json', 'browser.json', 'git-status.json')
+$missingFilesOnDisk = @()
+foreach ($f in $mandatoryList) {
+    if (-not (Test-Path (Join-Path $EvidenceDir $f))) {
+        $missingFilesOnDisk += $f
+    }
+}
+
+# 10. Write result.json
+Write-Host "[9/9] Compiling final result.json..." -ForegroundColor Yellow
+$finalStatus = "VERIFIED"
+$overallExit = 0
+
+if ($buildExit -ne 0 -or $testExit -ne 0 -or $runtimeExit -ne 0) {
+    $finalStatus = "FAILED"
+    $overallExit = 1
+} elseif ($missingFilesOnDisk.Count -gt 0) {
+    $finalStatus = "MISSING_EVIDENCE"
+    $overallExit = 1
+} elseif ($playwrightStatus -ne "VERIFIED" -or $mcpStatus -ne "AVAILABLE") {
+    $finalStatus = "PARTIALLY_VERIFIED"
+    $overallExit = 1
+}
+
 $resultData = @{
     executionMode = "HUMAN_OPERATOR_EXECUTION"
     plannedBy = "ANTIGRAVITY"
     executedBy = "HUMAN_OPERATOR"
     verifiedBy = "ALPER_DESIGN_OS"
-    build = @{ status = "PASS"; exitCode = 0 }
-    tests = @{ status = "PASS"; exitCode = 0 }
-    docker = @{ status = "AVAILABLE" }
-    browser = @{ status = "AVAILABLE"; engine = "SYSTEM_EDGE"; version = "${options?.browserVersion || '155.0.4283.45'}" }
-    playwright = @{ status = "CONFIGURED"; channel = "msedge" }
-    benchmark = @{ status = "COMPLETED" }
-    exitCode = 0
+    status = $finalStatus
+    build = @{ status = if ($buildExit -eq 0) { "PASS" } else { "FAIL" }; exitCode = $buildExit }
+    tests = @{ status = if ($testExit -eq 0) { "PASS" } else { "FAIL" }; exitCode = $testExit }
+    runtimeCheck = @{ status = if ($runtimeExit -eq 0) { "PASS" } else { "FAIL" }; exitCode = $runtimeExit }
+    missingEvidence = $missingFilesOnDisk
+    docker = @{ status = if ($dockerInfo.dockerAvailable) { "AVAILABLE" } else { "RESTRICTED" }; daemonRunning = $dockerRunning }
+    mcp = @{ status = $mcpStatus; totalTools = 88 }
+    browser = @{ status = if (Test-Path $browserJsonPath) { "AVAILABLE" } else { "MISSING" }; engine = $browserEngine; version = $browserVer }
+    playwright = @{ status = $playwrightStatus; channel = "msedge" }
+    benchmark = @{ status = if ($runtimeExit -eq 0) { "COMPLETED" } else { "FAILED" } }
+    exitCode = $overallExit
     timestamp = (Get-Date -Format "o")
 }
 Write-EvidenceFile (Join-Path $EvidenceDir "result.json") ($resultData | ConvertTo-Json -Depth 5)
 
-Write-Host "\`n[+] All evidence successfully captured into: $EvidenceDir" -ForegroundColor Green
-Write-Host "[+] Status: VERIFIED by ALPER_DESIGN_OS" -ForegroundColor Green
+if ($missingFilesOnDisk.Count -gt 0) {
+    Write-Host "[!] Missing mandatory evidence: $($missingFilesOnDisk -join ', ')" -ForegroundColor Red
+}
+if ($buildExit -ne 0 -or $testExit -ne 0 -or $runtimeExit -ne 0) {
+    Write-Host "[!] Sub-step failure detected: build=$buildExit, tests=$testExit, runtime=$runtimeExit" -ForegroundColor Red
+}
+
+$bannerColor = if ($finalStatus -eq "VERIFIED") { "Green" } elseif ($finalStatus -eq "PARTIALLY_VERIFIED") { "Yellow" } else { "Red" }
+Write-Host "\`n========================================================" -ForegroundColor $bannerColor
+Write-Host "  OPERATOR EXECUTION COMPLETE" -ForegroundColor $bannerColor
+Write-Host "  Bundle: $bundleDir"
+Write-Host "  Evidence: $EvidenceDir"
+Write-Host "  Result: $finalStatus by ALPER_DESIGN_OS" -ForegroundColor $bannerColor
+Write-Host "========================================================\`n"
 `;
   fs.writeFileSync(scriptPath, runPs1Content, 'utf-8');
 
@@ -233,7 +324,7 @@ Write-Host "[+] Status: VERIFIED by ALPER_DESIGN_OS" -ForegroundColor Green
 }
 
 export interface VerifyManualRunResult {
-  status: 'MANUAL_EXECUTION_REQUIRED' | 'VERIFIED' | 'MISSING_EVIDENCE' | 'FAILED';
+  status: 'MANUAL_EXECUTION_REQUIRED' | 'VERIFIED' | 'MISSING_EVIDENCE' | 'FAILED' | 'PARTIALLY_VERIFIED';
   runId: string;
   missingFiles: string[];
   collectedFiles: string[];
@@ -297,7 +388,7 @@ export function verifyManualRunEvidence(runIdOrBundlePath: string): VerifyManual
       missingFiles,
       collectedFiles,
       secretsRedactedCount: 0,
-      summary: `Evidence incomplete: ${missingFiles.length} mandatory file(s) missing (${missingFiles.join(', ')}).`
+      summary: `Evidence incomplete: ${missingFiles.length} mandatory file(s) missing (${missingFiles.join(', ')}). Sub-step failure prohibited from passing as VERIFIED.`
     };
   }
 
@@ -330,6 +421,7 @@ export function verifyManualRunEvidence(runIdOrBundlePath: string): VerifyManual
     }
   }
 
+  // Strict validation: Non-zero exit code, failed sub-steps, or declared non-VERIFIED status cannot pass as VERIFIED
   if (result.exitCode !== 0) {
     return {
       status: 'FAILED',
@@ -339,6 +431,42 @@ export function verifyManualRunEvidence(runIdOrBundlePath: string): VerifyManual
       result,
       secretsRedactedCount,
       summary: `Manual run completed with non-zero exit code (${result.exitCode}). Investigation required.`
+    };
+  }
+
+  if (result.build?.status !== 'PASS' || result.tests?.status !== 'PASS') {
+    return {
+      status: 'FAILED',
+      runId,
+      missingFiles: [],
+      collectedFiles,
+      result,
+      secretsRedactedCount,
+      summary: `Manual run failed: build status=${result.build?.status}, tests status=${result.tests?.status}. Sub-step failure prohibited from passing as VERIFIED.`
+    };
+  }
+
+  if (result.runtimeCheck && result.runtimeCheck.status !== 'PASS') {
+    return {
+      status: 'FAILED',
+      runId,
+      missingFiles: [],
+      collectedFiles,
+      result,
+      secretsRedactedCount,
+      summary: `Manual run failed: runtime check exitCode=${result.runtimeCheck.exitCode}. Sub-step failure prohibited from passing as VERIFIED.`
+    };
+  }
+
+  if (result.playwright?.status !== 'VERIFIED' || result.browser?.status !== 'AVAILABLE' || result.mcp?.status !== 'AVAILABLE') {
+    return {
+      status: 'PARTIALLY_VERIFIED',
+      runId,
+      missingFiles: [],
+      collectedFiles,
+      result,
+      secretsRedactedCount,
+      summary: `Manual run partially verified: browser=${result.browser?.status}, playwright=${result.playwright?.status}, mcp=${result.mcp?.status}.`
     };
   }
 

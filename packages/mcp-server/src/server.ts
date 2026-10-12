@@ -7,20 +7,7 @@ import {
 import * as Tools from './tools/index.js';
 import * as T from './types.js';
 
-export function createAlperDesignServer(): Server {
-  const server = new Server(
-    {
-      name: 'alper-design-os',
-      version: '0.1.0'
-    },
-    {
-      capabilities: {
-        tools: {}
-      }
-    }
-  );
-
-  const toolDefinitions: Tool[] = [
+export const TOOL_DEFINITIONS: Tool[] = [
     {
       name: 'analyze_project',
       description: 'Performs read-only comprehensive stack, UI, and accessibility analysis on an existing project.',
@@ -1132,6 +1119,29 @@ export function createAlperDesignServer(): Server {
       }
     }
   ];
+
+export function getToolDefinitions(): Tool[] {
+  return TOOL_DEFINITIONS;
+}
+
+export function getRegisteredToolCount(): number {
+  return TOOL_DEFINITIONS.length;
+}
+
+export function createAlperDesignServer(): Server {
+  const server = new Server(
+    {
+      name: 'alper-design-os',
+      version: '0.1.0'
+    },
+    {
+      capabilities: {
+        tools: {}
+      }
+    }
+  );
+
+  const toolDefinitions = TOOL_DEFINITIONS;
 
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     return { tools: toolDefinitions };

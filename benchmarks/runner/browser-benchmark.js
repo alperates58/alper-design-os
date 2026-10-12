@@ -14,7 +14,12 @@ export async function runBrowserBenchmark({
   goldenUrl,
   screenshotDir = null
 }) {
-  const browser = await chromium.launch({ headless: true });
+  let browser;
+  try {
+    browser = await chromium.launch({ headless: true });
+  } catch (err) {
+    browser = await chromium.launch({ headless: true, channel: 'msedge' });
+  }
   const results = {
     testedAt: new Date().toISOString(),
     viewportsTested: VIEWPORTS.map((v) => `${v.name} (${v.width}x${v.height})`),

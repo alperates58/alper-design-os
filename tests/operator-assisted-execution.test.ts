@@ -86,6 +86,7 @@ describe('Phase 1E.7.1: Operator-Assisted Execution Hotfix', () => {
     fs.writeFileSync(path.join(evidenceDir, 'build.log'), 'Build completed successfully. 0 errors.');
     fs.writeFileSync(path.join(evidenceDir, 'tests.log'), 'All 303 tests passed. 0 failures.');
     fs.writeFileSync(path.join(evidenceDir, 'benchmark.log'), 'Benchmark verification completed.');
+    fs.writeFileSync(path.join(evidenceDir, 'mcp.json'), JSON.stringify({ status: 'AVAILABLE', totalTools: 88 }));
     fs.writeFileSync(path.join(evidenceDir, 'playwright.json'), JSON.stringify({ channel: 'msedge', status: 'VERIFIED' }));
     fs.writeFileSync(path.join(evidenceDir, 'browser.json'), JSON.stringify({ engine: 'SYSTEM_EDGE', version: '155.0.4283.45' }));
     fs.writeFileSync(path.join(evidenceDir, 'git-status.json'), JSON.stringify({ status: 'clean' }));
@@ -95,11 +96,12 @@ describe('Phase 1E.7.1: Operator-Assisted Execution Hotfix', () => {
       plannedBy: 'ANTIGRAVITY',
       executedBy: 'HUMAN_OPERATOR',
       verifiedBy: 'ALPER_DESIGN_OS',
-      build: { status: 'PASS' },
-      tests: { status: 'PASS' },
+      build: { status: 'PASS', exitCode: 0 },
+      tests: { status: 'PASS', exitCode: 0 },
+      mcp: { status: 'AVAILABLE' },
       docker: { status: 'AVAILABLE' },
       browser: { status: 'AVAILABLE', engine: 'SYSTEM_EDGE', version: '155.0.4283.45' },
-      playwright: { status: 'CONFIGURED', channel: 'msedge' },
+      playwright: { status: 'VERIFIED', channel: 'msedge' },
       benchmark: { status: 'COMPLETED' },
       exitCode: 0,
       timestamp: new Date().toISOString()
@@ -260,6 +262,166 @@ describe('Phase 1E.7.1: Operator-Assisted Execution Hotfix', () => {
       });
       expect(result.recommendedMode).toBe('HUMAN_OPERATOR_EXECUTION');
       expect(result.formattedReport).toContain('Docker Capability');
+    });
+  });
+
+  // 10. Operator Execution Bug Fixes & Governance Regression Suite
+  describe('Operator Execution Bug Fixes & Governance Regression Suite', () => {
+    // 1. MCP runtime check import success
+    it('1. MCP runtime check import success: canonical toolRegistry exported with 88 tools', () => {
+      expect(MCPTools.toolRegistry).toBeDefined();
+      expect(MCPTools.toolRegistry.size).toBe(88);
+      expect(MCPTools.toolRegistry.has('run_operator_doctor')).toBe(true);
+      expect(MCPTools.toolRegistry.has('create_manual_run_bundle')).toBe(true);
+      expect(MCPTools.toolRegistry.has('verify_manual_run_evidence')).toBe(true);
+    });
+
+    // 2. Runtime child step fails -> final VERIFIED olamaz
+    it('2. runtime child step fails: non-zero exit code or sub-step failure strictly prevents VERIFIED status', () => {
+      const bundle = createManualRunBundle({
+        runId: 'test-reg-fail-step',
+        baseDir: testRunDir
+      });
+      const evidenceDir = path.join(bundle.bundlePath, 'evidence');
+
+      for (const f of MANDATORY_EVIDENCE_FILES) {
+        if (f !== 'result.json') {
+          fs.writeFileSync(path.join(evidenceDir, f), 'sample-data');
+        }
+      }
+
+      const failingResult = {
+        executionMode: 'HUMAN_OPERATOR_EXECUTION',
+        plannedBy: 'ANTIGRAVITY',
+        executedBy: 'HUMAN_OPERATOR',
+        verifiedBy: 'ALPER_DESIGN_OS',
+        build: { status: 'PASS', exitCode: 0 },
+        tests: { status: 'PASS', exitCode: 0 },
+        runtimeCheck: { status: 'FAIL', exitCode: 1 },
+        docker: { status: 'AVAILABLE' },
+        mcp: { status: 'AVAILABLE' },
+        browser: { status: 'AVAILABLE', engine: 'SYSTEM_EDGE', version: '155.0.4283.45' },
+        playwright: { status: 'VERIFIED', channel: 'msedge' },
+        benchmark: { status: 'FAILED' },
+        exitCode: 1,
+        timestamp: new Date().toISOString()
+      };
+      fs.writeFileSync(path.join(evidenceDir, 'result.json'), JSON.stringify(failingResult));
+
+      const verification = verifyManualRunEvidence(bundle.bundlePath);
+      expect(verification.status).toBe('FAILED');
+      expect(verification.status).not.toBe('VERIFIED');
+    });
+
+    // 3. Mandatory evidence missing -> MISSING_EVIDENCE
+    it('3. mandatory evidence missing: returns MISSING_EVIDENCE when any required artifact is absent', () => {
+      const bundle = createManualRunBundle({
+        runId: 'test-reg-missing-art',
+        baseDir: testRunDir
+      });
+      const evidenceDir = path.join(bundle.bundlePath, 'evidence');
+      fs.writeFileSync(path.join(evidenceDir, 'environment.json'), '{}');
+
+      const verification = verifyManualRunEvidence(bundle.bundlePath);
+      expect(verification.status).toBe('MISSING_EVIDENCE');
+      expect(verification.missingFiles.length).toBeGreaterThan(0);
+    });
+
+    // 4. All mandatory evidence + exit codes OK -> VERIFIED
+    it('4. all mandatory evidence + exit codes OK: returns VERIFIED', () => {
+      const bundle = createManualRunBundle({
+        runId: 'test-reg-all-ok',
+        baseDir: testRunDir
+      });
+      const evidenceDir = path.join(bundle.bundlePath, 'evidence');
+
+      for (const f of MANDATORY_EVIDENCE_FILES) {
+        if (f !== 'result.json') {
+          fs.writeFileSync(path.join(evidenceDir, f), JSON.stringify({ ok: true }));
+        }
+      }
+
+      const validResult = {
+        executionMode: 'HUMAN_OPERATOR_EXECUTION',
+        plannedBy: 'ANTIGRAVITY',
+        executedBy: 'HUMAN_OPERATOR',
+        verifiedBy: 'ALPER_DESIGN_OS',
+        build: { status: 'PASS', exitCode: 0 },
+        tests: { status: 'PASS', exitCode: 0 },
+        runtimeCheck: { status: 'PASS', exitCode: 0 },
+        docker: { status: 'AVAILABLE' },
+        mcp: { status: 'AVAILABLE' },
+        browser: { status: 'AVAILABLE', engine: 'SYSTEM_EDGE', version: '155.0.4283.45' },
+        playwright: { status: 'VERIFIED', channel: 'msedge' },
+        benchmark: { status: 'COMPLETED' },
+        exitCode: 0,
+        timestamp: new Date().toISOString()
+      };
+      fs.writeFileSync(path.join(evidenceDir, 'result.json'), JSON.stringify(validResult));
+
+      const verification = verifyManualRunEvidence(bundle.bundlePath);
+      expect(verification.status).toBe('VERIFIED');
+      expect(verification.missingFiles.length).toBe(0);
+    });
+
+    // 5. browser.json missing -> VERIFIED olamaz
+    it('5. browser.json missing: strictly blocks VERIFIED status', () => {
+      const bundle = createManualRunBundle({
+        runId: 'test-reg-no-browser',
+        baseDir: testRunDir
+      });
+      const evidenceDir = path.join(bundle.bundlePath, 'evidence');
+
+      for (const f of MANDATORY_EVIDENCE_FILES) {
+        if (f !== 'browser.json') {
+          fs.writeFileSync(path.join(evidenceDir, f), JSON.stringify({ ok: true }));
+        }
+      }
+
+      const verification = verifyManualRunEvidence(bundle.bundlePath);
+      expect(verification.status).toBe('MISSING_EVIDENCE');
+      expect(verification.missingFiles).toContain('browser.json');
+      expect(verification.status).not.toBe('VERIFIED');
+    });
+
+    // 6. playwright.json missing -> VERIFIED olamaz
+    it('6. playwright.json missing: strictly blocks VERIFIED status', () => {
+      const bundle = createManualRunBundle({
+        runId: 'test-reg-no-playwright',
+        baseDir: testRunDir
+      });
+      const evidenceDir = path.join(bundle.bundlePath, 'evidence');
+
+      for (const f of MANDATORY_EVIDENCE_FILES) {
+        if (f !== 'playwright.json') {
+          fs.writeFileSync(path.join(evidenceDir, f), JSON.stringify({ ok: true }));
+        }
+      }
+
+      const verification = verifyManualRunEvidence(bundle.bundlePath);
+      expect(verification.status).toBe('MISSING_EVIDENCE');
+      expect(verification.missingFiles).toContain('playwright.json');
+      expect(verification.status).not.toBe('VERIFIED');
+    });
+
+    // 7. mcp.json missing -> VERIFIED olamaz
+    it('7. mcp.json missing: strictly blocks VERIFIED status', () => {
+      const bundle = createManualRunBundle({
+        runId: 'test-reg-no-mcp',
+        baseDir: testRunDir
+      });
+      const evidenceDir = path.join(bundle.bundlePath, 'evidence');
+
+      for (const f of MANDATORY_EVIDENCE_FILES) {
+        if (f !== 'mcp.json') {
+          fs.writeFileSync(path.join(evidenceDir, f), JSON.stringify({ ok: true }));
+        }
+      }
+
+      const verification = verifyManualRunEvidence(bundle.bundlePath);
+      expect(verification.status).toBe('MISSING_EVIDENCE');
+      expect(verification.missingFiles).toContain('mcp.json');
+      expect(verification.status).not.toBe('VERIFIED');
     });
   });
 });
