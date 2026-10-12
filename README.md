@@ -277,6 +277,103 @@ Tüm 16 test dosyasında **326 testin tamamının eksiksiz geçtiğini** görmel
 
 ---
 
+## 🏗️ Sıfırdan Projeye Başlama Kılavuzu: 360° Bütünsel Yazılım Döngüsü
+
+Geleneksel yazılım geliştirme süreçlerinde ekipler genellikle önce kodu yazar, ardından tasarımı giydirmeye çalışır; güvenlik ve performans ise en son aşamada "yama" olarak eklenmeye çalışılır. Bu durum; güvenlik açıkları, mimari tıkanıklıklar, yavaş arayüzler ve devasa teknik borç (technical debt) ile sonuçlanır.
+
+**Alper Design OS**, bu kaotik döngüyü kökten değiştirir. Bir projeye başlarken **4 temel mühendislik ekseni**, daha ilk satır kod yazılmadan önce eşzamanlı ve kontrollü bir şekilde devreye girer:
+
+```mermaid
+flowchart TD
+    subgraph S1["1. TASARIM & ERGONOMİ EKSENİ"]
+        A1["Alan & Ürün Analizi (15 Domain)"] --> A2["Operatör Ergonomisi & Yoğunluk"]
+        A2 --> A3["28 Kanonik UX Deseni & DTCG Tokenlar"]
+        A3 --> A4["UI Blueprint DSL (Framework Bağımsız)"]
+    end
+
+    subgraph S2["2. GÜVENLİK & TEHDİT EKSENİ"]
+        B1["STRIDE Tehdit Modellemesi"] --> B2["OWASP Top 10 & API Güvenlik Politikası"]
+        B2 --> B3["Sır Maskeleme ([REDACTED_*]) & Supply Chain"]
+        B3 --> B4["Katı Release Gate Kriterleri (STRICT)"]
+    end
+
+    subgraph S3["3. MÜHENDİSLİK & MİMARİ EKSENİ"]
+        C1["11 Mimari Stil (Clean / Hexagonal vb.)"] --> C2["Veritabanı Şeması & FK İndeksleme"]
+        C2 --> C3["Sıfır Kesinti (Expand/Contract) Migrasyon"]
+        C3 --> C4["ADR (Mimari Karar Kayıtları)"]
+    end
+
+    subgraph S4["4. OPTİMİZASYON & GÖZLEMLENEBİLİRLİK"]
+        D1["Core Web Vitals Bütçesi (LCP, INP, CLS)"] --> D2["OpenTelemetry Tracing & Korelasyon ID"]
+        D2 --> D3["Circuit Breaker & Hata Toleransı"]
+        D3 --> D4["SLI / SLO & Graceful Degradation"]
+    end
+
+    S1 --> GATE{"ALPER GOVERNANCE GATE<br/>Tüm Eksenler Onaylandı mı?"}
+    S2 --> GATE
+    S3 --> GATE
+    S4 --> GATE
+
+    GATE -->|ONAYLANDI (PASS)| CODE["GÜVENLİ, PERFORMANSLI & KANITLI KOD YAZIMI"]
+    CODE --> VERIFY["5. DOĞRULAMA: Playwright E2E + Truthful UI Gate"]
+```
+
+---
+
+### Döngünün 5 Temel Aşaması
+
+#### 🎨 1. Eksen: Alan Analizi, Ergonomi & Kanonik Tasarım Sistemi (Design & UX)
+* **Amaç:** Estetik kaygıların ötesinde, kullanıcının bilişsel yükünü optimize eden, ergonomik ve taşınabilir bir arayüz temeli kurmak.
+* **Kullanılan Yetenekler:** `alper-domain-intelligence`, `alper-design-new`, `alper-ui-blueprint`, `alper-design-language`
+* **Kullanılan MCP Araçları:** `understand_product`, `research_domain`, `recommend_ux_patterns`, `get_design_tokens`, `create_page_blueprint`
+* **Yapılan Kontroller:**
+  1. **15 Kanonik Alan Sınıflandırması:** Geliştirilen ürünün sektörü (Fintech, Health & Clinical, DevTools, E-commerce, Logistik & Fleet vb.) ve operatör profili belirlenir.
+  2. **Bilgi Yoğunluğu (Information Density):** Saha operatörleri için yüksek kontrastlı ve kompakt (compact) arayüz; son kullanıcı için ferah ve rehberli (roomy) akışlar seçilir.
+  3. **28 Kanonik UX Deseni:** Veri yoğunluğu ve akışa göre kanıtlanmış UX desenleri (Split-Pane Workbench, Inline-Editable DataGrid, Multi-Step Wizard, Command Palette vb.) seçilir.
+  4. **DTCG Uyumlu Tasarım Tokenları:** W3C standartlarında renk, tipografi, boşluk, sınır yarıçapı ve gölge tokenları üretilir.
+  5. **UI Blueprint DSL:** Framework bağımsız sayfa ve bileşen şablonu (JSON DSL) oluşturulur; böylece React, Vue, Blade veya Razor çıktısı birebir görsel pariteyle türetilebilir.
+
+#### 🛡️ 2. Eksen: Güvenlik, Tehdit Modellemesi & Sır Politikası (Security & Compliance)
+* **Amaç:** Güvenliği yazılım bittikten sonra denetlemek yerine, tehditleri tasarım aşamasında yok etmek ("Shift-Left Security").
+* **Kullanılan Yetenekler:** `alper-secure-coding`, `alper-security-audit`, `alper-api-security`, `alper-secret-management`, `alper-supply-chain-security`
+* **Kullanılan MCP Araçları:** `generate_threat_model`, `generate_engineering_policy`, `run_safe_security_scan`, `evaluate_release_gates`
+* **Yapılan Kontroller:**
+  1. **STRIDE Tehdit Analizi:** Kimlik Sahteciliği (Spoofing), Veri Tahrifatı (Tampering), İnkar (Repudiation), Bilgi İfşası (Information Disclosure), Hizmet Engelleme (Denial of Service) ve Yetki Yükseltme (Elevation of Privilege) riskleri haritalandırılır.
+  2. **OWASP Top 10 (2025) & OWASP API Security:** BOLA (Broken Object Level Authorization), Injection, Mass Assignment ve Broken Authentication zafiyetlerine karşı kodlama sözleşmeleri tanımlanır.
+  3. **Sıfır Sır Sızıntısı:** API anahtarları, DB parolaları ve JWT tokenlar loglarda, testlerde ve commitlerde asla açık görünemez; her veri `[REDACTED_*]` ile maskelenir.
+  4. **Tedarik Zinciri Güvenliği:** SLSA provenance ve CycloneDX SBOM yapılandırması hazırlanır, yapay zekanın uydurduğu sahte paket yüklemeleri (AI hallucinated packages) engellenir.
+
+#### 🏛️ 3. Eksen: Yazılım Mimarisi & Veritabanı Mühendisliği (Engineering & Architecture)
+* **Amaç:** Spagetti kod, kördüğüm bağımlılıklar ve kilitlenen veritabanı tablolarının önüne geçen sağlam bir mühendislik omurgası kurmak.
+* **Kullanılan Yetenekler:** `alper-architecture`, `alper-database-engineering`, `alper-sql-performance`, `alper-migration-safety`, `alper-data-integrity`
+* **Kullanılan MCP Araçları:** `analyze_architecture`, `generate_adr`, `analyze_database_schema`, `evaluate_api_compatibility`, `classify_code_paths`
+* **Yapılan Kontroller:**
+  1. **11 Mimari Stil Analizi:** Sistemin ölçek gereksinimine göre Clean Architecture, Hexagonal (Ports & Adapters), Modular Monolith veya Event-Driven mimari stili seçilir.
+  2. **ADR (Architectural Decision Records):** Alınan her temel mimari ve teknoloji kararı (`docs/adr/` altında) bağlamı, gerekçesi ve sonuçlarıyla belgelenir.
+  3. **Veritabanı Şeması & FK İndeksleri:** Normalizasyon seviyesi belirlenir; foreign key kolonlarına indeksler eklenerek N+1 sorgu felaketleri baştan engellenir.
+  4. **Expand/Contract Sıfır Kesinti Migrasyonu:** Veritabanı şema değişiklikleri SAFE / REVIEW / DANGEROUS olarak sınıflandırılır; canlı sistemi durdurmayan aşamalı migrasyon deseni zorunlu tutulur.
+
+#### ⚡ 4. Eksen: Performans Bütçesi, Dayanıklılık & Gözlemlenebilirlik (Optimization & O11y)
+* **Amaç:** Ürünün daha ilk günden hızlı, hataya dayanıklı ve üretim ortamında izlenebilir olmasını sağlamak.
+* **Kullanılan Yetenekler:** `alper-performance-engineering`, `alper-reliability`, `alper-resilience`, `alper-observability`, `alper-contract-testing`
+* **Kullanılan MCP Araçları:** Core Web Vitals ölçümleri, OpenTelemetry konfigüratörleri, Circuit Breaker kalıpları
+* **Yapılan Kontroller:**
+  1. **Core Web Vitals Bütçesi:** LCP (Largest Contentful Paint) < 2.5s, INP (Interaction to Next Paint) < 200ms, CLS (Cumulative Layout Shift) < 0.1 performans hedefleri kilitlenir.
+  2. **Dağıtık Gözlemlenebilirlik (O11y):** Her işlem için `X-Correlation-ID` ve OpenTelemetry tracing omurgası kurulur; loglar PII korumalı ve yapılandırılmış JSON formatında tasarlanır.
+  3. **Hata Toleransı (Resilience):** Dış servislere bağımlı noktalarda Devre Kesici (Circuit Breaker), Zaman Aşımı (Timeout) ve Kademeli Üstel Bekleme (Exponential Backoff with Jitter) kalıpları kurulur.
+  4. **Zarif Gerileme (Graceful Degradation):** Bir alt servis veya 3. taraf API yanıt vermediğinde tüm ekranın çökmesi engellenir; önbellek veya sadeleştirilmiş yedek mod devreye girer.
+
+#### 🧪 5. Eksen: Test Piramidi & Doğruluk Kapısı (Testing & Truthful UI)
+* **Amaç:** "Çalışıyor görünüyor" yanılgısını ortadan kaldırıp, somut kanıtlarla doğrulanmış ve sahte veriden arındırılmış bir teslimat sağlamak.
+* **Kullanılan Yetenekler:** `alper-testing-strategy`, `alper-playwright-testing`, `alper-evidence-review`, `alper-design-critic`
+* **Kullanılan MCP Araçları:** `generate_test_pyramid`, `generate_playwright_test`, `evaluate_truthful_ui`, `audit_data_provenance`, `manage_human_visual_approval`
+* **Yapılan Kontroller:**
+  1. **Dengeli Test Piramidi:** %70 Unit (iş mantığı), %20 Entegrasyon (API ve veritabanı), %10 Playwright E2E (kritik kullanıcı yolculukları) piramidi oluşturulur.
+  2. **Rol Tabanlı E2E Testleri:** Kırılgan CSS/XPath seçicileri yerine gerçek kullanıcı gibi semantik roller (`getByRole('button', { name: 'Kaydet' })`) ile dayanıklı testler yazılır.
+  3. **Truthful UI & Kanıt Onayı:** Ekrandaki metrik ve grafiklerin veri kaynağı taranır (`Authoritative`, `Derived`, `Mock Synthetic`); sahte veya kanıtsız telemetri engellenir (`CONTENT_TRUTH_PASS`). Gerçek tarayıcı veya test kanıtı olmayan hiçbir duruma `PASS` verilmez.
+
+---
+
 ## 🛠️ MCP Sunucusu & 88 Güçlü Araç
 
 `alper-design-os` MCP sunucusu 10 temel kategoride **88 adet tip güvenli araç** sunar:
@@ -299,6 +396,50 @@ Tüm 16 test dosyasında **326 testin tamamının eksiksiz geçtiğini** görmel
 ## 💬 Örnek Promptlar (Kullanım Rehberi)
 
 Aşağıdaki hazır promptları Antigravity, Cursor veya Claude arayüzünde doğrudan kullanabilirsiniz:
+
+### 👑 0. Sıfırdan Proje Başlatma Master Promptu (All-in-One Starter Prompt)
+*Tetiklenen Yetenekler:* Tüm Alper Design OS ekosistemi (`alper-domain-intelligence`, `alper-secure-coding`, `alper-architecture`, `alper-database-engineering`, `alper-performance-engineering`, `alper-ui-blueprint`, `alper-playwright-testing`, `alper-evidence-review`)
+
+Yeni bir projeye başlarken aşağıdaki master promptu Antigravity veya AI asistanınıza ileterek tüm kontrolleri tek seferde başlatabilirsiniz:
+
+```text
+Alper Design OS ile sıfırdan yeni ve üretime hazır bir yazılım projesi başlatmak istiyorum.
+Lütfen kod yazmaya başlamadan önce projeyi Güvenlik, Mühendislik, Tasarım ve Optimizasyon eksenlerinde 360° denetle ve planla.
+
+Proje Tanımı:
+- Proje Adı: [Örn: FleetFlow - Gerçek Zamanlı Filo ve Rota Yönetim Sistemi]
+- Amacı: [Örn: Lojistik operatörlerinin 500+ aracın konum, yakıt, sıcaklık ve teslimat durumunu canlı takip edip rota optimizasyonu yapması]
+- Tercih Edilen Teknoloji: [Örn: React + TypeScript, Node.js / PostgreSQL veya ASP.NET Core]
+
+Lütfen aşağıdaki 5 adımlı Alper Design OS başlangıç protokolünü sırasıyla çalıştır:
+
+1. [TASARIM & ALAN EKSENİ]:
+   - 'understand_product' ve 'research_domain' ile alanı (15 kanonik sektörden biri) ve bilgi yoğunluğu seviyesini analiz et.
+   - Operatör ergonomisi için en uygun 3 UX desenini belirle (Örn: SplitPane Workbench, Dense DataGrid, Timeline).
+   - DTCG uyumlu tasarım tokenlarını ve UI Blueprint DSL sayfa taslaklarını hazırla.
+
+2. [GÜVENLİK & TEHDİT EKSENİ]:
+   - 'generate_threat_model' ile STRIDE tehdit modelini çıkar ve güven sınırlarını (trust boundaries) belirle.
+   - OWASP Top 10 ve OWASP API Security kontrollerini tanımla.
+   - 'generate_engineering_policy' ile STRICT release gate politikasını ve sır ([REDACTED_*]) kurallarını bağla.
+
+3. [MÜHENDİSLİK & MİMARİ EKSENİ]:
+   - 'analyze_architecture' ile mimari stili (Clean / Hexagonal) seç ve ilk ADR (Architectural Decision Record) belgesini oluştur.
+   - 'analyze_database_schema' ile ilişkileri, veri bütünlüğü kurallarını ve zorunlu Foreign Key indekslerini tasarla.
+   - Gelecekteki şema değişiklikleri için Expand/Contract migrasyon politikasını kurgula.
+
+4. [OPTİMİZASYON & GÖZLEMLENEBİLİRLİK EKSENİ]:
+   - Core Web Vitals hedeflerini (LCP < 2.5s, INP < 200ms, CLS < 0.1) belirle.
+   - OpenTelemetry tracing, korelasyon ID (X-Correlation-ID) ve PII maskeli yapılandırılmış log omurgasını planla.
+   - Dış servis entegrasyonları için Circuit Breaker ve kademeli bekleme (backoff) stratejisi kur.
+
+5. [DOĞRULAMA & TEST PLANI]:
+   - 'generate_test_pyramid' ile %70 Unit, %20 Integration, %10 E2E test piramidini oluştur.
+   - 'generate_playwright_test' ile kritik operatör akışı için rol tabanlı ('getByRole') E2E test taslağı çıkar.
+   - 'evaluate_truthful_ui' doğrulaması ile ekrandaki verilerin kaynağını (Authoritative vs Synthetic) şeffafça etiketle.
+
+Tüm bu kontroller tamamlandıktan ve onaylandıktan sonra temel proje iskeletini ve ilk ekran bileşenlerini üret.
+```
 
 ### 1. Yeni Ürün & Alan Analizi (NEW Modu)
 *Tetiklenen Yetenekler:* `alper-design-new`, `alper-domain-intelligence`, `alper-ui-blueprint`
