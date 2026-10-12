@@ -536,6 +536,38 @@ describe('Alper Design MCP Tools Verification', () => {
     expect(result.liveContainersProbed).toBe(false);
     expect(result.deferredItems.length).toBeGreaterThan(0);
   });
+
+  it('60. create_manual_run_bundle generates bundle via MCP', () => {
+    const result = Tools.handleCreateManualRunBundle({
+      runId: 'mcp-run-bundle-test'
+    });
+    expect(result.runId).toBe('mcp-run-bundle-test');
+    expect(result.status).toBe('MANUAL_EXECUTION_REQUIRED');
+  });
+
+  it('61. verify_manual_run_evidence checks bundle evidence via MCP', () => {
+    const result = Tools.handleVerifyManualRunEvidence({
+      runIdOrPath: 'mcp-run-bundle-test'
+    });
+    expect(result.status).toBeDefined();
+  });
+
+  it('62. resolve_browser_runtime resolves browser via MCP', () => {
+    const result = Tools.handleResolveBrowserRuntime({
+      forceChromiumBlocked: true
+    });
+    expect(result.selectedBrowser).toBe('SYSTEM_EDGE');
+    expect(result.playwrightChannel).toBe('msedge');
+  });
+
+  it('63. run_operator_doctor diagnoses authority via MCP', () => {
+    const result = Tools.handleRunOperatorDoctor({
+      overrideDockerCapability: 'AVAILABLE',
+      overrideBrowserCapability: 'AVAILABLE'
+    });
+    expect(result.recommendedMode).toBe('HUMAN_OPERATOR_EXECUTION');
+    expect(result.formattedReport).toContain('Recommended Mode');
+  });
 });
 
 

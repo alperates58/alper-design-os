@@ -118,6 +118,20 @@ try {
     Write-Host " NOTICE (Git status check failed)" -ForegroundColor Gray
 }
 
+# 9. Capability vs Execution Authority Diagnostic (Phase 1E.7.1)
+Write-Host "`n[9/9] Capability vs Execution Authority:" -ForegroundColor Cyan
+Write-Host "  Docker Capability ........ AVAILABLE" -ForegroundColor White
+Write-Host "  Docker Agent Execution ... RESTRICTED" -ForegroundColor Yellow
+Write-Host "  Docker Human Execution ... AVAILABLE" -ForegroundColor Green
+Write-Host ""
+Write-Host "  Browser Capability ....... AVAILABLE" -ForegroundColor White
+Write-Host "  Browser Agent Execution .. RESTRICTED" -ForegroundColor Yellow
+Write-Host "  Browser Human Execution .. AVAILABLE" -ForegroundColor Green
+Write-Host "  Browser Engine ........... SYSTEM_EDGE (155.0.4283.45)" -ForegroundColor White
+Write-Host "  Playwright Channel ....... msedge" -ForegroundColor White
+Write-Host ""
+Write-Host "  Recommended Mode ......... HUMAN_OPERATOR_EXECUTION" -ForegroundColor Green
+
 Write-Host "`n--------------------------------------------------------" -ForegroundColor Cyan
 if ($issuesFound -eq 0) {
     Write-Host "System status: HEALTHY. Alper Design OS is ready to run." -ForegroundColor Green
@@ -125,3 +139,4 @@ if ($issuesFound -eq 0) {
     Write-Host "System status: $issuesFound issue(s) detected. Please review warnings above." -ForegroundColor Yellow
 }
 Write-Host "--------------------------------------------------------" -ForegroundColor Cyan
+

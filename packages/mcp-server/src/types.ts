@@ -807,5 +807,32 @@ export const AuditTrackTraceTelemetryInputSchema = z.object({
 });
 export type AuditTrackTraceTelemetryInput = z.infer<typeof AuditTrackTraceTelemetryInputSchema>;
 
+// 85. create_manual_run_bundle
+export const CreateManualRunBundleInputSchema = z.object({
+  runId: z.string().optional(),
+  plannedObjective: z.string().optional()
+});
+export type CreateManualRunBundleInput = z.infer<typeof CreateManualRunBundleInputSchema>;
+
+// 86. verify_manual_run_evidence
+export const VerifyManualRunEvidenceInputSchema = z.object({
+  runIdOrPath: z.string()
+});
+export type VerifyManualRunEvidenceInput = z.infer<typeof VerifyManualRunEvidenceInputSchema>;
+
+// 87. resolve_browser_runtime
+export const ResolveBrowserRuntimeInputSchema = z.object({
+  forceChromiumBlocked: z.boolean().optional()
+});
+export type ResolveBrowserRuntimeInput = z.infer<typeof ResolveBrowserRuntimeInputSchema>;
+
+// 88. run_operator_doctor
+export const RunOperatorDoctorInputSchema = z.object({
+  overrideDockerCapability: z.enum(['AVAILABLE', 'UNAVAILABLE']).optional(),
+  overrideBrowserCapability: z.enum(['AVAILABLE', 'UNAVAILABLE']).optional()
+});
+export type RunOperatorDoctorInput = z.infer<typeof RunOperatorDoctorInputSchema>;
+
+
 
 

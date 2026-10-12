@@ -29,3 +29,6 @@ export * from './truthful-ui-policy.js';
 export * from './human-visual-approval.js';
 export * from './truthful-ui-gate.js';
 export * from './track-trace-audit.js';
+export * from './browser-resolver.js';
+export * from './manual-run-bundle.js';
+export * from './operator-doctor.js';

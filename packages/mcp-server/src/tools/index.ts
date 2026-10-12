@@ -70,7 +70,11 @@ import {
   createVisualApprovalRecord,
   recordVisualReview,
   evaluateVisualApprovalGate,
-  auditTrackTraceTelemetryStatic
+  auditTrackTraceTelemetryStatic,
+  createManualRunBundle,
+  verifyManualRunEvidence,
+  resolveBrowserRuntime,
+  diagnoseOperatorExecutionEnvironment
 } from '@alper-design-os/agent-governance';
 import {
   createDesignIntent,
@@ -1248,6 +1252,35 @@ export function handleAuditTrackTraceTelemetry(input: T.AuditTrackTraceTelemetry
     sampleEndpoints: input.sampleEndpoints
   });
 }
+
+// 85. create_manual_run_bundle
+export function handleCreateManualRunBundle(input: T.CreateManualRunBundleInput) {
+  return createManualRunBundle({
+    runId: input.runId,
+    plannedObjective: input.plannedObjective
+  });
+}
+
+// 86. verify_manual_run_evidence
+export function handleVerifyManualRunEvidence(input: T.VerifyManualRunEvidenceInput) {
+  return verifyManualRunEvidence(input.runIdOrPath);
+}
+
+// 87. resolve_browser_runtime
+export function handleResolveBrowserRuntime(input: T.ResolveBrowserRuntimeInput) {
+  return resolveBrowserRuntime({
+    forceChromiumBlocked: input.forceChromiumBlocked
+  });
+}
+
+// 88. run_operator_doctor
+export function handleRunOperatorDoctor(input: T.RunOperatorDoctorInput) {
+  return diagnoseOperatorExecutionEnvironment({
+    overrideDockerCapability: input.overrideDockerCapability,
+    overrideBrowserCapability: input.overrideBrowserCapability
+  });
+}
+
 
 
 

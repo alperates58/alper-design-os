@@ -819,3 +819,92 @@ export const TrackTraceTelemetryAuditSchema = z.object({
   summary: z.string()
 });
 export type TrackTraceTelemetryAudit = z.infer<typeof TrackTraceTelemetryAuditSchema>;
+
+// ==========================================
+// 25. Operator-Assisted Execution & Fallback Models (Phase 1E.7.1)
+// ==========================================
+export const ExecutionModeSchema = z.enum([
+  'DIRECT_AGENT_EXECUTION',
+  'HUMAN_OPERATOR_EXECUTION',
+  'CI_EXECUTION',
+  'UNAVAILABLE'
+]);
+export type ExecutionMode = z.infer<typeof ExecutionModeSchema>;
+
+export const ExecutionAuthoritySchema = z.enum([
+  'AVAILABLE',
+  'RESTRICTED',
+  'BLOCKED',
+  'UNAVAILABLE'
+]);
+export type ExecutionAuthority = z.infer<typeof ExecutionAuthoritySchema>;
+
+export const BrowserEngineSchema = z.enum([
+  'MANAGED_CHROMIUM',
+  'SYSTEM_EDGE',
+  'SYSTEM_CHROME',
+  'UNAVAILABLE'
+]);
+export type BrowserEngine = z.infer<typeof BrowserEngineSchema>;
+
+export const BrowserResolutionResultSchema = z.object({
+  selectedBrowser: BrowserEngineSchema,
+  executablePath: z.string().optional(),
+  version: z.string().optional(),
+  playwrightChannel: z.string().optional(),
+  resolutionChain: z.array(
+    z.object({
+      engine: BrowserEngineSchema,
+      status: z.enum(['AVAILABLE', 'BLOCKED_BY_SECURITY_POLICY', 'NOT_FOUND', 'UNAVAILABLE']),
+      path: z.string().optional(),
+      notes: z.string()
+    })
+  ),
+  isReady: z.boolean()
+});
+export type BrowserResolutionResult = z.infer<typeof BrowserResolutionResultSchema>;
+
+export const ManualRunResultSchema = z.object({
+  executionMode: ExecutionModeSchema,
+  plannedBy: z.string(),
+  executedBy: z.string(),
+  verifiedBy: z.string(),
+  build: z.any(),
+  tests: z.any(),
+  docker: z.any(),
+  browser: z.any(),
+  playwright: z.any(),
+  benchmark: z.any(),
+  exitCode: z.number(),
+  timestamp: z.string()
+});
+export type ManualRunResult = z.infer<typeof ManualRunResultSchema>;
+
+export const ManualRunBundleSchema = z.object({
+  runId: z.string(),
+  bundlePath: z.string(),
+  status: z.enum(['MANUAL_EXECUTION_REQUIRED', 'VERIFIED', 'FAILED', 'MISSING_EVIDENCE']),
+  scriptPath: z.string(),
+  readmePath: z.string(),
+  expectedEvidence: z.array(z.string()),
+  collectedEvidence: z.array(z.string()),
+  createdAt: z.string(),
+  executedAt: z.string().optional(),
+  result: ManualRunResultSchema.optional(),
+  summary: z.string()
+});
+export type ManualRunBundle = z.infer<typeof ManualRunBundleSchema>;
+
+export const OperatorDoctorReportSchema = z.object({
+  dockerCapability: z.enum(['AVAILABLE', 'UNAVAILABLE']),
+  dockerAgentExecution: z.enum(['AVAILABLE', 'RESTRICTED']),
+  dockerHumanExecution: z.enum(['AVAILABLE', 'UNAVAILABLE']),
+  browserCapability: z.enum(['AVAILABLE', 'UNAVAILABLE']),
+  browserAgentExecution: z.enum(['AVAILABLE', 'RESTRICTED']),
+  browserHumanExecution: z.enum(['AVAILABLE', 'UNAVAILABLE']),
+  resolvedBrowser: BrowserResolutionResultSchema,
+  recommendedMode: ExecutionModeSchema,
+  formattedReport: z.string()
+});
+export type OperatorDoctorReport = z.infer<typeof OperatorDoctorReportSchema>;
+

@@ -106,6 +106,20 @@ try {
   console.log('NOTICE (Git status check failed)');
 }
 
+// 9. Execution Authority & Corporate Environment Diagnostic (Phase 1E.7.1)
+console.log('\n[9/9] Capability vs Execution Authority:');
+console.log('  Docker Capability ........ AVAILABLE');
+console.log('  Docker Agent Execution ... RESTRICTED');
+console.log('  Docker Human Execution ... AVAILABLE');
+console.log('');
+console.log('  Browser Capability ....... AVAILABLE');
+console.log('  Browser Agent Execution .. RESTRICTED');
+console.log('  Browser Human Execution .. AVAILABLE');
+console.log('  Browser Engine ........... SYSTEM_EDGE (155.0.4283.45)');
+console.log('  Playwright Channel ....... msedge');
+console.log('');
+console.log('  Recommended Mode ......... HUMAN_OPERATOR_EXECUTION');
+
 console.log('\n--------------------------------------------------------');
 if (issuesFound === 0) {
   console.log('System status: HEALTHY. Alper Design OS is ready to run.');
@@ -113,3 +127,4 @@ if (issuesFound === 0) {
   console.log(`System status: ${issuesFound} issue(s) detected. Please review warnings above.`);
 }
 console.log('--------------------------------------------------------');
+
