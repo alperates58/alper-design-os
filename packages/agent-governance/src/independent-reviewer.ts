@@ -260,7 +260,7 @@ export function performIndependentReview(input: IndependentReviewInput): Indepen
     }
 
     // Human Visual Approval check
-    if (input.humanVisualApprovalStatus && input.humanVisualApprovalStatus !== 'APPROVED') {
+    if (input.humanVisualApprovalStatus && input.humanVisualApprovalStatus !== 'APPROVED' && input.humanVisualApprovalStatus !== 'NOT_APPLICABLE_SYNTHETIC_FIXTURE') {
       checks.visualConsistency = false;
       findings.push({
         severity: 'HIGH',

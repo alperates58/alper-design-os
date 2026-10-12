@@ -1375,7 +1375,11 @@ export function handleSelectModernizationStrategy(input: T.SelectModernizationSt
   return selectModernizationStrategy({
     requestedStrategy: input.requestedStrategy as any,
     projectProfile: profile,
+    explicitUserApproval: input.explicitUserApproval,
     explicitUserRequest: input.explicitUserRequest,
+    hasCheckpointPlan: input.hasCheckpointPlan,
+    hasRollbackPlan: input.hasRollbackPlan,
+    preservationImpactReviewed: input.preservationImpactReviewed,
     justification: input.justification
   });
 }

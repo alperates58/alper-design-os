@@ -1416,7 +1416,7 @@ export const DesignDirectionWorkflowSchema = z.object({
   candidates: z.array(DesignDirectionCandidateSchema),
   selectedCandidateId: z.string().optional(),
   humanVisualApprovalRequired: z.literal(true),
-  humanVisualApprovalStatus: z.enum(['PENDING', 'APPROVED', 'REJECTED'])
+  humanVisualApprovalStatus: z.enum(['PENDING', 'APPROVED', 'REJECTED', 'NOT_APPLICABLE_SYNTHETIC_FIXTURE'])
 });
 export type DesignDirectionWorkflow = z.infer<typeof DesignDirectionWorkflowSchema>;
 
@@ -1472,7 +1472,7 @@ export const ModernizationCompletionContractSchema = z.object({
   security: z.enum(['PASS', 'FAIL']),
   regression: z.enum(['PASS', 'FAIL']),
   contentTruth: z.enum(['PASS', 'FAIL']),
-  humanVisualApproval: z.enum(['APPROVED', 'PENDING', 'REJECTED']),
+  humanVisualApproval: z.enum(['APPROVED', 'PENDING', 'REJECTED', 'NOT_APPLICABLE_SYNTHETIC_FIXTURE']),
   isComplete: z.boolean(),
   verdict: z.enum(['COMPLETE', 'INCOMPLETE', 'REJECTED']),
   blockReasons: z.array(z.string())

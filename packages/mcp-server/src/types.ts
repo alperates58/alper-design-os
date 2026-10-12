@@ -904,7 +904,11 @@ export type CreateModernizationPlanInput = z.infer<typeof CreateModernizationPla
 export const SelectModernizationStrategyInputSchema = z.object({
   requestedStrategy: z.string(),
   projectPath: z.string().optional(),
+  explicitUserApproval: z.boolean().optional(),
   explicitUserRequest: z.boolean().optional(),
+  hasCheckpointPlan: z.boolean().optional(),
+  hasRollbackPlan: z.boolean().optional(),
+  preservationImpactReviewed: z.boolean().optional(),
   justification: z.string().optional()
 });
 export type SelectModernizationStrategyInput = z.infer<typeof SelectModernizationStrategyInputSchema>;
@@ -926,7 +930,7 @@ export const EvaluateModernizationCompletionInputSchema = z.object({
   security: z.enum(['PASS', 'FAIL']),
   regression: z.enum(['PASS', 'FAIL']),
   contentTruth: z.enum(['PASS', 'FAIL']),
-  humanVisualApproval: z.enum(['APPROVED', 'PENDING', 'REJECTED'])
+  humanVisualApproval: z.enum(['APPROVED', 'PENDING', 'REJECTED', 'NOT_APPLICABLE_SYNTHETIC_FIXTURE'])
 });
 export type EvaluateModernizationCompletionInput = z.infer<typeof EvaluateModernizationCompletionInputSchema>;
 

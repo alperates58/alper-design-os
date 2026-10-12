@@ -23,7 +23,8 @@ import {
   validateProjectModeTransition,
   createModernizationPlan,
   evaluateModernizationCompletion,
-  performIndependentReview
+  performIndependentReview,
+  runSyntheticModernizationDrill
 } from '@alper-design-os/agent-governance';
 
 describe('ALPER DESIGN OS - FAZ 1F.0: Existing Project Modernization Engine Foundation', () => {
@@ -469,16 +470,19 @@ describe('ALPER DESIGN OS - FAZ 1F.0: Existing Project Modernization Engine Foun
   });
 
   // 18. Design Direction Workflow (Candidate A, B, C)
-  it('18. design direction workflow: generates distinct candidates across composition, hierarchy, and density', () => {
+  it('18. design direction workflow: generates distinct candidates across composition, hierarchy, and density with anonymized IDs', () => {
     const profile = profileExistingProject({ rootDir: '.', files: [] });
     const intentResult = createModernizationIntent({ why: 'Modernize operator dashboard with accessible hierarchy' }, profile);
     const workflow = generateDesignCandidates(profile, intentResult.intent!);
 
     expect(workflow.candidates.length).toBe(3);
-    const candA = workflow.candidates.find(c => c.candidateId.includes('A_HIGH_DENSITY'));
-    const candB = workflow.candidates.find(c => c.candidateId.includes('B_MODULAR_CARD'));
-    const candC = workflow.candidates.find(c => c.candidateId.includes('C_STREAMLINED'));
+    const candA = workflow.candidates.find(c => c.candidateId === 'CANDIDATE_A');
+    const candB = workflow.candidates.find(c => c.candidateId === 'CANDIDATE_B');
+    const candC = workflow.candidates.find(c => c.candidateId === 'CANDIDATE_C');
 
+    expect(candA).toBeDefined();
+    expect(candB).toBeDefined();
+    expect(candC).toBeDefined();
     expect(candA?.density).toContain('COMPACT');
     expect(candB?.density).toContain('BALANCED');
     expect(candC?.density).toContain('COMFORTABLE');
@@ -526,5 +530,273 @@ describe('ALPER DESIGN OS - FAZ 1F.0: Existing Project Modernization Engine Foun
     const plainWebFiles = loadFixture('legacy-plain-web');
     const plainProfile = profileExistingProject({ rootDir: 'tests/fixtures/legacy-plain-web', files: plainWebFiles });
     expect(plainProfile.detectedStack.languages).toContain('HTML');
+  });
+});
+
+describe('ALPER DESIGN OS - FAZ 1F.0.1: Modernization Guardrail Hotfix & Synthetic End-to-End Drill', () => {
+  const profile = profileExistingProject({ rootDir: '.', files: [] });
+
+  // 1. Big-bang requires explicit approval
+  it('1. big bang requires explicit approval: blocked when explicitUserApproval is false or missing', () => {
+    const unapproved = selectModernizationStrategy({
+      requestedStrategy: 'BIG_BANG_REWRITE',
+      projectProfile: profile,
+      explicitUserApproval: false
+    });
+
+    expect(unapproved.blocked).toBe(true);
+    expect(unapproved.strategy).toBe('BRIDGE');
+    expect(unapproved.blockReason).toContain('explicitUserApproval = true');
+  });
+
+  // 2. Long rationale is not approval
+  it('2. long rationale is not approval: 100+ character justification alone does not authorize rewrite', () => {
+    const longRationale = 'We have extensively analyzed this legacy architecture and firmly believe that replacing every single component with modern functional abstractions is the only viable path forward for long term velocity.';
+    expect(longRationale.length).toBeGreaterThan(100);
+
+    const result = selectModernizationStrategy({
+      requestedStrategy: 'BIG_BANG_REWRITE',
+      projectProfile: profile,
+      justification: longRationale,
+      explicitUserApproval: false
+    });
+
+    expect(result.blocked).toBe(true);
+    expect(result.strategy).toBe('BRIDGE');
+    expect(result.rationale).toContain('A long text rationale is not authorization');
+    expect(result.blockReason).toContain('explicitUserApproval = true');
+  });
+
+  // 3. Big bang blocked when checkpointPlan, rollbackPlan, or preservation impact is missing
+  it('3. big bang blocked when checkpointPlan, rollbackPlan, or preservation review is missing', () => {
+    // Has explicit approval, but missing checkpointPlan, rollbackPlan, and preservation review
+    const partialAuth1 = selectModernizationStrategy({
+      requestedStrategy: 'BIG_BANG_REWRITE',
+      projectProfile: profile,
+      explicitUserApproval: true,
+      hasCheckpointPlan: false,
+      hasRollbackPlan: false,
+      preservationImpactReviewed: false
+    });
+    expect(partialAuth1.blocked).toBe(true);
+    expect(partialAuth1.blockReason).toContain('checkpointPlan exists');
+    expect(partialAuth1.blockReason).toContain('rollbackPlan exists');
+    expect(partialAuth1.blockReason).toContain('preservation impact explicitly reviewed');
+
+    // Has approval + checkpoint, but missing rollback and preservation
+    const partialAuth2 = selectModernizationStrategy({
+      requestedStrategy: 'BIG_BANG_REWRITE',
+      projectProfile: profile,
+      explicitUserApproval: true,
+      hasCheckpointPlan: true,
+      hasRollbackPlan: false,
+      preservationImpactReviewed: false
+    });
+    expect(partialAuth2.blocked).toBe(true);
+    expect(partialAuth2.blockReason).toContain('rollbackPlan exists');
+    expect(partialAuth2.blockReason).toContain('preservation impact explicitly reviewed');
+  });
+
+  // 4. Big bang authorized only when all 4 strict criteria are satisfied
+  it('4. big bang authorized only when all 4 strict criteria are satisfied', () => {
+    const authorized = selectModernizationStrategy({
+      requestedStrategy: 'BIG_BANG_REWRITE',
+      projectProfile: profile,
+      explicitUserApproval: true,
+      hasCheckpointPlan: true,
+      hasRollbackPlan: true,
+      preservationImpactReviewed: true,
+      justification: 'Approved migration plan following stage 0 risk audit'
+    });
+
+    expect(authorized.blocked).toBe(false);
+    expect(authorized.strategy).toBe('REBUILD_SHELL');
+    expect(authorized.riskAssessment).toBe('HIGH');
+    expect(authorized.bridgeRequired).toBe(true);
+    expect(authorized.bridgeMechanisms).toContain('Rollback Gate');
+  });
+
+  // 5. Application-wide shell rebuild requires same authorization
+  it('5. application-wide shell rebuild requires same authorization', () => {
+    const appWideUnapproved = selectModernizationStrategy({
+      requestedStrategy: 'REBUILD_SHELL',
+      scopeLevel: 'APPLICATION',
+      projectProfile: profile,
+      explicitUserApproval: false
+    });
+    expect(appWideUnapproved.blocked).toBe(true);
+    expect(appWideUnapproved.blockReason).toContain('explicitUserApproval = true');
+
+    const appWideApproved = selectModernizationStrategy({
+      requestedStrategy: 'REBUILD_SHELL',
+      scopeLevel: 'APPLICATION',
+      projectProfile: profile,
+      explicitUserApproval: true,
+      hasCheckpointPlan: true,
+      hasRollbackPlan: true,
+      preservationImpactReviewed: true
+    });
+    expect(appWideApproved.blocked).toBe(false);
+    expect(appWideApproved.strategy).toBe('REBUILD_SHELL');
+  });
+
+  // 6. Design candidate directions are dynamic and adapt to project profile
+  it('6. design candidate directions are dynamic: adapts to stack, styling, debts, and intent', () => {
+    const reactProfile = profileExistingProject({
+      rootDir: 'tests/fixtures/legacy-react',
+      files: [
+        { path: 'src/App.jsx', content: '<table className="legacy-table">...</table>' },
+        { path: 'src/styles/app.css', content: '.legacy-table { border: 1px solid #ccc; }' }
+      ]
+    });
+    const intentRes = createModernizationIntent({
+      why: 'Modernize legacy table layout to responsive grid',
+      visualGoals: ['Modernize grid'],
+      uxGoals: ['Accessible contrast'],
+      technicalGoals: ['Zero regressions']
+    }, reactProfile);
+
+    const dynamicWorkflow = generateDesignCandidates(reactProfile, intentRes.intent!, {
+      currentLayout: 'HTML table layout with fixed widths',
+      designPersonality: 'Precision Engineering',
+      productUXProfile: { archetype: 'High-Volume Operations Console' }
+    });
+
+    expect(dynamicWorkflow.candidates.length).toBe(3);
+    const candA = dynamicWorkflow.candidates.find(c => c.candidateId === 'CANDIDATE_A');
+    const candB = dynamicWorkflow.candidates.find(c => c.candidateId === 'CANDIDATE_B');
+    const candC = dynamicWorkflow.candidates.find(c => c.candidateId === 'CANDIDATE_C');
+
+    expect(candA?.title).toContain('Precision Engineering');
+    expect(candA?.composition).toContain('HTML table layout with fixed widths');
+    expect(candB?.composition).toContain('responsive modular sections');
+    expect(candC?.density).toContain('COMFORTABLE');
+  });
+
+  // 7. Candidate IDs do not imply fixed visual solution
+  it('7. candidate IDs do not imply fixed visual solution: uses anonymized CANDIDATE_A, B, C', () => {
+    const intentRes = createModernizationIntent({ why: 'Replace monolithic view with modular sections' }, profile);
+    const workflow = generateDesignCandidates(profile, intentRes.intent!);
+
+    const candidateIds = workflow.candidates.map(c => c.candidateId);
+    expect(candidateIds).toEqual(['CANDIDATE_A', 'CANDIDATE_B', 'CANDIDATE_C']);
+
+    // Ensure candidate IDs are NOT fixed static layout strings
+    expect(candidateIds.some(id => id.includes('HIGH_DENSITY'))).toBe(false);
+    expect(candidateIds.some(id => id.includes('MODULAR_CARD'))).toBe(false);
+    expect(candidateIds.some(id => id.includes('STREAMLINED'))).toBe(false);
+  });
+
+  // 8. Full synthetic modernization pipeline
+  it('8. full synthetic modernization drill: executes end-to-end on isolated workspace copy', () => {
+    const sourceFixtureDir = path.resolve('tests/fixtures/legacy-react');
+    const workspaceDir = path.resolve('tests/workspaces/modernization-drill-react');
+
+    const drill = runSyntheticModernizationDrill({
+      sourceFixtureDir,
+      workspaceDir
+    });
+
+    expect(drill.passed).toBe(true);
+    expect(drill.completionContract.isComplete).toBe(true);
+    expect(drill.completionContract.verdict).toBe('COMPLETE');
+    expect(drill.completionContract.humanVisualApproval).toBe('NOT_APPLICABLE_SYNTHETIC_FIXTURE');
+
+    // Verify original fixture was NOT mutated
+    const originalAppJsx = fs.readFileSync(path.join(sourceFixtureDir, 'src/App.jsx'), 'utf-8');
+    expect(originalAppJsx).toContain('legacy-table-layout');
+
+    // Verify workspace copy WAS mutated with modern layout
+    const workspaceAppJsx = fs.readFileSync(path.join(workspaceDir, 'src/App.jsx'), 'utf-8');
+    expect(workspaceAppJsx).toContain('modern-layout-shell');
+  });
+
+  // 9. Behavior preservation after apply
+  it('9. behavior preservation after apply: strictly preserves routes, auth token handling, and table data', () => {
+    const sourceFixtureDir = path.resolve('tests/fixtures/legacy-react');
+    const workspaceDir = path.resolve('tests/workspaces/modernization-drill-react');
+
+    const drill = runSyntheticModernizationDrill({
+      sourceFixtureDir,
+      workspaceDir
+    });
+
+    expect(drill.behaviorComparison.passed).toBe(true);
+    expect(drill.behaviorComparison.regressionsDetected.length).toBe(0);
+
+    // Verify critical routes preserved
+    const afterRoutes = drill.behavioralBaselineAfter.routes.map(r => r.path);
+    expect(afterRoutes).toContain('/dashboard');
+    expect(afterRoutes).toContain('/users');
+    expect(afterRoutes).toContain('/settings');
+
+    // Verify auth invariant preserved in workspace App.jsx
+    const workspaceAppJsx = fs.readFileSync(path.join(workspaceDir, 'src/App.jsx'), 'utf-8');
+    expect(workspaceAppJsx).toContain("sessionStorage.removeItem('auth_token')");
+    expect(workspaceAppJsx).toContain("window.location.href = '/login'");
+
+    // Verify user data preserved in UserGrid.jsx
+    const workspaceUserGrid = fs.readFileSync(path.join(workspaceDir, 'src/components/UserGrid.jsx'), 'utf-8');
+    expect(workspaceUserGrid).toContain('Alice Smith');
+    expect(workspaceUserGrid).toContain('Bob Jones');
+  });
+
+  // 10. Stage rollback metadata
+  it('10. stage rollback metadata: each stage records changedFiles, reason, scope, verification, and rollback', () => {
+    const sourceFixtureDir = path.resolve('tests/fixtures/legacy-react');
+    const workspaceDir = path.resolve('tests/workspaces/modernization-drill-react');
+
+    const drill = runSyntheticModernizationDrill({
+      sourceFixtureDir,
+      workspaceDir
+    });
+
+    expect(drill.stageCheckpoints.length).toBe(3);
+
+    for (const cp of drill.stageCheckpoints) {
+      expect(cp.changedFiles.length).toBeGreaterThan(0);
+      expect(cp.reason).toBeDefined();
+      expect(cp.scope).toBeDefined();
+      expect(cp.verification.passed).toBe(true);
+      expect(cp.rollback.steps.length).toBeGreaterThan(0);
+    }
+
+    const stage1 = drill.stageCheckpoints.find(s => s.stageId === 'STAGE_1_FOUNDATION');
+    expect(stage1?.changedFiles).toContain('src/styles/bridge.css');
+
+    const stage2 = drill.stageCheckpoints.find(s => s.stageId === 'STAGE_2_SHELL');
+    expect(stage2?.changedFiles).toContain('src/App.jsx');
+
+    const stage3 = drill.stageCheckpoints.find(s => s.stageId === 'STAGE_3_TARGET');
+    expect(stage3?.changedFiles).toContain('src/components/UserGrid.jsx');
+  });
+
+  // 11. Dependency creep prevention
+  it('11. dependency creep prevention: verifies package.json dependencies remain identical without creep', () => {
+    const sourceFixtureDir = path.resolve('tests/fixtures/legacy-react');
+    const workspaceDir = path.resolve('tests/workspaces/modernization-drill-react');
+
+    const drill = runSyntheticModernizationDrill({
+      sourceFixtureDir,
+      workspaceDir
+    });
+
+    expect(drill.dependencyAudit.hasCreep).toBe(false);
+    expect(drill.dependencyAudit.addedDependencies.length).toBe(0);
+    expect(drill.dependencyAudit.dependenciesBefore).toEqual(drill.dependencyAudit.dependenciesAfter);
+  });
+
+  // 12. Truthful UI verification
+  it('12. truthful UI verification: ensures zero fake telemetry or metrics injected into fixture', () => {
+    const sourceFixtureDir = path.resolve('tests/fixtures/legacy-react');
+    const workspaceDir = path.resolve('tests/workspaces/modernization-drill-react');
+
+    const drill = runSyntheticModernizationDrill({
+      sourceFixtureDir,
+      workspaceDir
+    });
+
+    expect(drill.truthfulUIAudit.passed).toBe(true);
+    expect(drill.truthfulUIAudit.fabricatedTelemetryDetected).toBe(false);
   });
 });
