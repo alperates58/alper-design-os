@@ -35,7 +35,7 @@ pnpm install
 ## 3. Çalıştırılacak Doğrulama Adımları
 
 ### Adım 3.1: Tüm Test Paketini Çalıştırın
-Tüm 17 test dosyasının (330+ test) geçtiğini doğrulayın:
+Tüm 17 test dosyasının (337 test, 46 modernization engine testi) geçtiğini doğrulayın:
 ```bash
 npm test
 ```
@@ -126,6 +126,12 @@ const approval = recordVisualReview(currentRecord, {
 | CONTENT_TRUTH_PASS Gate Entegrasyonu | **PASS** | PASS |
 | MCP Tool Sözleşmeleri (97 Tool) | **PASS (72 Tests)** | PASS |
 | Faz 1F.0 Modernization Engine Foundation | **PASS (20 Tests)** | PASS (Entegre) |
+| Faz 1F.0.1 Synthetic End-to-End Drill & Hotfix | **PASS (12 Tests)** | PASS (Entegre) |
+| Faz 1F.0.2 Evidence Provenance & Anti-Inflation | **PASS (14 Tests)** | PASS (Entegre) |
+| Multi-Stack Drill (React, Blade, Razor, Plain-Web) | **PASS (4 Workspaces)** | PASS (Entegre) |
+| Native Stack Preservation (Zero Colonization) | **PASS** | PASS (Entegre) |
+| Security Invariant Preservation (@csrf / AntiForgery) | **PASS** | PASS (Entegre) |
+| Dependency Governance (Zero Creep Across 4 Stacks) | **PASS** | PASS (Entegre) |
 | Behavioral Baseline & Regression Guard | **PASS** | PASS (Entegre) |
 | Preservation Contract Engine | **PASS** | PASS (Entegre) |
 | Change Classification (KEEP/IMPROVE/REPLACE/DEFER/REMOVE) | **PASS** | PASS (Entegre) |
@@ -133,7 +139,7 @@ const approval = recordVisualReview(currentRecord, {
 | Scope Guard & Boundary (Page cannot silently expand to App) | **PASS** | PASS (Entegre) |
 | Existing Design System & Duplicate Detection | **PASS** | PASS (Entegre) |
 | Dependency Governance (Anti-Creep) | **PASS** | PASS (Entegre) |
-| Legacy Fixtures (React, Blade, Razor, Plain-Web) | **PASS** | PASS (Entegre) |
+| Legacy Fixtures Pristine Baseline | **PASS (Unchanged)** | PASS (Entegre) |
 | Statik Telemetry Audit (Direction B) | **PASS (Statik)** | Canlı Endpoint Doğrulaması |
 | Track Trace Docker Pilotu | `DEFERRED_HOME_RUNTIME_VALIDATION` | Canlı Container Çalıştırma |
 | Playwright Gerçek Ekran Görüntüleri | `DEFERRED_HOME_RUNTIME_VALIDATION` | Canlı Screenshot Üretimi |

@@ -1326,6 +1326,19 @@ export const BaselineQualityProfileSchema = z.object({
 });
 export type BaselineQualityProfile = z.infer<typeof BaselineQualityProfileSchema>;
 
+// 26.8b Verification Evidence Level (Section 2 & 3)
+export const VerificationEvidenceLevelSchema = z.enum([
+  'STATIC',
+  'HEURISTIC',
+  'UNIT_TEST',
+  'INTEGRATION',
+  'RUNTIME',
+  'BROWSER',
+  'HUMAN',
+  'NOT_VERIFIED'
+]);
+export type VerificationEvidenceLevel = z.infer<typeof VerificationEvidenceLevelSchema>;
+
 // 26.9 Modernization Stage
 export const ModernizationStageSchema = z.object({
   stageId: z.string(),
@@ -1344,6 +1357,7 @@ export const ModernizationStageSchema = z.object({
     baselineChecks: z.array(z.string()),
     reviewerCriteria: z.array(z.string())
   }),
+  evidenceLevel: VerificationEvidenceLevelSchema.default('STATIC'),
   rollbackSteps: z.array(z.string())
 });
 export type ModernizationStage = z.infer<typeof ModernizationStageSchema>;
@@ -1473,6 +1487,7 @@ export const ModernizationCompletionContractSchema = z.object({
   regression: z.enum(['PASS', 'FAIL']),
   contentTruth: z.enum(['PASS', 'FAIL']),
   humanVisualApproval: z.enum(['APPROVED', 'PENDING', 'REJECTED', 'NOT_APPLICABLE_SYNTHETIC_FIXTURE']),
+  evidenceLevels: z.record(VerificationEvidenceLevelSchema).optional(),
   isComplete: z.boolean(),
   verdict: z.enum(['COMPLETE', 'INCOMPLETE', 'REJECTED']),
   blockReasons: z.array(z.string())

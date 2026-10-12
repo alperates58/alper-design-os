@@ -24,7 +24,13 @@ import {
   createModernizationPlan,
   evaluateModernizationCompletion,
   performIndependentReview,
-  runSyntheticModernizationDrill
+  runSyntheticModernizationDrill,
+  validateEvidenceLevelIntegrity,
+  runReactModernizationDrill,
+  runBladeModernizationDrill,
+  runRazorModernizationDrill,
+  runPlainWebModernizationDrill,
+  runMultiStackModernizationDrill
 } from '@alper-design-os/agent-governance';
 
 describe('ALPER DESIGN OS - FAZ 1F.0: Existing Project Modernization Engine Foundation', () => {
@@ -597,8 +603,8 @@ describe('ALPER DESIGN OS - FAZ 1F.0.1: Modernization Guardrail Hotfix & Synthet
     expect(partialAuth2.blockReason).toContain('preservation impact explicitly reviewed');
   });
 
-  // 4. Big bang authorized only when all 4 strict criteria are satisfied
-  it('4. big bang authorized only when all 4 strict criteria are satisfied', () => {
+  // 4. Big bang authorized only when all 5 strict criteria are satisfied
+  it('4. big bang authorized only when all strict criteria are satisfied', () => {
     const authorized = selectModernizationStrategy({
       requestedStrategy: 'BIG_BANG_REWRITE',
       projectProfile: profile,
@@ -606,6 +612,8 @@ describe('ALPER DESIGN OS - FAZ 1F.0.1: Modernization Guardrail Hotfix & Synthet
       hasCheckpointPlan: true,
       hasRollbackPlan: true,
       preservationImpactReviewed: true,
+      riskAssessmentCompleted: true,
+      assessedRiskLevel: 'HIGH',
       justification: 'Approved migration plan following stage 0 risk audit'
     });
 
@@ -634,7 +642,9 @@ describe('ALPER DESIGN OS - FAZ 1F.0.1: Modernization Guardrail Hotfix & Synthet
       explicitUserApproval: true,
       hasCheckpointPlan: true,
       hasRollbackPlan: true,
-      preservationImpactReviewed: true
+      preservationImpactReviewed: true,
+      riskAssessmentCompleted: true,
+      assessedRiskLevel: 'HIGH'
     });
     expect(appWideApproved.blocked).toBe(false);
     expect(appWideApproved.strategy).toBe('REBUILD_SHELL');
@@ -800,3 +810,315 @@ describe('ALPER DESIGN OS - FAZ 1F.0.1: Modernization Guardrail Hotfix & Synthet
     expect(drill.truthfulUIAudit.fabricatedTelemetryDetected).toBe(false);
   });
 });
+
+// =========================================================================
+// FAZ 1F.0.2: Evidence Provenance Hardening & Multi-Stack Modernization Drill
+// =========================================================================
+
+describe('ALPER DESIGN OS - FAZ 1F.0.2: Evidence Provenance Hardening & Multi-Stack Modernization Drill', () => {
+  const fixturesDir = path.resolve('tests/fixtures');
+  const workspacesDir = path.resolve('tests/workspaces');
+
+  const mockProfile = profileExistingProject({
+    rootDir: 'tests/fixtures/legacy-react',
+    files: [
+      { path: 'package.json', content: JSON.stringify({ dependencies: { react: '17.0.2' } }) },
+      { path: 'src/App.jsx', content: 'export default function App() { return <div>App</div>; }' }
+    ]
+  });
+
+  // 1. Big bang requires completed risk assessment
+  it('1. big bang requires completed risk assessment: blocks rewrite when risk assessment is missing', () => {
+    const missingRisk = selectModernizationStrategy({
+      requestedStrategy: 'BIG_BANG_REWRITE',
+      projectProfile: mockProfile,
+      explicitUserApproval: true,
+      hasCheckpointPlan: true,
+      hasRollbackPlan: true,
+      preservationImpactReviewed: true,
+      riskAssessmentCompleted: false
+    });
+
+    expect(missingRisk.blocked).toBe(true);
+    expect(missingRisk.strategy).toBe('BRIDGE');
+    expect(missingRisk.blockReason).toContain('riskAssessmentCompleted = true');
+  });
+
+  // 2. Application rewrite cannot be classified as LOW or MEDIUM risk
+  it('2. application rewrite cannot be classified as LOW or MEDIUM risk', () => {
+    const lowRiskRewrite = selectModernizationStrategy({
+      requestedStrategy: 'BIG_BANG_REWRITE',
+      projectProfile: mockProfile,
+      explicitUserApproval: true,
+      hasCheckpointPlan: true,
+      hasRollbackPlan: true,
+      preservationImpactReviewed: true,
+      riskAssessmentCompleted: true,
+      assessedRiskLevel: 'LOW'
+    });
+
+    expect(lowRiskRewrite.blocked).toBe(true);
+    expect(lowRiskRewrite.blockReason).toContain("cannot be classified as 'LOW'");
+    expect(lowRiskRewrite.blockReason).toContain('minimum risk level is HIGH or CRITICAL');
+
+    const mediumRiskRewrite = selectModernizationStrategy({
+      requestedStrategy: 'BIG_BANG_REWRITE',
+      projectProfile: mockProfile,
+      explicitUserApproval: true,
+      hasCheckpointPlan: true,
+      hasRollbackPlan: true,
+      preservationImpactReviewed: true,
+      riskAssessmentCompleted: true,
+      assessedRiskLevel: 'MEDIUM'
+    });
+
+    expect(mediumRiskRewrite.blocked).toBe(true);
+    expect(mediumRiskRewrite.blockReason).toContain("cannot be classified as 'MEDIUM'");
+
+    const highRiskRewrite = selectModernizationStrategy({
+      requestedStrategy: 'BIG_BANG_REWRITE',
+      projectProfile: mockProfile,
+      explicitUserApproval: true,
+      hasCheckpointPlan: true,
+      hasRollbackPlan: true,
+      preservationImpactReviewed: true,
+      riskAssessmentCompleted: true,
+      assessedRiskLevel: 'HIGH'
+    });
+
+    expect(highRiskRewrite.blocked).toBe(false);
+    expect(highRiskRewrite.riskAssessment).toBe('HIGH');
+  });
+
+  // 3. Static evidence cannot masquerade as runtime or browser execution
+  it('3. static evidence cannot masquerade as runtime or browser execution', () => {
+    const checkRuntime = validateEvidenceLevelIntegrity('accessibility', 'RUNTIME', {
+      isStaticAnalysis: true,
+      hasRealRuntimeOutput: false,
+      hasBrowserExecution: false
+    });
+
+    expect(checkRuntime.valid).toBe(false);
+    expect(checkRuntime.inflationDetected).toBe(true);
+    expect(checkRuntime.reason).toContain('Static analysis cannot masquerade as runtime/browser');
+
+    const checkBrowser = validateEvidenceLevelIntegrity('ux', 'BROWSER', {
+      isStaticAnalysis: true,
+      hasRealRuntimeOutput: false,
+      hasBrowserExecution: false
+    });
+
+    expect(checkBrowser.valid).toBe(false);
+    expect(checkBrowser.inflationDetected).toBe(true);
+  });
+
+  // 4. Heuristic evaluation cannot masquerade as human approval
+  it('4. heuristic evaluation cannot masquerade as human approval', () => {
+    const checkHuman = validateEvidenceLevelIntegrity('visualAI', 'HUMAN', {
+      isHeuristicAI: true,
+      hasHumanApprovalSignature: false
+    });
+
+    expect(checkHuman.valid).toBe(false);
+    expect(checkHuman.inflationDetected).toBe(true);
+    expect(checkHuman.reason).toContain('AI heuristics cannot masquerade as human approval');
+  });
+
+  // 5. Unit test cannot masquerade as browser verification
+  it('5. unit test cannot masquerade as browser verification', () => {
+    const checkUnitTest = validateEvidenceLevelIntegrity('regression', 'BROWSER', {
+      isUnitTestOnly: true,
+      hasBrowserExecution: false
+    });
+
+    expect(checkUnitTest.valid).toBe(false);
+    expect(checkUnitTest.inflationDetected).toBe(true);
+    expect(checkUnitTest.reason).toContain('Unit test cannot masquerade as live browser');
+  });
+
+  // 6. Completion evaluation rejects evidence inflation
+  it('6. completion evaluation rejects evidence inflation in completion contract', () => {
+    const inflatedContract = evaluateModernizationCompletion({
+      technical: 'PASS',
+      visualAI: 'PASS',
+      ux: 'PASS',
+      accessibility: 'PASS',
+      security: 'PASS',
+      regression: 'PASS',
+      contentTruth: 'PASS',
+      humanVisualApproval: 'NOT_APPLICABLE_SYNTHETIC_FIXTURE',
+      evidenceLevels: {
+        accessibility: 'BROWSER', // Inflated! Real is static
+        visualAI: 'HUMAN'         // Inflated! Real is heuristic
+      },
+      evidenceAudits: {
+        accessibility: { isStaticAnalysis: true, hasBrowserExecution: false },
+        visualAI: { isHeuristicAI: true, hasHumanApprovalSignature: false }
+      },
+      isSyntheticDrill: true
+    });
+
+    expect(inflatedContract.isComplete).toBe(false);
+    expect(inflatedContract.blockReasons.some(r => r.includes('Evidence Inflation'))).toBe(true);
+  });
+
+  // 7. React modernization native-stack preservation
+  it('7. React modernization: verifies native-stack preservation and ADAPT strategy', () => {
+    const drill = runReactModernizationDrill({
+      sourceFixtureDir: path.join(fixturesDir, 'legacy-react'),
+      workspaceDir: path.join(workspacesDir, 'modernization-drill-react')
+    });
+
+    expect(drill.passed).toBe(true);
+    expect(drill.drillType).toBe('REACT');
+    expect(drill.nativeStackPreserved).toBe(true);
+    expect(drill.strategyDecision.strategy).toBe('ADAPT');
+    expect(drill.behaviorComparison.authPreserved).toBe(true);
+    expect(drill.behaviorComparison.routesPreserved).toBe(true);
+    expect(drill.dependencyAudit.hasCreep).toBe(false);
+  });
+
+  // 8. Blade modernization preserves @csrf and prevents framework colonization
+  it('8. Blade modernization: preserves @csrf and prevents framework colonization', () => {
+    const drill = runBladeModernizationDrill({
+      sourceFixtureDir: path.join(fixturesDir, 'legacy-blade'),
+      workspaceDir: path.join(workspacesDir, 'modernization-drill-blade')
+    });
+
+    expect(drill.passed).toBe(true);
+    expect(drill.drillType).toBe('BLADE');
+    expect(drill.nativeStackPreserved).toBe(true);
+    expect(drill.strategyDecision.strategy).toBe('BRIDGE');
+    expect(drill.behaviorComparison.csrfPreserved).toBe(true);
+    expect(drill.dependencyAudit.hasCreep).toBe(false);
+
+    // Verify pristine baseline was NOT modified
+    const originalMaster = fs.readFileSync(path.join(fixturesDir, 'legacy-blade/resources/views/layouts/master.blade.php'), 'utf-8');
+    expect(originalMaster).toContain('bootstrap/4.5.2');
+  });
+
+  // 9. Razor modernization preserves anti-forgery token and ASP.NET MVC architecture
+  it('9. Razor modernization: preserves anti-forgery token and ASP.NET architecture', () => {
+    const drill = runRazorModernizationDrill({
+      sourceFixtureDir: path.join(fixturesDir, 'legacy-razor'),
+      workspaceDir: path.join(workspacesDir, 'modernization-drill-razor')
+    });
+
+    expect(drill.passed).toBe(true);
+    expect(drill.drillType).toBe('RAZOR');
+    expect(drill.nativeStackPreserved).toBe(true);
+    expect(drill.strategyDecision.strategy).toBe('BRIDGE');
+    expect(drill.behaviorComparison.antiforgeryPreserved).toBe(true);
+    expect(drill.dependencyAudit.hasCreep).toBe(false);
+
+    // Verify pristine baseline was NOT modified
+    const originalLayout = fs.readFileSync(path.join(fixturesDir, 'legacy-razor/Views/Shared/_Layout.cshtml'), 'utf-8');
+    expect(originalLayout).toContain('bootstrap.min.css');
+  });
+
+  // 10. Plain Web modernization preserves forms and adds zero npm packages
+  it('10. Plain Web modernization: preserves forms and adds zero npm packages', () => {
+    const drill = runPlainWebModernizationDrill({
+      sourceFixtureDir: path.join(fixturesDir, 'legacy-plain-web'),
+      workspaceDir: path.join(workspacesDir, 'modernization-drill-plain')
+    });
+
+    expect(drill.passed).toBe(true);
+    expect(drill.drillType).toBe('PLAIN_WEB');
+    expect(drill.nativeStackPreserved).toBe(true);
+    expect(drill.strategyDecision.strategy).toBe('MIGRATE');
+    expect(drill.behaviorComparison.formActionPreserved).toBe(true);
+    expect(drill.dependencyAudit.hasCreep).toBe(false);
+
+    // Verify pristine baseline was NOT modified
+    const originalIndex = fs.readFileSync(path.join(fixturesDir, 'legacy-plain-web/index.html'), 'utf-8');
+    expect(originalIndex).toContain('bootstrap.min.css');
+  });
+
+  // 11. Multi-stack end-to-end modernization orchestration passes across all 4 stacks
+  it('11. multi-stack end-to-end modernization orchestration passes across all 4 stacks', () => {
+    const multiDrill = runMultiStackModernizationDrill({
+      baseFixturesDir: fixturesDir,
+      baseWorkspacesDir: workspacesDir
+    });
+
+    expect(multiDrill.allPassed).toBe(true);
+    expect(multiDrill.react.passed).toBe(true);
+    expect(multiDrill.blade.passed).toBe(true);
+    expect(multiDrill.razor.passed).toBe(true);
+    expect(multiDrill.plain.passed).toBe(true);
+
+    // Check cross-stack comparison matrix
+    expect(multiDrill.comparisonMatrix.profile.react).toBe(true);
+    expect(multiDrill.comparisonMatrix.profile.blade).toBe(true);
+    expect(multiDrill.comparisonMatrix.profile.razor).toBe(true);
+    expect(multiDrill.comparisonMatrix.profile.plain).toBe(true);
+
+    expect(multiDrill.comparisonMatrix.preservation.react).toBe(true);
+    expect(multiDrill.comparisonMatrix.preservation.blade).toBe(true);
+    expect(multiDrill.comparisonMatrix.preservation.razor).toBe(true);
+    expect(multiDrill.comparisonMatrix.preservation.plain).toBe(true);
+
+    expect(multiDrill.comparisonMatrix.regression.react).toBe(true);
+    expect(multiDrill.comparisonMatrix.regression.blade).toBe(true);
+    expect(multiDrill.comparisonMatrix.regression.razor).toBe(true);
+    expect(multiDrill.comparisonMatrix.regression.plain).toBe(true);
+
+    expect(multiDrill.comparisonMatrix.nativeStackPreserved.react).toBe(true);
+    expect(multiDrill.comparisonMatrix.nativeStackPreserved.blade).toBe(true);
+    expect(multiDrill.comparisonMatrix.nativeStackPreserved.razor).toBe(true);
+    expect(multiDrill.comparisonMatrix.nativeStackPreserved.plain).toBe(true);
+  });
+
+  // 12. Cross-stack dependency creep prevention confirms zero added dependencies across all 4 stacks
+  it('12. cross-stack dependency creep prevention confirms zero added dependencies across all 4 stacks', () => {
+    const multiDrill = runMultiStackModernizationDrill({
+      baseFixturesDir: fixturesDir,
+      baseWorkspacesDir: workspacesDir
+    });
+
+    expect(multiDrill.react.dependencyAudit.addedDependencies.length).toBe(0);
+    expect(multiDrill.blade.dependencyAudit.addedDependencies.length).toBe(0);
+    expect(multiDrill.razor.dependencyAudit.addedDependencies.length).toBe(0);
+    expect(multiDrill.plain.dependencyAudit.hasCreep).toBe(false);
+  });
+
+  // 13. Dynamic candidate diversity across stacks
+  it('13. dynamic candidate diversity across stacks ensures contextual specialization', () => {
+    const multiDrill = runMultiStackModernizationDrill({
+      baseFixturesDir: fixturesDir,
+      baseWorkspacesDir: workspacesDir
+    });
+
+    const reactCandidates = multiDrill.react.designDirectionWorkflow.candidates;
+    const bladeCandidates = multiDrill.blade.designDirectionWorkflow.candidates;
+    const razorCandidates = multiDrill.razor.designDirectionWorkflow.candidates;
+    const plainCandidates = multiDrill.plain.designDirectionWorkflow.candidates;
+
+    expect(reactCandidates.length).toBe(3);
+    expect(bladeCandidates.length).toBe(3);
+    expect(razorCandidates.length).toBe(3);
+    expect(plainCandidates.length).toBe(3);
+
+    // Verify candidates are stack-aware and differ
+    expect(reactCandidates[0].name).not.toBe(bladeCandidates[0].name);
+    expect(razorCandidates[0].name).not.toBe(plainCandidates[0].name);
+  });
+
+  // 14. Truthful evidence levels in completion contract without inflation
+  it('14. truthful evidence levels in completion contract without inflation', () => {
+    const multiDrill = runMultiStackModernizationDrill({
+      baseFixturesDir: fixturesDir,
+      baseWorkspacesDir: workspacesDir
+    });
+
+    const completion = multiDrill.react.completionContract;
+    expect(completion.isComplete).toBe(true);
+    expect(completion.evidenceLevels).toBeDefined();
+    expect(completion.evidenceLevels?.technical).toBe('STATIC');
+    expect(completion.evidenceLevels?.visualAI).toBe('HEURISTIC');
+    expect(completion.evidenceLevels?.regression).toBe('INTEGRATION');
+    expect(completion.evidenceLevels?.humanVisualApproval).toBe('NOT_VERIFIED');
+  });
+});
+

@@ -1380,6 +1380,8 @@ export function handleSelectModernizationStrategy(input: T.SelectModernizationSt
     hasCheckpointPlan: input.hasCheckpointPlan,
     hasRollbackPlan: input.hasRollbackPlan,
     preservationImpactReviewed: input.preservationImpactReviewed,
+    riskAssessmentCompleted: input.riskAssessmentCompleted,
+    assessedRiskLevel: input.assessedRiskLevel,
     justification: input.justification
   });
 }
