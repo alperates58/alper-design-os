@@ -397,48 +397,73 @@ flowchart TD
 
 Aşağıdaki hazır promptları Antigravity, Cursor veya Claude arayüzünde doğrudan kullanabilirsiniz:
 
-### 👑 0. Sıfırdan Proje Başlatma Master Promptu (All-in-One Starter Prompt)
-*Tetiklenen Yetenekler:* Tüm Alper Design OS ekosistemi (`alper-domain-intelligence`, `alper-secure-coding`, `alper-architecture`, `alper-database-engineering`, `alper-performance-engineering`, `alper-ui-blueprint`, `alper-playwright-testing`, `alper-evidence-review`)
+### 👑 0. 10 Kategorili Uçtan Uca Sıfırdan Başlangıç Master Promptu (All-in-One 10-Tier Starter Prompt)
+*Tetiklenen Yetenekler:* 57 Yeteneğin tamamı ve 10 Temel MCP Kategorisi (`alper-domain-intelligence`, `alper-project-analyzer`, `alper-source-intelligence`, `alper-ui-blueprint`, `alper-secure-coding`, `alper-architecture`, `alper-database-engineering`, `alper-performance-engineering`, `alper-change-planner`, `alper-browser-qa`, `alper-evidence-review`)
 
-Yeni bir projeye başlarken aşağıdaki master promptu Antigravity veya AI asistanınıza ileterek tüm kontrolleri tek seferde başlatabilirsiniz:
+Yeni bir projeye başlarken geliştiricinin yapay zekaya tek tek *"şunu da kontrol et, bunu da ekle, şu aracı da çalıştır"* demesine gerek kalmaması için tasarlanmış **turn-key (anahtar teslim)** master prompttur. Bu tek komutla Alper Design OS'in **10 temel MCP kategorisinin tamamı (88 araçlık güç)** sırasıyla, katı bir disiplinle işletilir:
 
 ```text
-Alper Design OS ile sıfırdan yeni ve üretime hazır bir yazılım projesi başlatmak istiyorum.
-Lütfen kod yazmaya başlamadan önce projeyi Güvenlik, Mühendislik, Tasarım ve Optimizasyon eksenlerinde 360° denetle ve planla.
+Alper Design OS ile sıfırdan yeni ve üretime hazır bir yazılım projesi başlatıyorum.
+Geliştirmeye başlamadan önce Alper Design OS'in 10 temel MCP kategorisinin TAMAMINI sırasıyla ve eksiksiz olarak çalıştır. Hiçbir adımı atlama, ek onay beklemeden tüm 10 kategoriyi disiplinle işlet:
 
-Proje Tanımı:
+PROJE GİRDİLERİ:
 - Proje Adı: [Örn: FleetFlow - Gerçek Zamanlı Filo ve Rota Yönetim Sistemi]
-- Amacı: [Örn: Lojistik operatörlerinin 500+ aracın konum, yakıt, sıcaklık ve teslimat durumunu canlı takip edip rota optimizasyonu yapması]
-- Tercih Edilen Teknoloji: [Örn: React + TypeScript, Node.js / PostgreSQL veya ASP.NET Core]
+- Hedef Sektör / Alan: [Örn: Lojistik, Soğuk Zincir Taşımacılığı ve Filo Operasyonları]
+- Kullanıcı / Operatör Profili: [Örn: 7/24 vardiyalı çalışan, saniyelik alarm ve gecikmeleri izleyen filo sevk uzmanları]
+- Hedef Teknoloji Yığını (Stack): [Örn: React + Strict TypeScript, Tailwind CSS, PostgreSQL, Node.js veya ASP.NET Core]
 
-Lütfen aşağıdaki 5 adımlı Alper Design OS başlangıç protokolünü sırasıyla çalıştır:
+---
 
-1. [TASARIM & ALAN EKSENİ]:
-   - 'understand_product' ve 'research_domain' ile alanı (15 kanonik sektörden biri) ve bilgi yoğunluğu seviyesini analiz et.
-   - Operatör ergonomisi için en uygun 3 UX desenini belirle (Örn: SplitPane Workbench, Dense DataGrid, Timeline).
-   - DTCG uyumlu tasarım tokenlarını ve UI Blueprint DSL sayfa taslaklarını hazırla.
+LÜTFEN AŞAĞIDAKİ 10 MCP KATEGORİSİNİ SIRAYLA ÇALIŞTIR VE RAPORLA:
 
-2. [GÜVENLİK & TEHDİT EKSENİ]:
-   - 'generate_threat_model' ile STRIDE tehdit modelini çıkar ve güven sınırlarını (trust boundaries) belirle.
-   - OWASP Top 10 ve OWASP API Security kontrollerini tanımla.
-   - 'generate_engineering_policy' ile STRICT release gate politikasını ve sır ([REDACTED_*]) kurallarını bağla.
+[KATEGORİ 1: ÜRÜN & ALAN ANALİZİ (Domain & Product Intelligence)]
+- 'understand_product' ve 'research_domain' araçlarını çalıştırarak alanı 15 kanonik sektörden birine oturt.
+- Operatörün çalışma ortamını (yüksek stres, çoklu ekran, karanlık mod gereksinimi) ve bilgi yoğunluğu seviyesini (Compact / Balanced) belirle.
+- 'recommend_ux_patterns' ile bu operasyona en uygun kanonik UX desenlerini (Split-Pane Workbench, DataGrid, Timeline vb.) listele.
 
-3. [MÜHENDİSLİK & MİMARİ EKSENİ]:
-   - 'analyze_architecture' ile mimari stili (Clean / Hexagonal) seç ve ilk ADR (Architectural Decision Record) belgesini oluştur.
-   - 'analyze_database_schema' ile ilişkileri, veri bütünlüğü kurallarını ve zorunlu Foreign Key indekslerini tasarla.
-   - Gelecekteki şema değişiklikleri için Expand/Contract migrasyon politikasını kurgula.
+[KATEGORİ 2: STATİK UI & STACK TESPİTİ (Project Analyzer & Baseline)]
+- 'detect_stack' ve 'analyze_project' araçlarını çalıştırarak hedef teknolojinin kurallarını, paket yöneticisini ve dosya yapısını belirle.
+- Hedef framework için erişilebilirlik taban çizgisini (WCAG 2.1 AA kontrastı, ARIA landmark standartları) tanımla.
 
-4. [OPTİMİZASYON & GÖZLEMLENEBİLİRLİK EKSENİ]:
-   - Core Web Vitals hedeflerini (LCP < 2.5s, INP < 200ms, CLS < 0.1) belirle.
-   - OpenTelemetry tracing, korelasyon ID (X-Correlation-ID) ve PII maskeli yapılandırılmış log omurgasını planla.
-   - Dış servis entegrasyonları için Circuit Breaker ve kademeli bekleme (backoff) stratejisi kur.
+[KATEGORİ 3: KAYNAK & REGISTRY İSTİHBARATI (Source & Registry Intelligence)]
+- 'discover_sources' ve 'search_registries' araçlarıyla projeye en uygun hazır topluluk bloklarını (shadcn/ui, Magic UI, Lucide ikonları vb.) tara.
+- 'recommend_data_grid' ve 'recommend_chart_library' araçlarını çalıştırarak gereksiz şişkinlik (bundle bloat) yaratmayan, lisansı güvenli (MIT/Apache) bileşenleri seç ve 'NEDEN (WHY)' gerekçesiyle sun.
 
-5. [DOĞRULAMA & TEST PLANI]:
-   - 'generate_test_pyramid' ile %70 Unit, %20 Integration, %10 E2E test piramidini oluştur.
-   - 'generate_playwright_test' ile kritik operatör akışı için rol tabanlı ('getByRole') E2E test taslağı çıkar.
-   - 'evaluate_truthful_ui' doğrulaması ile ekrandaki verilerin kaynağını (Authoritative vs Synthetic) şeffafça etiketle.
+[KATEGORİ 4: TASARIM TOKENLARI & UI BLUEPRINT DSL (Design Tokens & UI DSL)]
+- 'get_design_tokens' aracını kullanarak W3C DTCG uyumlu renk, tipografi, boşluk (spacing 4px/8px), border-radius ve gölge tokenlarını üret.
+- 'create_app_shell_blueprint' ve 'create_page_blueprint' araçlarıyla framework-bağımsız UI Blueprint DSL (JSON) sayfa şablonunu oluştur.
 
-Tüm bu kontroller tamamlandıktan ve onaylandıktan sonra temel proje iskeletini ve ilk ekran bileşenlerini üret.
+[KATEGORİ 5: MÜHENDİSLİK STANDARTLARI & GÜVENLİK (Engineering & Security Guardrails)]
+- 'generate_threat_model' aracını çalıştırarak STRIDE (Kimlik Sahteciliği, Veri Tahrifatı, İnkar, Bilgi İfşası, DoS, Yetki Yükseltme) tehdit modelini çıkar.
+- 'generate_engineering_policy' ile STRICT release gate politikasını kurgula; OWASP Top 10 ve OWASP API Security (BOLA, Injection) kurallarını bağla.
+- Tüm log, commit ve API çağrılarında sırlar için '[REDACTED_*]' sansürleme protokolünü zorunlu tut.
+
+[KATEGORİ 6: YAZILIM MİMARİSİ & VERİTABANI MÜHENDİSLİĞİ (Software Architecture & DB)]
+- 'analyze_architecture' aracıyla mimari stili (Clean Architecture / Hexagonal Ports & Adapters) seç ve ilk ADR'yi (docs/adr/0001-architecture-style.md) oluştur.
+- 'analyze_database_schema' aracıyla ilişkisel şemayı, veri bütünlüğü kurallarını (ACID, UUIDv7, Idempotency) ve zorunlu Foreign Key indekslerini tasarla (N+1 engelleme).
+- İlerideki şema güncellemeleri için sıfır kesintili 'Expand/Contract' migrasyon politikasını bağla.
+
+[KATEGORİ 7: PERFORMANS, DAYANIKLILIK & GÖZLEMLENEBİLİRLİK (Optimization, Reliability & O11y)]
+- Core Web Vitals performans bütçesini tanımla: LCP < 2.5s, INP < 200ms, CLS < 0.1, ilk yükleme bundle boyutu < 150KB.
+- Dağıtık izleme için 'X-Correlation-ID' ve OpenTelemetry tracing omurgasını planla; PII maskeli yapılandırılmış JSON log yapısını kurgula.
+- Dış servis çağrıları ve API'lar için Circuit Breaker (Devre Kesici), Timeout (3000ms) ve Exponential Backoff with Jitter kurallarını belirle.
+
+[KATEGORİ 8: AJAN YÖNETİŞİMİ & DEĞİŞİKLİK GÜVENLİĞİ (Agent Governance)]
+- 'create_action_plan' aracını çalıştırarak projenin 17 adımlı AgentActionPlan'ını, etki alanını (blast radius) ve geri alma (rollback) senaryolarını oluştur.
+- 'evaluate_scope' aracıyla yetkisiz dosya değişikliklerini (scope creep) kısıtla; 'create_checkpoint_plan' ile güvenli git kontrol noktalarını planla.
+
+[KATEGORİ 9: QA, TEST PİRAMİDİ & PLAYWRIGHT E2E (QA & Testing Engine)]
+- 'generate_test_pyramid' aracıyla %70 Unit, %20 Integration, %10 E2E test piramidini kur.
+- 'generate_user_journeys' ile kritik operatör akışlarını (giriş yap -> telemetriyi filtrele -> acil aksiyon al) haritalandır.
+- 'generate_playwright_test' aracıyla kırılgan seçiciler yerine semantik roller ('getByRole') kullanan dayanıklı E2E test dosyasını oluştur.
+
+[KATEGORİ 10: TRUTHFUL UI & OPERATÖR ÇALIŞTIRMA (Truthful UI & Operator Execution)]
+- 'audit_data_provenance' ve 'evaluate_truthful_ui' araçlarını çalıştır: Ekrandaki her veriyi sınıflandır (Authoritative, Derived, Mock Synthetic). Uydurma rastgele verileri canlı donanım verisi gibi gösterme; canlı bağlantı yoksa 'SIMULATED_ESTIMATE' olarak etiketle ('CONTENT_TRUTH_PASS').
+- 'resolve_browser_runtime' ile ortamdaki tarayıcıyı doğrula; kurumsal güvenlik kısıtlaması varsa 'create_manual_run_bundle' ile operatör yürütme paketini hazırla.
+
+---
+ÇIKTI BEKLENTİSİ:
+Yukarıdaki 10 kategorinin analizini ve kararlarını özetle, oluşturulan ADR ve mimari planı göster, ardından onaylanan bu 10 eksenli temel üzerine projenin ilk temiz kod iskeletini ve sayfa bileşenini üret!
 ```
 
 ### 1. Yeni Ürün & Alan Analizi (NEW Modu)
