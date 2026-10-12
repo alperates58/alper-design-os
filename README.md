@@ -293,7 +293,7 @@ flowchart TD
 
     subgraph S2["2. GÜVENLİK & TEHDİT EKSENİ"]
         B1["STRIDE Tehdit Modellemesi"] --> B2["OWASP Top 10 & API Güvenlik Politikası"]
-        B2 --> B3["Sır Maskeleme ([REDACTED_*]) & Supply Chain"]
+        B2 --> B3["Sır Maskeleme REDACTED & Supply Chain"]
         B3 --> B4["Katı Release Gate Kriterleri (STRICT)"]
     end
 
@@ -309,12 +309,12 @@ flowchart TD
         D3 --> D4["SLI / SLO & Graceful Degradation"]
     end
 
-    S1 --> GATE{"ALPER GOVERNANCE GATE<br/>Tüm Eksenler Onaylandı mı?"}
-    S2 --> GATE
-    S3 --> GATE
-    S4 --> GATE
+    A4 --> GATE{"ALPER GOVERNANCE GATE: Tüm Eksenler Onaylandı mı?"}
+    B4 --> GATE
+    C4 --> GATE
+    D4 --> GATE
 
-    GATE -->|ONAYLANDI (PASS)| CODE["GÜVENLİ, PERFORMANSLI & KANITLI KOD YAZIMI"]
+    GATE -->|ONAYLANDI| CODE["GÜVENLİ, PERFORMANSLI & KANITLI KOD YAZIMI"]
     CODE --> VERIFY["5. DOĞRULAMA: Playwright E2E + Truthful UI Gate"]
 ```
 
