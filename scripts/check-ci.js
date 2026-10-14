@@ -1,17 +1,32 @@
-/**
- * ALPER DESIGN OS - Live GitHub Actions CI Monitor
- * Fetches real runtime evidence directly from GitHub Actions API.
- */
+import { execSync } from 'node:child_process';
+
+function getGithubToken() {
+  if (process.env.GITHUB_TOKEN) return process.env.GITHUB_TOKEN;
+  try {
+    const creds = execSync('printf "protocol=https\\nhost=github.com\\n\\n" | git credential fill', {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'ignore'],
+      shell: true
+    });
+    const passMatch = creds.match(/^password=(.+)$/m);
+    if (passMatch) return passMatch[1].trim();
+  } catch {}
+  return null;
+}
 
 export async function fetchCiRunStatus(commitSha) {
   const repo = 'alperates58/alper-design-os';
   const url = `https://api.github.com/repos/${repo}/actions/runs?per_page=10`;
-  const res = await fetch(url, {
-    headers: {
-      'User-Agent': 'alper-design-os-ci-monitor',
-      'Accept': 'application/vnd.github.v3+json'
-    }
-  });
+  const token = getGithubToken();
+  const headers = {
+    'User-Agent': 'alper-design-os-ci-monitor',
+    'Accept': 'application/vnd.github.v3+json'
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const res = await fetch(url, { headers });
 
   if (!res.ok) {
     throw new Error(`GitHub API HTTP ${res.status}: ${await res.text()}`);
@@ -35,12 +50,7 @@ export async function fetchCiRunStatus(commitSha) {
   }
 
   // Fetch jobs for this run
-  const jobsRes = await fetch(targetRun.jobs_url, {
-    headers: {
-      'User-Agent': 'alper-design-os-ci-monitor',
-      'Accept': 'application/vnd.github.v3+json'
-    }
-  });
+  const jobsRes = await fetch(targetRun.jobs_url, { headers });
   let jobs = [];
   if (jobsRes.ok) {
     const jobsData = await jobsRes.json();

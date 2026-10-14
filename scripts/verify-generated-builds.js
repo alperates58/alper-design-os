@@ -89,13 +89,15 @@ export async function verifyGeneratedBuilds(options = {}) {
       } else if (stack === 'REACT_TYPESCRIPT') {
         // React + TS: Real production build via Vite & TypeScript
         let logs = 'Executing React + TypeScript qualification contract...\n';
-        const installCmd = process.platform === 'win32' ? 'npm.cmd install --no-audit' : 'npm install --no-audit';
+        const installCmd = process.platform === 'win32'
+          ? 'npm.cmd install --no-audit --no-fund --prefer-offline'
+          : 'npm install --no-audit --no-fund --prefer-offline';
         const buildCmd = process.platform === 'win32' ? 'npm.cmd run build' : 'npm run build';
         let tscPath = path.join(repoRoot, 'node_modules', 'typescript', 'bin', 'tsc');
 
         try {
           // 1. Dependency Install
-          const installOut = execSync(installCmd, { cwd: stackDir, encoding: 'utf-8', shell: true });
+          const installOut = execSync(installCmd, { cwd: stackDir, encoding: 'utf-8', shell: true, timeout: 180000 });
           logs += `[1/3] Install:\n${installOut}\n`;
           qualificationContract.dimensions.dependencyInstall = { status: 'VERIFIED', command: installCmd };
 

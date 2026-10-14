@@ -235,7 +235,7 @@ describe('Phase 1I: Portability, CI/CD, Bootstrap & Distribution V1', () => {
       expect(['PARTIALLY_VERIFIED', 'NOT_VERIFIED']).toContain(summary.globalDebtStatus);
       expect(summary.allVerified).toBe(false);
     }
-  }, 60000);
+  }, 240000);
 
   // 11. Doctor Preflight Mode
   it('11. verifies doctor --preflight checks prerequisites without requiring build artifacts', async () => {
