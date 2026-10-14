@@ -146,6 +146,25 @@ export async function packageDistribution(options = {}) {
   });
   checksumLines.push(`${sha}  ${archiveName}`);
 
+  // Generate and register SBOM in release artifacts
+  const sbomPath = path.join(distDir, 'sbom.spdx.json');
+  try {
+    execSync('node scripts/generate-sbom.js', { cwd: repoRoot, stdio: 'pipe' });
+    if (fs.existsSync(sbomPath)) {
+      const sbomSha = computeFileSha256(sbomPath);
+      const sbomSize = fs.statSync(sbomPath).size;
+      manifest.artifacts.push({
+        file: 'sbom.spdx.json',
+        sizeBytes: sbomSize,
+        sha256: sbomSha
+      });
+      checksumLines.push(`${sbomSha}  sbom.spdx.json`);
+      console.log(`      SPDX 2.3 SBOM generated and included in distribution: ${sbomPath}`);
+    }
+  } catch (err) {
+    console.warn(`Warning generating SBOM during packaging: ${err.message}`);
+  }
+
   if (manifest.artifacts.length === 0 || checksumLines.length === 0) {
     throw new Error('No distribution artifacts were generated for release packaging.');
   }

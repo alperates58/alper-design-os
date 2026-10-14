@@ -2,7 +2,7 @@
   "$schema": "https://alper-design-os.org/schemas/environment-manifest.v1.json",
   "manifestVersion": "1.0.0",
   "system": "alper-design-os",
-  "version": "0.1.0",
+  "version": "1.0.0-rc.1",
   "contract": {
     "coreRequired": [
       {

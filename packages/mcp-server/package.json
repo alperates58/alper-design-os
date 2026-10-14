@@ -1,6 +1,6 @@
 {
   "name": "@alper-design-os/mcp-server",
-  "version": "0.1.0",
+  "version": "1.0.0-rc.1",
   "description": "Local TypeScript MCP server for Alper Design OS with 15 typed tools",
   "main": "dist/index.js",
   "bin": {

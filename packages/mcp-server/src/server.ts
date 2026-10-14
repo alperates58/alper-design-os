@@ -48,7 +48,7 @@ export function createAlperDesignServer(): Server {
   const server = new Server(
     {
       name: 'alper-design-os',
-      version: '0.1.0'
+      version: '1.0.0-rc.1'
     },
     {
       capabilities: {

@@ -33,3 +33,4 @@ yarn-debug.log*
 !.alper-design-os/project/
 scratch/
 tests/workspaces/
+temp-dirty-test-file.txt

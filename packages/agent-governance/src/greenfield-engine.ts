@@ -2501,6 +2501,16 @@ export function scaffoldNewProject(
     });
   }
 
+  const WINDOWS_RESERVED_PATTERN = /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\..*)?$/i;
+  const resolvedTarget = path.resolve(targetDir);
+
+  const targetSegments = resolvedTarget.split(/[\\/]/);
+  for (const seg of targetSegments) {
+    if (WINDOWS_RESERVED_PATTERN.test(seg)) {
+      throw new Error(`Invalid target directory: Windows reserved device name detected: ${seg}`);
+    }
+  }
+
   if (!fs.existsSync(targetDir)) {
     fs.mkdirSync(targetDir, { recursive: true });
   }
@@ -2508,7 +2518,23 @@ export function scaffoldNewProject(
   const filesCreated: string[] = [];
 
   function writeFile(relPath: string, content: string) {
-    const fullPath = path.join(targetDir, relPath);
+    if (path.isAbsolute(relPath)) {
+      throw new Error(`Path traversal rejected: Absolute path forbidden in scaffold relative path: ${relPath}`);
+    }
+    const normalizedRel = path.normalize(relPath);
+    if (normalizedRel.startsWith('..') || path.isAbsolute(normalizedRel)) {
+      throw new Error(`Path traversal rejected: File escapes target directory: ${relPath}`);
+    }
+    const fullPath = path.resolve(resolvedTarget, normalizedRel);
+    if (!fullPath.startsWith(resolvedTarget)) {
+      throw new Error(`Path traversal rejected: Target escapes root boundary: ${relPath}`);
+    }
+    const segments = normalizedRel.split(/[\\/]/);
+    for (const segment of segments) {
+      if (WINDOWS_RESERVED_PATTERN.test(segment)) {
+        throw new Error(`Invalid filename: Windows reserved device name detected: ${segment}`);
+      }
+    }
     const dir = path.dirname(fullPath);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
@@ -2773,27 +2799,18 @@ export default function App() {
       `#!/usr/bin/env php
 <?php
 
+use Symfony\\Component\\Console\\Input\\ArgvInput;
+
 define('LARAVEL_START', microtime(true));
 
-if (file_exists(__DIR__.'/vendor/autoload.php')) {
-    require __DIR__.'/vendor/autoload.php';
-}
+// Register the Composer autoloader...
+require __DIR__.'/vendor/autoload.php';
 
+// Bootstrap Laravel and handle the command...
 $app = require_once __DIR__.'/bootstrap/app.php';
 
-// Version and info inspection for standalone or installed environments
-if (isset($argv[1]) && in_array($argv[1], ['--version', '-V', 'version'])) {
-    $ver = method_exists($app, 'version') ? $app->version() : '11.0.0';
-    echo "Laravel Framework {$ver}\\n";
-    exit(0);
-}
+$status = $app->handleCommand(new ArgvInput);
 
-if (!class_exists('Illuminate\\Foundation\\Application') || !method_exists($app, 'handleCommand')) {
-    echo "Laravel Framework 11.0.0 (Scaffolding Verified)\\n";
-    exit(0);
-}
-
-$status = $app->handleCommand(new \\Symfony\\Component\\Console\\Input\\ArgvInput);
 exit($status);
 `
     );
@@ -2805,35 +2822,55 @@ use Illuminate\\Foundation\\Application;
 use Illuminate\\Foundation\\Configuration\\Exceptions;
 use Illuminate\\Foundation\\Configuration\\Middleware;
 
-if (class_exists(Application::class) && method_exists(Application::class, 'configure')) {
-    return Application::configure(basePath: dirname(__DIR__))
-        ->withRouting(
-            web: __DIR__.'/../routes/web.php',
-            commands: __DIR__.'/../routes/console.php',
-            health: '/up',
-        )
-        ->withMiddleware(function (Middleware $middleware) {
-            //
-        })
-        ->withExceptions(function (Exceptions $exceptions) {
-            //
-        })->create();
-}
-
-// Standalone container fallback for pre-vendor CI syntax and execution testing
-class StandaloneApplication {
-    public string $basePath;
-    public function __construct(string $basePath) {
-        $this->basePath = $basePath;
-    }
-    public function version(): string {
-        return '11.0.0';
-    }
-}
-
-return new StandaloneApplication(dirname(__DIR__));
+return Application::configure(basePath: dirname(__DIR__))
+    ->withRouting(
+        web: __DIR__.'/../routes/web.php',
+        commands: __DIR__.'/../routes/console.php',
+        health: '/up',
+    )
+    ->withMiddleware(function (Middleware $middleware) {
+        //
+    })
+    ->withExceptions(function (Exceptions $exceptions) {
+        //
+    })->create();
 `
     );
+    writeFile(
+      'routes/console.php',
+      `<?php
+
+use Illuminate\\Support\\Facades\\Artisan;
+
+Artisan::command('inspire', function () {
+    $this->comment('Simplicity is the prerequisite for reliability.');
+})->purpose('Display an inspiring quote');
+`
+    );
+    writeFile(
+      '.env',
+      `APP_NAME="${blueprint.productProfile.productName}"
+APP_ENV=local
+APP_KEY=base64:u/pQ04LqR8qJ8qJ8qJ8qJ8qJ8qJ8qJ8qJ8qJ8qJ8qJ8=
+APP_DEBUG=true
+APP_TIMEZONE=UTC
+APP_URL=http://localhost
+`
+    );
+    writeFile(
+      '.env.example',
+      `APP_NAME="${blueprint.productProfile.productName}"
+APP_ENV=local
+APP_KEY=
+APP_DEBUG=true
+APP_TIMEZONE=UTC
+APP_URL=http://localhost
+`
+    );
+    writeFile('storage/framework/views/.gitkeep', '');
+    writeFile('storage/framework/cache/.gitkeep', '');
+    writeFile('storage/framework/sessions/.gitkeep', '');
+    writeFile('storage/logs/.gitkeep', '');
     writeFile(
       'app/Http/Controllers/DirectoryController.php',
       `<?php
@@ -2934,6 +2971,19 @@ class Entity
 `
     );
   } else if (stack === 'ASPNET_RAZOR') {
+    writeFile(
+      'global.json',
+      JSON.stringify(
+        {
+          sdk: {
+            version: '8.0.406',
+            rollForward: 'latestMajor'
+          }
+        },
+        null,
+        2
+      )
+    );
     writeFile(
       'App.csproj',
       `<Project Sdk="Microsoft.NET.Sdk.Web">

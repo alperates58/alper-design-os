@@ -1283,6 +1283,9 @@ export function handleCreateAppShellBlueprint(input: T.CreateAppShellBlueprintIn
 // 70. render_blueprint
 export function handleRenderBlueprint(input: T.RenderBlueprintInput) {
   const bpId = input.blueprintId || input.blueprintPreset || 'data-management-workspace';
+  if (bpId && (bpId.includes('..') || bpId.startsWith('/') || bpId.startsWith('\\'))) {
+    throw new Error(`Path traversal rejected in blueprintId: ${bpId}`);
+  }
   const rawBp = resolvePageBlueprintById(bpId);
   const blueprint = input.customPageTitle ? { ...rawBp, title: input.customPageTitle } : rawBp;
   let renderer;

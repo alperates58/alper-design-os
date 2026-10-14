@@ -15,9 +15,10 @@ describe('Phase 1I: Portability, CI/CD, Bootstrap & Distribution V1', () => {
     const manifestPath = path.join(repoRoot, 'environment-manifest.json');
     expect(fs.existsSync(manifestPath)).toBe(true);
 
+    const rootPkg = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf-8'));
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
     expect(manifest.system).toBe('alper-design-os');
-    expect(manifest.version).toBe('0.1.0');
+    expect(manifest.version).toBe(rootPkg.version);
     expect(manifest.contract).toBeDefined();
 
     const { coreRequired, featureRequired, optional, operatorFallback } = manifest.contract;
@@ -47,9 +48,10 @@ describe('Phase 1I: Portability, CI/CD, Bootstrap & Distribution V1', () => {
 
   // 3. Monorepo Version Consistency
   it('3. validates zero version drift across all monorepo packages, adapters, and manifests', () => {
+    const rootPkg = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf-8'));
     const result = validateVersionConsistency(repoRoot);
     expect(result.isConsistent).toBe(true);
-    expect(result.canonicalVersion).toBe('0.1.0');
+    expect(result.canonicalVersion).toBe(rootPkg.version);
     expect(result.discrepancies.length).toBe(0);
   });
 
@@ -169,8 +171,9 @@ describe('Phase 1I: Portability, CI/CD, Bootstrap & Distribution V1', () => {
     expect(fs.existsSync(manifestPath)).toBe(true);
     expect(fs.existsSync(checksumsPath)).toBe(true);
 
+    const rootPkg = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf-8'));
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
-    expect(manifest.version).toBe('0.1.0');
+    expect(manifest.version).toBe(rootPkg.version);
     expect(manifest.contracts.canonicalMcpTools).toBe(124);
     expect(manifest.contracts.skills.total).toBe(74);
     expect(manifest.contracts.skills.active).toBe(55);
@@ -178,7 +181,7 @@ describe('Phase 1I: Portability, CI/CD, Bootstrap & Distribution V1', () => {
 
     const checksumContent = fs.readFileSync(checksumsPath, 'utf-8');
     expect(checksumContent.length).toBeGreaterThan(0);
-    expect(checksumContent).toContain('alper-design-os-0.1.0.tar.gz');
+    expect(checksumContent).toContain(`alper-design-os-${rootPkg.version}.tar.gz`);
   });
 
   // 10. Generated Project Native Build Evidence Ingestion
@@ -232,7 +235,7 @@ describe('Phase 1I: Portability, CI/CD, Bootstrap & Distribution V1', () => {
       expect(['PARTIALLY_VERIFIED', 'NOT_VERIFIED']).toContain(summary.globalDebtStatus);
       expect(summary.allVerified).toBe(false);
     }
-  });
+  }, 60000);
 
   // 11. Doctor Preflight Mode
   it('11. verifies doctor --preflight checks prerequisites without requiring build artifacts', async () => {

@@ -1,6 +1,6 @@
 {
   "name": "@alper-design-os/source-intelligence",
-  "version": "0.1.0",
+  "version": "1.0.0-rc.1",
   "description": "Source Intelligence Layer, Knowledge Architecture, and Discovery Engine for Alper Design OS",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

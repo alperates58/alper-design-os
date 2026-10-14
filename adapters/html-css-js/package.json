@@ -1,6 +1,6 @@
 {
   "name": "@alper-design-os/adapter-html-css-js",
-  "version": "0.1.0",
+  "version": "1.0.0-rc.1",
   "description": "Semantic HTML5, modern CSS3, and ES6 JavaScript adapter for Alper Design OS",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

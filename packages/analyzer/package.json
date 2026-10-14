@@ -1,6 +1,6 @@
 {
   "name": "@alper-design-os/analyzer",
-  "version": "0.1.0",
+  "version": "1.0.0-rc.1",
   "description": "Read-only project stack detector and UX/UI auditor for Alper Design OS",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -1,6 +1,6 @@
 {
   "name": "@alper-design-os/adapter-php",
-  "version": "0.1.0",
+  "version": "1.0.0-rc.1",
   "description": "Standard PHP templating and server-side rendering adapter for Alper Design OS",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

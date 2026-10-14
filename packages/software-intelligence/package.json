@@ -1,6 +1,6 @@
 {
   "name": "@alper-design-os/software-intelligence",
-  "version": "0.1.0",
+  "version": "1.0.0-rc.1",
   "description": "Technology-agnostic Software Engineering Intelligence Layer: Architecture, Database, Observability, API Governance, Resilience, Supply Chain, and Production Readiness",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

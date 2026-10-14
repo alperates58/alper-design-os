@@ -1,6 +1,6 @@
 {
   "name": "@alper-design-os/engineering-guardrails",
-  "version": "0.1.0",
+  "version": "1.0.0-rc.1",
   "description": "Technology-agnostic Engineering Guardrails: Security, Quality, Performance, Reliability, Supply Chain, and Release Gates for Alper Design OS",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -1,6 +1,6 @@
 {
   "name": "@alper-design-os/agent-governance",
-  "version": "0.1.0",
+  "version": "1.0.0-rc.1",
   "description": "Technology-agnostic Agent Governance, Orchestration, Change Safety, and Verification Evidence Engine for Alper Design OS",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
