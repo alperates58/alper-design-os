@@ -35,7 +35,7 @@ const TOOLS_TO_DETECT: ToolDefinition[] = [
     id: 'playwright-test',
     name: 'Playwright Test Framework',
     category: 'E2E_TESTING',
-    checkCommands: ['npx playwright --version'],
+    checkCommands: ['npx --no-install playwright --version'],
     installRecommendation: 'Run: npm install -D @playwright/test && npx playwright install'
   },
   {
@@ -49,14 +49,14 @@ const TOOLS_TO_DETECT: ToolDefinition[] = [
     id: 'lighthouse',
     name: 'Google Lighthouse CLI',
     category: 'PERFORMANCE',
-    checkCommands: ['lighthouse --version', 'npx lighthouse --version'],
+    checkCommands: ['lighthouse --version', 'npx --no-install lighthouse --version'],
     installRecommendation: 'Run: npm install -D lighthouse'
   },
   {
     id: 'lighthouse-ci',
     name: 'Lighthouse CI',
     category: 'PERFORMANCE',
-    checkCommands: ['lhci --version', 'npx @lhci/cli --version'],
+    checkCommands: ['lhci --version', 'npx --no-install @lhci/cli --version'],
     installRecommendation: 'Run: npm install -D @lhci/cli'
   },
   {
@@ -70,21 +70,21 @@ const TOOLS_TO_DETECT: ToolDefinition[] = [
     id: 'storybook',
     name: 'Storybook Component Workshop',
     category: 'COMPONENT_TESTING',
-    checkCommands: ['npx storybook --version'],
+    checkCommands: ['npx --no-install storybook --version'],
     installRecommendation: 'Run: npx storybook@latest init'
   },
   {
     id: 'vitest',
     name: 'Vitest Test Runner',
     category: 'UNIT_TESTING',
-    checkCommands: ['vitest --version', 'npx vitest --version'],
+    checkCommands: ['vitest --version', 'npx --no-install vitest --version'],
     installRecommendation: 'Run: npm install -D vitest'
   },
   {
     id: 'pact',
     name: 'Pact Contract Testing Framework',
     category: 'CONTRACT_TESTING',
-    checkCommands: ['npx @pact-foundation/pact --version'],
+    checkCommands: ['npx --no-install @pact-foundation/pact --version'],
     installRecommendation: 'Run: npm install -D @pact-foundation/pact'
   },
   {

@@ -69,7 +69,7 @@ describe('Phase 1I: Portability, CI/CD, Bootstrap & Distribution V1', () => {
     expect(doc.checks.skillRegistry.details.active).toBe(55);
     expect(doc.checks.skillRegistry.details.deprecated).toBe(19);
     expect(doc.checks.secretSafety.status).toBe('PASS');
-  });
+  }, 60000);
 
   // 5. Safe Update Dirty-Worktree Protection
   it('5. strictly prevents non-destructive updates when dirty workspace files are detected', async () => {

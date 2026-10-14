@@ -296,28 +296,28 @@ export async function runDoctor(options = {}) {
 
   // 11. Optional Tools Detection (Docker, Browser, .NET, PHP)
   try {
-    const dockerV = execSync('docker --version', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
+    const dockerV = execSync('docker --version', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'], timeout: 3000 }).trim();
     recordCheck('dockerRuntime', 'OPTIONAL', 'PASS', `Docker available (${dockerV})`);
   } catch {
     recordCheck('dockerRuntime', 'OPTIONAL', 'OPTIONAL_NOT_FOUND', 'Docker not found. Optional containerized execution unavailable.');
   }
 
   try {
-    const pwV = execSync('npx playwright --version', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'], cwd: projectRoot }).trim();
+    const pwV = execSync('npx --no-install playwright --version', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'], cwd: projectRoot, timeout: 3000 }).trim();
     recordCheck('browserRuntime', 'OPTIONAL', 'PASS', `Playwright available (${pwV})`);
   } catch {
     recordCheck('browserRuntime', 'OPTIONAL', 'OPTIONAL_NOT_FOUND', 'Playwright runtime not installed. E2E browser tests run in operator fallback mode.');
   }
 
   try {
-    const dotnetV = execSync('dotnet --version', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
+    const dotnetV = execSync('dotnet --version', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'], timeout: 3000 }).trim();
     recordCheck('dotnetSdk', 'OPTIONAL', 'PASS', `.NET SDK available (${dotnetV})`);
   } catch {
     recordCheck('dotnetSdk', 'OPTIONAL', 'OPTIONAL_NOT_FOUND', '.NET SDK not found. ASPNET_RAZOR builds will require host toolchain or container.');
   }
 
   try {
-    const phpV = execSync('php -v', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).split('\n')[0].trim();
+    const phpV = execSync('php -v', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'], timeout: 3000 }).split('\n')[0].trim();
     recordCheck('phpRuntime', 'OPTIONAL', 'PASS', `PHP available (${phpV})`);
   } catch {
     recordCheck('phpRuntime', 'OPTIONAL', 'OPTIONAL_NOT_FOUND', 'PHP not found. LARAVEL_BLADE builds will require host toolchain or container.');
