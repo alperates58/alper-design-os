@@ -89,19 +89,11 @@ export async function verifyGeneratedBuilds(options = {}) {
       } else if (stack === 'REACT_TYPESCRIPT') {
         // React + TS: Real production build via Vite & TypeScript
         let logs = 'Executing React + TypeScript qualification contract...\n';
-        let pm = 'npm';
-        try {
-          execSync(process.platform === 'win32' ? 'pnpm.cmd --version' : 'pnpm --version', { stdio: 'pipe' });
-          pm = 'pnpm';
-        } catch {}
+        const installCmd = process.platform === 'win32'
+          ? 'npm.cmd install --no-audit --no-fund'
+          : 'npm install --no-audit --no-fund';
 
-        const installCmd = pm === 'pnpm'
-          ? (process.platform === 'win32' ? 'pnpm.cmd install --no-frozen-lockfile' : 'pnpm install --no-frozen-lockfile')
-          : (process.platform === 'win32' ? 'npm.cmd install --no-audit --no-fund --prefer-offline' : 'npm install --no-audit --no-fund --prefer-offline');
-
-        const buildCmd = pm === 'pnpm'
-          ? (process.platform === 'win32' ? 'pnpm.cmd run build' : 'pnpm run build')
-          : (process.platform === 'win32' ? 'npm.cmd run build' : 'npm run build');
+        const buildCmd = process.platform === 'win32' ? 'npm.cmd run build' : 'npm run build';
 
         let tscPath = path.join(repoRoot, 'node_modules', 'typescript', 'bin', 'tsc');
 
@@ -307,14 +299,14 @@ export async function verifyGeneratedBuilds(options = {}) {
           }
 
           // Restore
-          const restoreCmd = 'dotnet restore App.csproj';
-          const restoreOut = execSync(restoreCmd, { cwd: stackDir, encoding: 'utf-8', timeout: 120000, stdio: ['ignore', 'pipe', 'pipe'] });
+          const restoreCmd = 'dotnet restore App.csproj -nr:false';
+          const restoreOut = execSync(restoreCmd, { cwd: stackDir, encoding: 'utf-8', timeout: 60000, stdio: ['ignore', 'pipe', 'pipe'] });
           logs += `dotnet restore: OK\n${restoreOut}\n`;
           qualificationContract.dimensions.dotnetRestore = { status: 'VERIFIED', command: restoreCmd };
 
           // Build
-          const buildCmd = 'dotnet build App.csproj --verbosity minimal';
-          const buildOut = execSync(buildCmd, { cwd: stackDir, encoding: 'utf-8', timeout: 120000, stdio: ['ignore', 'pipe', 'pipe'] });
+          const buildCmd = 'dotnet build App.csproj --verbosity minimal -nr:false /p:UseSharedCompilation=false';
+          const buildOut = execSync(buildCmd, { cwd: stackDir, encoding: 'utf-8', timeout: 60000, stdio: ['ignore', 'pipe', 'pipe'] });
           logs += `dotnet build: OK\n${buildOut}\n`;
           qualificationContract.dimensions.dotnetBuild = { status: 'VERIFIED', command: buildCmd };
 
