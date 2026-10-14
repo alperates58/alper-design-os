@@ -280,9 +280,11 @@ export async function verifyGeneratedBuilds(options = {}) {
         }
       } else if (stack === 'ASPNET_RAZOR') {
         // ASP.NET Razor: Exact .NET 8 SDK qualification & assembly build
+        let dotnetV = 'unknown';
+        let logs = '';
         try {
-          const dotnetV = execSync('dotnet --version', { encoding: 'utf-8' }).trim();
-          let logs = `.NET SDK Version: ${dotnetV}\n`;
+          dotnetV = execSync('dotnet --version', { encoding: 'utf-8' }).trim();
+          logs = `.NET SDK Version: ${dotnetV}\n`;
 
           const isExactNet8 = dotnetV.startsWith('8.0.');
           qualificationContract.dimensions.exactSdkCheck = {

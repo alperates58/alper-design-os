@@ -194,12 +194,12 @@ describe('Phase 1I: Portability, CI/CD, Bootstrap & Distribution V1', () => {
     const plainRes = summary.results.find(r => r.stack === 'PLAIN_HTML_CSS_JS');
     expect(plainRes).toBeDefined();
     expect(plainRes?.evidenceKind).toBe('STATIC_ANALYSIS');
-    expect(plainRes?.verificationStatus).toBe('VERIFIED');
+    expect(plainRes?.verificationStatus, plainRes?.logs).toBe('VERIFIED');
 
     const reactRes = summary.results.find(r => r.stack === 'REACT_TYPESCRIPT');
     expect(reactRes).toBeDefined();
     expect(reactRes?.evidenceKind).toBe('STATIC_ANALYSIS');
-    expect(reactRes?.verificationStatus).toBe('VERIFIED');
+    expect(reactRes?.verificationStatus, reactRes?.logs).toBe('VERIFIED');
 
     // Optional toolchain detection
     let hasPhp = false;
@@ -212,7 +212,7 @@ describe('Phase 1I: Portability, CI/CD, Bootstrap & Distribution V1', () => {
     expect(laravelRes).toBeDefined();
     expect(laravelRes?.evidenceKind).toBe('STATIC_ANALYSIS');
     if (hasPhp) {
-      expect(laravelRes?.verificationStatus).toBe('VERIFIED');
+      expect(laravelRes?.verificationStatus, laravelRes?.logs).toBe('VERIFIED');
     }
 
     let hasDotnet = false;
@@ -225,7 +225,7 @@ describe('Phase 1I: Portability, CI/CD, Bootstrap & Distribution V1', () => {
     expect(aspnetRes).toBeDefined();
     expect(aspnetRes?.evidenceKind).toBe('STATIC_ANALYSIS');
     if (hasDotnet) {
-      expect(aspnetRes?.verificationStatus).toBe('VERIFIED');
+      expect(aspnetRes?.verificationStatus, aspnetRes?.logs).toBe('VERIFIED');
     }
 
     if (hasPhp && hasDotnet) {
