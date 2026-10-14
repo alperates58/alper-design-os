@@ -142,6 +142,17 @@ export type GreenfieldRequirementsBundle = z.infer<typeof GreenfieldRequirements
 // 3. Requirement Traceability Matrix (Section 4)
 // =========================================================================
 
+export const TraceabilityApplicabilitySchema = z.enum(['APPLICABLE', 'NOT_APPLICABLE']);
+export type TraceabilityApplicability = z.infer<typeof TraceabilityApplicabilitySchema>;
+
+export const RequirementTraceabilityEdgeSchema = z.object({
+  targetType: z.enum(['ARCHITECTURE', 'DATABASE', 'API', 'UI', 'TEST']),
+  targetId: z.string().optional(),
+  applicability: TraceabilityApplicabilitySchema.default('APPLICABLE'),
+  reason: z.string().optional()
+});
+export type RequirementTraceabilityEdge = z.infer<typeof RequirementTraceabilityEdgeSchema>;
+
 export const TraceabilityItemSchema = z.object({
   requirementId: z.string(),
   architectureDecisionIds: z.array(z.string()).default([]),
@@ -150,6 +161,7 @@ export const TraceabilityItemSchema = z.object({
   pageIds: z.array(z.string()).default([]),
   implementationFiles: z.array(z.string()).default([]),
   testIds: z.array(z.string()).default([]),
+  edges: z.array(RequirementTraceabilityEdgeSchema).default([]),
   status: z.enum(['PLANNED', 'IMPLEMENTED', 'TESTED', 'ORPHAN']).default('PLANNED')
 });
 export type TraceabilityItem = z.infer<typeof TraceabilityItemSchema>;
@@ -368,8 +380,21 @@ export type ApiBlueprint = z.infer<typeof ApiBlueprintSchema>;
 // 8. AuthN / AuthZ Models (Section 10)
 // =========================================================================
 
+export const AuthenticationStrategySchema = z.enum([
+  'SESSION',
+  'SECURE_COOKIE',
+  'TOKEN',
+  'OIDC',
+  'EXTERNAL_IDP',
+  'SESSION_COOKIE',
+  'BEARER_TOKEN',
+  'OIDC_OAUTH2',
+  'LOCAL_DEV_SIMPLE'
+]);
+export type AuthenticationStrategy = z.infer<typeof AuthenticationStrategySchema>;
+
 export const AuthenticationModelSchema = z.object({
-  strategy: z.enum(['SESSION_COOKIE', 'BEARER_TOKEN', 'OIDC_OAUTH2', 'LOCAL_DEV_SIMPLE']),
+  strategy: AuthenticationStrategySchema,
   mechanism: z.string().optional(),
   sessionCookieName: z.string().optional(),
   sessionDurationHours: z.number().default(24),
@@ -377,12 +402,21 @@ export const AuthenticationModelSchema = z.object({
     httpOnly: z.boolean().default(true),
     secure: z.boolean().default(true),
     sameSite: z.enum(['strict', 'lax', 'none']).default('strict')
-  }),
+  }).optional(),
+  tokenSettings: z.object({
+    issuer: z.string().optional(),
+    audience: z.string().optional(),
+    expiryMinutes: z.number().default(60)
+  }).optional(),
+  idpSettings: z.object({
+    provider: z.string().optional(),
+    discoveryUrl: z.string().optional()
+  }).optional(),
   passwordPolicy: z.object({
     minLength: z.number().default(10),
     requireSpecial: z.boolean().default(true),
     hashingAlgorithm: z.string().default('Argon2id')
-  }),
+  }).optional(),
   multiFactorSupported: z.boolean().default(false)
 }).passthrough();
 export type AuthenticationModel = z.infer<typeof AuthenticationModelSchema>;
@@ -395,8 +429,19 @@ export const AuthorizationRoleSchema = z.object({
 }).passthrough();
 export type AuthorizationRole = z.infer<typeof AuthorizationRoleSchema>;
 
+export const AuthorizationStrategySchema = z.enum([
+  'ROLE_BASED',
+  'PERMISSION_BASED',
+  'POLICY_BASED',
+  'RESOURCE_OWNERSHIP',
+  'ATTRIBUTE_BASED',
+  'RBAC',
+  'ABAC'
+]);
+export type AuthorizationStrategy = z.infer<typeof AuthorizationStrategySchema>;
+
 export const AuthorizationModelSchema = z.object({
-  strategy: z.enum(['RBAC', 'ABAC', 'POLICY_BASED']).default('RBAC'),
+  strategy: AuthorizationStrategySchema.default('ROLE_BASED'),
   roles: z.array(AuthorizationRoleSchema),
   permissions: z.array(z.string()),
   policies: z.array(z.object({ name: z.string(), resource: z.string(), rule: z.string() })).default([])
@@ -419,6 +464,16 @@ export const PageStateSchema = z.enum([
 ]);
 export type PageState = z.infer<typeof PageStateSchema>;
 
+export const PageStateApplicabilitySchema = z.object({
+  applicableStates: z.array(PageStateSchema),
+  requiredStates: z.array(PageStateSchema),
+  notApplicableStates: z.array(z.object({
+    state: PageStateSchema,
+    reason: z.string()
+  })).default([])
+});
+export type PageStateApplicability = z.infer<typeof PageStateApplicabilitySchema>;
+
 export const PageInventoryItemSchema = z.object({
   pageId: z.string(),
   title: z.string(),
@@ -429,6 +484,7 @@ export const PageInventoryItemSchema = z.object({
   requiredData: z.array(z.string()),
   actions: z.array(z.string()),
   states: z.union([z.record(z.any()), z.array(PageStateSchema)]).default(['LOADING', 'EMPTY', 'SUCCESS', 'ERROR']),
+  stateApplicability: PageStateApplicabilitySchema.optional(),
   permissions: z.array(z.string()).default([]),
   responsiveStrategy: z.string().default('Adaptive Desktop to Mobile Stack'),
   criticality: z.enum(['CORE', 'SECONDARY', 'ADMIN']).default('CORE')

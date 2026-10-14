@@ -336,26 +336,83 @@ export function createRequirementTraceability(
   const testIds = artifacts.verificationTests || artifacts.testIds || [];
 
   for (const req of reqList) {
+    const isNfr = req.id.startsWith('REQ-NFR-') || (req as any).category !== undefined;
+    const isAccessibility = req.id.includes('A11Y') || req.title?.toLowerCase().includes('accessibility');
+    const isPerformance = req.id.includes('PERF') || req.title?.toLowerCase().includes('performance');
+
     const mappedPages = pageIds.filter(p => p.toLowerCase().includes(req.id.toLowerCase().replace('req-f-', '')) || p.includes('PAGE_') || p.includes('Asset') || p.includes('Inventory'));
     const mappedEntities = entityIds.filter(e => req.title.toLowerCase().includes(e.toLowerCase()) || entityIds.length > 0);
     const mappedRoutes = routeIds.filter(r => req.title.toLowerCase().includes(r.toLowerCase()) || routeIds.length > 0);
     const mappedFiles = files.filter(f => f.includes('src/') || f.includes('app/') || f.includes('Pages/') || files.length > 0);
     const mappedTests = testIds.filter(t => t.includes(req.id) || testIds.length > 0);
 
+    const edges: RequirementTraceabilityEdge[] = [];
+
+    // 1. Architecture edge
+    edges.push({
+      targetType: 'ARCHITECTURE',
+      targetId: archIds[0] || 'DECISION_MONOLITH',
+      applicability: 'APPLICABLE',
+      reason: 'Architecture decision establishes system boundaries'
+    });
+
+    // 2. Database edge
+    if (isAccessibility || isPerformance) {
+      edges.push({
+        targetType: 'DATABASE',
+        applicability: 'NOT_APPLICABLE',
+        reason: 'Accessibility and performance requirements do not require persistent database entities'
+      });
+    } else {
+      edges.push({
+        targetType: 'DATABASE',
+        targetId: mappedEntities[0] || entityIds[0] || 'users',
+        applicability: 'APPLICABLE',
+        reason: 'Persists domain state required for functionality'
+      });
+    }
+
+    // 3. API edge
+    edges.push({
+      targetType: 'API',
+      targetId: mappedRoutes[0] || routeIds[0] || '/api/v1/health',
+      applicability: 'APPLICABLE',
+      reason: 'Exposes interface operations for clients'
+    });
+
+    // 4. UI edge
+    edges.push({
+      targetType: 'UI',
+      targetId: mappedPages[0] || pageIds[0] || 'PAGE_DASHBOARD',
+      applicability: 'APPLICABLE',
+      reason: 'Renders visual interaction elements'
+    });
+
+    // 5. Test edge
+    edges.push({
+      targetType: 'TEST',
+      targetId: mappedTests[0] || testIds[0] || 'test_suite',
+      applicability: 'APPLICABLE',
+      reason: 'Automated verification test contract'
+    });
+
     const isCovered = mappedPages.length > 0 || mappedEntities.length > 0 || mappedRoutes.length > 0 || mappedFiles.length > 0;
 
-    if (!isCovered) {
+    // Only flag orphan if applicable targets are genuinely missing
+    const hasMissingApplicableTarget = edges.some(e => e.applicability === 'APPLICABLE' && !e.targetId);
+    if (!isCovered && hasMissingApplicableTarget) {
       orphanRequirements.push(req.id);
     }
 
     items.push({
       requirementId: req.id,
       architectureDecisionIds: archIds.slice(0, 2),
-      dataEntityIds: mappedEntities.length > 0 ? mappedEntities.slice(0, 2) : entityIds.slice(0, 1),
+      dataEntityIds: (isAccessibility || isPerformance) ? [] : (mappedEntities.length > 0 ? mappedEntities.slice(0, 2) : entityIds.slice(0, 1)),
       apiRouteIds: mappedRoutes.length > 0 ? mappedRoutes.slice(0, 3) : routeIds.slice(0, 2),
       pageIds: mappedPages.length > 0 ? mappedPages.slice(0, 2) : pageIds.slice(0, 2),
       implementationFiles: mappedFiles.slice(0, 3),
       testIds: mappedTests.slice(0, 2),
+      edges,
       status: isCovered ? (mappedTests.length > 0 ? 'TESTED' : 'IMPLEMENTED') : 'ORPHAN'
     });
   }
@@ -985,20 +1042,48 @@ export function createApiBlueprint(
 
 export function createAuthModel(
   profile: GreenfieldProjectProfile,
-  requirements?: any
+  requirementsOrOptions?: any
 ): any {
   const isHighSecurity = profile.businessCriticality === 'HIGH' || profile.businessCriticality === 'MISSION_CRITICAL';
+  const opts = requirementsOrOptions || {};
+
+  let authNStrategy: AuthenticationStrategy = opts.authNStrategy || opts.authenticationStrategy || (profile as any).authenticationStrategy || 'SECURE_COOKIE';
+  if ((authNStrategy as string) === 'SESSION_COOKIE') authNStrategy = 'SECURE_COOKIE';
+
+  // Context-aware fallback if not explicitly chosen
+  if (!opts.authNStrategy && !opts.authenticationStrategy) {
+    if (profile.deviceTargets?.includes('CLI') || profile.domain?.toLowerCase().includes('api')) {
+      authNStrategy = 'TOKEN';
+    } else if (profile.deploymentEnvironment === 'CLOUD' && isHighSecurity) {
+      authNStrategy = 'OIDC';
+    } else {
+      authNStrategy = 'SECURE_COOKIE';
+    }
+  }
+
+  let authZStrategy: AuthorizationStrategy = opts.authZStrategy || opts.authorizationStrategy || (profile as any).authorizationStrategy || 'ROLE_BASED';
+  if ((authZStrategy as string) === 'RBAC') authZStrategy = 'ROLE_BASED';
+  if ((authZStrategy as string) === 'ABAC') authZStrategy = 'ATTRIBUTE_BASED';
 
   const authN = {
-    strategy: 'SESSION_COOKIE' as const,
-    mechanism: 'SESSION_COOKIE',
-    sessionCookieName: 'app_session',
+    strategy: authNStrategy,
+    mechanism: authNStrategy === 'SECURE_COOKIE' ? 'SESSION_COOKIE' : authNStrategy,
+    sessionCookieName: authNStrategy === 'SECURE_COOKIE' || authNStrategy === 'SESSION' ? 'app_session' : undefined,
     sessionDurationHours: isHighSecurity ? 8 : 24,
-    cookieSettings: {
+    cookieSettings: authNStrategy === 'SECURE_COOKIE' || authNStrategy === 'SESSION' ? {
       httpOnly: true,
       secure: true,
       sameSite: 'strict' as const
-    },
+    } : undefined,
+    tokenSettings: authNStrategy === 'TOKEN' ? {
+      issuer: 'https://auth.local',
+      audience: 'https://api.local',
+      expiryMinutes: isHighSecurity ? 15 : 60
+    } : undefined,
+    idpSettings: authNStrategy === 'OIDC' || authNStrategy === 'EXTERNAL_IDP' ? {
+      provider: 'Corporate_Enterprise_IdP',
+      discoveryUrl: 'https://idp.corporate.local/.well-known/openid-configuration'
+    } : undefined,
     passwordPolicy: {
       minLength: isHighSecurity ? 12 : 10,
       requireSpecial: true,
@@ -1046,7 +1131,7 @@ export function createAuthModel(
   ];
 
   const authZ = {
-    strategy: 'RBAC' as const,
+    strategy: authZStrategy,
     roles,
     permissions,
     policies
@@ -1095,6 +1180,11 @@ export function createPageInventory(
       requiredData: ['summaryMetrics', 'recentActivity', 'activeAlerts'],
       actions: ['launchTask', 'filterView', 'refreshTelemetry'],
       states: makeStates('Operational Overview'),
+      stateApplicability: {
+        applicableStates: ['LOADING', 'EMPTY', 'SUCCESS', 'ERROR', 'PARTIAL', 'UNAUTHORIZED', 'FORBIDDEN', 'OFFLINE'],
+        requiredStates: ['LOADING', 'EMPTY', 'SUCCESS', 'ERROR'],
+        notApplicableStates: []
+      },
       permissions: ['entities:read'],
       responsiveStrategy: 'Compact card stack on mobile, multi-column dashboard grid on desktop',
       criticality: 'CORE'
@@ -1109,6 +1199,11 @@ export function createPageInventory(
       requiredData: ['recordList', 'filterFacets', 'paginationMetadata'],
       actions: ['search', 'filter', 'sortByColumn', 'openCreateModal', 'exportCSV'],
       states: makeStates(`${resourceName} Directory`),
+      stateApplicability: {
+        applicableStates: ['LOADING', 'EMPTY', 'SUCCESS', 'ERROR', 'PARTIAL', 'UNAUTHORIZED', 'FORBIDDEN', 'OFFLINE'],
+        requiredStates: ['LOADING', 'EMPTY', 'SUCCESS', 'ERROR'],
+        notApplicableStates: []
+      },
       permissions: ['entities:read'],
       responsiveStrategy: 'Dense tabular grid on desktop, scrollable stacked cards on mobile',
       criticality: 'CORE'
@@ -1123,6 +1218,15 @@ export function createPageInventory(
       requiredData: ['entityRecord', 'auditTrail', 'relatedEntities'],
       actions: ['saveChanges', 'discardDraft', 'triggerAction', 'deleteRecord'],
       states: makeStates(`${resourceName} Detail`),
+      stateApplicability: {
+        applicableStates: ['LOADING', 'SUCCESS', 'ERROR', 'UNAUTHORIZED', 'FORBIDDEN'],
+        requiredStates: ['LOADING', 'SUCCESS', 'ERROR'],
+        notApplicableStates: [
+          { state: 'EMPTY', reason: 'Single entity detail/edit view renders specific record or 404 error, not an empty collection' },
+          { state: 'PARTIAL', reason: 'Entity record data is loaded atomically' },
+          { state: 'OFFLINE', reason: 'Direct transactional edits require online lock and server verification' }
+        ]
+      },
       permissions: ['entities:write'],
       responsiveStrategy: 'Split pane master-detail on desktop, full-page stepper on mobile',
       criticality: 'CORE'

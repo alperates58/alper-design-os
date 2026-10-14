@@ -271,7 +271,7 @@ describe('Phase 1E.7.1: Operator-Assisted Execution Hotfix', () => {
     it('1. MCP runtime check import success: canonical toolRegistry exported with registered tools', () => {
       expect(MCPTools.toolRegistry).toBeDefined();
       expect(MCPTools.toolRegistry.size).toBeGreaterThanOrEqual(88);
-      expect(MCPTools.toolRegistry.size).toBe(110);
+      expect(MCPTools.toolRegistry.size).toBe(124);
       expect(MCPTools.toolRegistry.has('run_operator_doctor')).toBe(true);
       expect(MCPTools.toolRegistry.has('profile_existing_project')).toBe(true);
       expect(MCPTools.toolRegistry.has('create_manual_run_bundle')).toBe(true);

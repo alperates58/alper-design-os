@@ -124,7 +124,7 @@ const approval = recordVisualReview(currentRecord, {
 | Source Authority Classification | **PASS** | PASS (Entegre) |
 | Human Visual Approval Gate Kodları | **PASS** | Gerçek İnsan İncelemesi Bekliyor |
 | CONTENT_TRUTH_PASS Gate Entegrasyonu | **PASS** | PASS |
-| MCP Tool Sözleşmeleri (110 Tool) | **PASS (72 Tests)** | PASS |
+| MCP Tool Sözleşmeleri (124 Tool) | **PASS (89 Tests)** | PASS |
 | Faz 1F.0 Modernization Engine Foundation | **PASS (20 Tests)** | PASS (Entegre) |
 | Faz 1F.0.1 Synthetic End-to-End Drill & Hotfix | **PASS (12 Tests)** | PASS (Entegre) |
 | Faz 1F.0.2 Evidence Provenance & Anti-Inflation | **PASS (14 Tests)** | PASS (Entegre) |
@@ -133,6 +133,15 @@ const approval = recordVisualReview(currentRecord, {
 | Greenfield Requirements & Traceability Matrix (RTM) | **PASS (100% Traceability)** | PASS (Entegre) |
 | Greenfield Anti-Overengineering Guardrails (No Microservices Default) | **PASS (Complexity <= 3)** | PASS (Entegre) |
 | Greenfield Multi-Stack Scaffolding (React, Blade, Razor, Plain) | **PASS (Buildable Emitted Projects)** | PASS (Entegre) |
+| Faz 1H Project Intelligence, Durable Memory & Continuous Improvement | **PASS (17 Tests, 14 New Tools)** | PASS (Entegre) |
+| Durable Version-Controlled Memory (.alper-design-os/project/) | **PASS (Zero Absolute Paths)** | PASS (Entegre) |
+| Secret Redaction Engine (Zero Stored Credentials) | **PASS (Strict Regex Masking)** | PASS (Entegre) |
+| ADR Lifecycle & Bi-Directional Superseding Governance | **PASS (No Silent Overwrite)** | PASS (Entegre) |
+| Project Architecture Graph & Fingerprint Snapshots | **PASS (Real Code Facts)** | PASS (Entegre) |
+| Contract & Architecture Drift Detection Engine | **PASS (Expected vs Breaking)** | PASS (Entegre) |
+| Change Impact Analysis (Blast Radius & Risk Evaluation) | **PASS (Graph Traversal)** | PASS (Entegre) |
+| Cross-Project Boundary & Anti-Accidental Global Learning | **PASS (Explicit Governance Gate)** | PASS (Entegre) |
+| Synthetic Longitudinal Benchmark (T0 -> T6 Time Simulation) | **PASS (Full Lifecycle Verified)** | PASS (Entegre) |
 | Multi-Stack Drill (React, Blade, Razor, Plain-Web) | **PASS (4 Workspaces)** | PASS (Entegre) |
 | Native Stack Preservation (Zero Colonization) | **PASS** | PASS (Entegre) |
 | Security Invariant Preservation (@csrf / AntiForgery) | **PASS** | PASS (Entegre) |

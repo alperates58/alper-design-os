@@ -4,14 +4,14 @@
 
 [![License: MIT](https://img.shields.io/badge/Lisans-MIT-blue.svg)](LICENSE_POLICY.md)
 [![TypeScript: Strict](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](tsconfig.json)
-[![Antigravity Plugin Ready](https://img.shields.io/badge/Antigravity-67%20Skills%20Registered-emerald.svg)](plugin.json)
-[![Tests: 413+ Passed](https://img.shields.io/badge/Tests-413%2B%20Passed%20(18%20Suites)-brightgreen.svg)](tests/)
-[![MCP Server: 110 Tools](https://img.shields.io/badge/MCP%20Server-110%20Tools-purple.svg)](packages/mcp-server/)
+[![Antigravity Plugin Ready](https://img.shields.io/badge/Antigravity-72%20Skills%20Registered-emerald.svg)](plugin.json)
+[![Tests: 430+ Passed](https://img.shields.io/badge/Tests-430%2B%20Passed%20(19%20Suites)-brightgreen.svg)](tests/)
+[![MCP Server: 124 Tools](https://img.shields.io/badge/MCP%20Server-124%20Tools-purple.svg)](packages/mcp-server/)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](scripts/)
 
 **ALPER DESIGN OS**, sıradan bir bileşen veya UI kütüphanesi değildir. Yazılım alanlarını (domain) derinlemesine anlayan, kullanıcı iş akışlarını ve ergonomisini analiz eden, kurumsal seviyede mimari ve UX/UI kararları alan, sıfırdan ürün tasarlayan veya mevcut devasa sistemleri cerrahi/aşamalı olarak modernize eden **AI-Native, Teknoloji Bağımsız Tasarım ve UX Geliştirme İşletim Sistemi**'dir.
 
-Bünyesinde **67 adet Antigravity Yeteneği (Skill)**, **110 adet tip güvenli MCP Aracı**, **8 farklı frontend/backend adaptörü**, **Mevcut Proje Modernizasyon Motoru (Phase 1F)** ve **Sıfırdan Proje Üretim Motoru (Phase 1G Greenfield Engine)** barındırır.
+Bünyesinde **72 adet Antigravity Yeteneği (Skill)**, **124 adet tip güvenli MCP Aracı**, **8 farklı frontend/backend adaptörü**, **Mevcut Proje Modernizasyon Motoru (Phase 1F)**, **Sıfırdan Proje Üretim Motoru (Phase 1G)** ve **Kalıcı Proje İstihbarat Motoru (Phase 1H Project Intelligence)** barındırır.
 
 
 ---
@@ -65,19 +65,27 @@ Bünyesinde **67 adet Antigravity Yeteneği (Skill)**, **110 adet tip güvenli M
     `BRIEF -> PRODUCT UNDERSTANDING -> DOMAIN RESEARCH -> REQUIREMENTS (RTM) -> ARCHITECTURE -> DATA MODEL -> API MODEL -> UX MODEL -> DESIGN SYSTEM -> PLAN -> SCAFFOLD -> VERIFY`
     * **Anti-Overengineering & Karmaşıklık Bütçesi:** Küçük CRUD ve dahili araçlar için mikroservis, Kafka ve Kubernetes kesinlikle varsayılan değildir; `MONOLITH` veya `MODULAR_MONOLITH` (karmaşıklık puanı $\le 3$) zorunludur.
     * **Gereksinim İzlenebilirlik Matrisi (RTM):** %100 fonksiyonel gereksinim mimari karara, veritabanı modeline, API uç noktasına, UI sayfasına ve otomatik teste bağlanır.
-    * **8 Durumlu Eksiksiz Sayfa Modeli:** Her sayfa için `LOADING`, `EMPTY`, `SUCCESS`, `ERROR`, `PARTIAL`, `UNAUTHORIZED`, `FORBIDDEN`, `OFFLINE` durumları zorunludur.
+    * **8 Durumlu Eksiksiz Sayfa Modeli:** Her sayfa için `LOADING`, `EMPTY`, `SUCCESS`, `ERROR`, `PARTIAL`, `UNAUTHORIZED`, `FORBIDDEN`, `OFFLINE` durumları context-aware modellenir.
     * **Çoklu Stack Desteği:** React+TypeScript (Strict), Laravel+Blade, ASP.NET Core+Razor ve Plain HTML/CSS/JS için derlenebilir proje scaffolding'i.
+
+11. **Proje İstihbaratı, Kalıcı Bellek & Sürekli İyileştirme (Phase 1H Project Intelligence V1):**
+    Ajanların her oturumda projeyi baştan keşfetme amnezisini bitiren, `.alper-design-os/project/` altında versiyon kontrollü kalıcı hafıza:
+    * **Sıfır Gizli Veri Depolama:** API key, token, şifre ve bağlantı dizgeleri otomatik olarak tespit edilip `[REDACTED]` ile maskelenir.
+    * **ADR Yaşam Döngüsü & Çift Yönlü Superseding:** Kararlar asla sessizce ezilmez; eski karar `SUPERSEDED`, yeni karar `supersedes` ile şeffaf şekilde bağlanır.
+    * **Mimari Bağımlılık Grafiği & Snapshot:** Gerçek kod analizinden üretilen `ProjectArchitectureGraph`, fingerprint snapshot'ları ve otomatik drift tespiti.
+    * **Değişiklik Etki Analizi (Blast Radius):** Kod değişikliği öncesinde etkilenen modül, endpoint, sayfa ve testleri hesaplar; risk puanı çıkarır.
+    * **Sürekli İyileştirme & Çapraz Proje İzolasyonu:** Proje içi öğrenilen dersler (`LessonLearnedRecord`), insan yönetişim onayı olmadan genel kurala dönüştürülemez.
 
 ---
 
-## 🧠 67 Uzmanlaşmış Yetenek (Antigravity Skills)
+## 🧠 72 Uzmanlaşmış Yetenek (Antigravity Skills)
 
 ### Yetenek (Skill) Nedir ve Nasıl Çalışır?
 Alper Design OS içerisindeki **Skill'ler**, yapay zeka ajanının sıradan bir metin tamamlayıcı gibi değil; **kıdemli bir baş mimar, güvenlik denetçisi veya UX araştırmacısı** gibi hareket etmesini sağlayan kurallar, kılavuzlar ve iş akışları paketidir.
 
-Bir istekte bulunduğunuzda (örneğin *"bu projeyi modernize et"* veya *"veritabanı migrasyon riskini denetle"*), yapay zeka ajanı ilgili yeteneği otomatik olarak yükler, o alana özgü katı mühendislik kurallarını (`SKILL.md`) okur ve 110 MCP aracı arasından gerekenleri disiplinli bir sırayla çalıştırır.
+Bir istekte bulunduğunuzda (örneğin *"bu projeyi modernize et"* veya *"veritabanı migrasyon riskini denetle"*), yapay zeka ajanı ilgili yeteneği otomatik olarak yükler, o alana özgü katı mühendislik kurallarını (`SKILL.md`) okur ve 124 MCP aracı arasından gerekenleri disiplinli bir sırayla çalıştırır.
 
-67 yetenek **10 ana uzmanlık alanında** organize edilmiştir:
+72 yetenek **11 ana uzmanlık alanında** organize edilmiştir:
 
 ```mermaid
 graph TD
@@ -196,27 +204,44 @@ graph TD
 | `alper-api-designer` | **API Tasarımcısı:** OpenAPI 3.1.0 uyumlu REST API, standart hata/sayfalama zarfları ve oturum/RBAC güvenliği tasarlar. |
 | `alper-greenfield-generator` | **Uçtan Uca Yeşil Alan Üreticisi:** Master blueprint sentezi, 7 aşamalı uygulama planı ve 4 stack için derlenebilir scaffolding üretir. |
 
+### 11. Proje İstihbaratı, Kalıcı Bellek & Sürekli İyileştirme (Phase 1H)
+| Yetenek | Rolü ve Açıklaması |
+| :--- | :--- |
+| `alper-project-intelligence` | **Proje İstihbarat Yöneticisi:** `.alper-design-os/project` kalıcı hafızasını, manifest, profil ve mimari grafiği yönetir. |
+| `alper-decision-management` | **Karar Yönetimi & ADR:** ADR yaşam döngüsünü, çift yönlü superseding'i ve reddedilen alternatifleri kayıt altına alır. |
+| `alper-change-impact-analysis` | **Değişiklik Etki Analizi:** Modül/veri/API değişikliklerinde bağımlılık grafiği üzerinden blast radius ve risk hesaplar. |
+| `alper-project-continuation` | **Proje Sürekliliği:** Yeni oturumlarda ve ajanlarda projeyi sıfırdan keşfetmeden anında bağlam oluşturur. |
+| `alper-continuous-improvement` | **Sürekli İyileştirme:** Öğrenilen dersleri belgeler; insan onaylı kurumsal yönetişimle iyileştirme adayları sunar. |
+
 ---
 
 ## 📁 Proje Dizin Yapısı
 
 ```text
 alper-design-os/
-├── plugin.json                 # Antigravity Plugin Tanımı (67 Yetenek Kayıtlı)
+├── plugin.json                 # Antigravity Plugin Tanımı (72 Yetenek Kayıtlı)
 ├── mcp_config.json             # MCP Sunucu Konfigürasyonu
 ├── hooks.json                  # Yaşam Döngüsü Hook'ları
 ├── pnpm-workspace.yaml         # Monorepo Workspace Konfigürasyonu
 │
-├── skills/                     # 67 Uzmanlaşmış Antigravity Yeteneği
-│   ├── alper-design-new/       # Sıfırdan Ürün Tasarım Akışı
+├── .alper-design-os/project/   # Versiyon Kontrollü Kalıcı Proje İstihbaratı (Phase 1H)
+│   ├── manifest.json           # Proje Kimliği ve Versiyon Haritası
+│   ├── architecture.json       # Mimari Standartlar ve Kararlar
+│   ├── invariants.json         # Kırılmaz Sistem Kuralları (Security/Data/API)
+│   ├── decisions/              # ADR Arşivi (Çift Yönlü Superseding)
+│   ├── knowledge/              # Doğrulanmış İş Kuralları ve Terimler Sözlüğü
+│   └── snapshots/              # Mimari ve Sözleşme Fingerprint Snapshot'ları
+│
+├── skills/                     # 72 Uzmanlaşmış Antigravity Yeteneği
+│   ├── alper-project-intelligence/      # Kalıcı Proje Belleği (Phase 1H)
+│   ├── alper-decision-management/       # ADR ve Superseding (Phase 1H)
+│   ├── alper-change-impact-analysis/    # Değişiklik Etki Analizi (Phase 1H)
+│   ├── alper-project-continuation/      # Proje Süreklilik Özeti (Phase 1H)
+│   ├── alper-continuous-improvement/    # Öğrenilen Dersler & İyileştirme (Phase 1H)
 │   ├── alper-greenfield-generator/      # Uçtan Uca Greenfield Üretim (Phase 1G)
 │   ├── alper-requirements-engineering/  # Gereksinim ve RTM (Phase 1G)
-│   ├── alper-architecture-planner/      # Mimari ve Karmaşıklık Bütçesi (Phase 1G)
-│   ├── alper-database-designer/         # Veritabanı ve Migrasyon (Phase 1G)
-│   ├── alper-api-designer/              # OpenAPI ve REST API (Phase 1G)
-│   ├── alper-greenfield-product-analysis/# Ürün Anlama ve Profil (Phase 1G)
 │   ├── alper-existing-project-analysis/ # Mevcut Proje Analizi (Phase 1F)
-│   └── ...                     # (Toplam 67 adet yetenek klasörü)
+│   └── ...                     # (Toplam 72 adet yetenek klasörü)
 │
 ├── scripts/                    # Otomasyon ve Sistem Sağlık Araçları
 │   ├── install-windows.ps1     # Otomatik Windows Kurulum Scripti
@@ -250,9 +275,10 @@ alper-design-os/
 │   ├── engineering-guardrails/ # Kalite Profilleri, STRIDE Tehdit Modeli, Güvenli Tarama
 │   ├── qa-engine/              # Playwright, DevTools, Görsel Regresyon, QA Raporlayıcı
 │   ├── software-intelligence/  # Mimari Stil Tespiti, DB Migrasyon Riski, ADR Üretimi
-│   └── mcp-server/             # 110 Tipli Araç İçeren Resmi MCP Sunucusu
+│   └── mcp-server/             # 124 Tipli Araç İçeren Resmi MCP Sunucusu
 │
-├── tests/                      # 18 Test Süiti, 413+ Otomatik Vitest Testi
+├── tests/                      # 19 Test Süiti, 430+ Otomatik Vitest Testi
+│   ├── project-intelligence.test.ts # Faz 1H Proje İstihbaratı & Kalıcı Bellek Süiti
 │   ├── greenfield-engine.test.ts    # Faz 1G Sıfırdan Proje Üretim Motoru Süiti
 │   ├── modernization-engine.test.ts # Faz 1F Modernizasyon Motoru Süiti
 │   ├── domain-benchmark-15.test.ts
@@ -263,6 +289,10 @@ alper-design-os/
 │   └── ...
 │
 └── docs/                       # Mimari & Kullanım Dokümantasyonu
+    ├── project-intelligence.md
+    ├── decision-lifecycle.md
+    ├── change-impact-analysis.md
+    ├── continuous-improvement.md
     ├── greenfield-generation.md
     ├── requirements-traceability.md
     ├── architecture-selection.md

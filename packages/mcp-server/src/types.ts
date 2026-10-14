@@ -1089,6 +1089,179 @@ export const EvaluateNewProjectCompletionInputSchema = z.object({
 });
 export type EvaluateNewProjectCompletionInput = z.infer<typeof EvaluateNewProjectCompletionInputSchema>;
 
+// =========================================================================
+// FAZ 1H: PROJECT INTELLIGENCE, DURABLE MEMORY & CONTINUOUS IMPROVEMENT (Tools 111 - 124)
+// =========================================================================
+
+// 111. initialize_project_intelligence
+export const InitializeProjectIntelligenceInputSchema = z.object({
+  baseDir: z.string().describe('Target project directory path'),
+  projectName: z.string().describe('Name of the software project'),
+  mode: z.enum(['NEW', 'EXISTING', 'REPAIR', 'MODERNIZE']).default('NEW'),
+  projectId: z.string().optional(),
+  primaryStack: z.string().optional(),
+  domains: z.array(z.string()).optional(),
+  blueprint: z.any().optional(),
+  profile: z.any().optional()
+});
+export type InitializeProjectIntelligenceInput = z.infer<typeof InitializeProjectIntelligenceInputSchema>;
+
+// 112. load_project_intelligence
+export const LoadProjectIntelligenceInputSchema = z.object({
+  baseDir: z.string().describe('Project root directory path')
+});
+export type LoadProjectIntelligenceInput = z.infer<typeof LoadProjectIntelligenceInputSchema>;
+
+// 113. record_project_decision
+export const RecordProjectDecisionInputSchema = z.object({
+  baseDir: z.string().describe('Project root directory path'),
+  id: z.string().describe('ADR identifier, e.g. ADR-001'),
+  title: z.string().describe('Decision title'),
+  context: z.string().describe('Context and problem statement'),
+  decision: z.string().describe('Chosen architectural or design decision'),
+  alternatives: z.array(z.string()).optional().default([]),
+  consequences: z.array(z.string()).optional().default([]),
+  risks: z.array(z.string()).optional().default([]),
+  evidence: z.array(z.string()).optional().default([]),
+  requirements: z.array(z.string()).optional().default([]),
+  affectedComponents: z.array(z.string()).optional().default([]),
+  status: z.enum(['PROPOSED', 'ACCEPTED', 'REJECTED', 'SUPERSEDED', 'DEPRECATED']).optional().default('ACCEPTED'),
+  supersedes: z.string().nullable().optional(),
+  approvedBy: z.string().describe('Name of human user or system authority')
+});
+export type RecordProjectDecisionInput = z.infer<typeof RecordProjectDecisionInputSchema>;
+
+// 114. record_business_rule
+export const RecordBusinessRuleInputSchema = z.object({
+  baseDir: z.string().describe('Project root directory path'),
+  ruleId: z.string().describe('Business rule identifier, e.g. BR-001'),
+  statement: z.string().describe('Invariant rule statement'),
+  source: z.string().describe('Verifiable domain or user authority source'),
+  priority: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']).optional().default('HIGH'),
+  scope: z.string().optional().default('PROJECT'),
+  inputs: z.array(z.string()).optional().default([]),
+  outputs: z.array(z.string()).optional().default([]),
+  exceptions: z.array(z.string()).optional().default([]),
+  requirements: z.array(z.string()).optional().default([]),
+  tests: z.array(z.string()).optional().default([])
+});
+export type RecordBusinessRuleInput = z.infer<typeof RecordBusinessRuleInputSchema>;
+
+// 115. record_project_invariant
+export const RecordProjectInvariantInputSchema = z.object({
+  baseDir: z.string().describe('Project root directory path'),
+  id: z.string().describe('Invariant identifier, e.g. INV-SEC-01'),
+  description: z.string().describe('Unbreakable system rule description'),
+  category: z.enum(['SECURITY', 'DATA_INTEGRITY', 'API_CONTRACT', 'BUSINESS_LOGIC', 'UX_ERGONOMICS']),
+  scope: z.string().optional().default('PROJECT'),
+  severity: z.enum(['CRITICAL', 'HIGH', 'MEDIUM']).optional().default('HIGH'),
+  verificationMethod: z.string().describe('Automated test or verification method name'),
+  relatedTests: z.array(z.string()).optional().default([]),
+  source: z.string().describe('Authority provenance for invariant')
+});
+export type RecordProjectInvariantInput = z.infer<typeof RecordProjectInvariantInputSchema>;
+
+// 116. build_project_architecture_graph
+export const BuildProjectArchitectureGraphInputSchema = z.object({
+  baseDir: z.string().describe('Project root directory path'),
+  codeArtifacts: z.object({
+    modules: z.array(z.string()).optional(),
+    components: z.array(z.string()).optional(),
+    services: z.array(z.string()).optional(),
+    tables: z.array(z.string()).optional(),
+    apis: z.array(z.string()).optional(),
+    pages: z.array(z.string()).optional()
+  }).optional()
+});
+export type BuildProjectArchitectureGraphInput = z.infer<typeof BuildProjectArchitectureGraphInputSchema>;
+
+// 117. create_project_snapshot
+export const CreateProjectSnapshotInputSchema = z.object({
+  baseDir: z.string().describe('Project root directory path'),
+  snapshotId: z.string().describe('Unique snapshot identifier, e.g. SNAP-T1'),
+  commitSha: z.string().optional(),
+  stack: z.string().optional(),
+  architectureHash: z.string().optional(),
+  requirementHash: z.string().optional(),
+  routeInventory: z.array(z.string()).optional(),
+  apiInventory: z.array(z.string()).optional(),
+  databaseFingerprint: z.string().optional(),
+  dependencyFingerprint: z.string().optional(),
+  designSystemFingerprint: z.string().optional()
+});
+export type CreateProjectSnapshotInput = z.infer<typeof CreateProjectSnapshotInputSchema>;
+
+// 118. detect_project_drift
+export const DetectProjectDriftInputSchema = z.object({
+  baseSnapshot: z.any().describe('Baseline ProjectSnapshot'),
+  targetSnapshot: z.any().describe('Target or current ProjectSnapshot')
+});
+export type DetectProjectDriftInput = z.infer<typeof DetectProjectDriftInputSchema>;
+
+// 119. analyze_change_impact
+export const AnalyzeChangeImpactInputSchema = z.object({
+  baseDir: z.string().describe('Project root directory path'),
+  target: z.string().describe('Component, entity, endpoint, or module to change'),
+  proposedChange: z.string().describe('Detailed description of proposed modification')
+});
+export type AnalyzeChangeImpactInput = z.infer<typeof AnalyzeChangeImpactInputSchema>;
+
+// 120. build_task_context
+export const BuildTaskContextInputSchema = z.object({
+  baseDir: z.string().describe('Project root directory path'),
+  task: z.string().describe('Task objective or user prompt'),
+  target: z.string().describe('Target entity, feature, or subsystem'),
+  scope: z.string().describe('Operational scope: PROJECT, MODULE, COMPONENT, API, PAGE, or DATABASE')
+});
+export type BuildTaskContextInput = z.infer<typeof BuildTaskContextInputSchema>;
+
+// 121. detect_knowledge_conflicts
+export const DetectKnowledgeConflictsInputSchema = z.object({
+  baseDir: z.string().describe('Project root directory path'),
+  actualCodeFacts: z.object({
+    databaseEngine: z.string().optional(),
+    authStrategy: z.string().optional(),
+    installedPackages: z.array(z.string()).optional()
+  }).optional()
+});
+export type DetectKnowledgeConflictsInput = z.infer<typeof DetectKnowledgeConflictsInputSchema>;
+
+// 122. record_lesson_learned
+export const RecordLessonLearnedInputSchema = z.object({
+  baseDir: z.string().describe('Project root directory path'),
+  id: z.string().describe('Lesson ID, e.g. LRN-001'),
+  problem: z.string(),
+  context: z.string(),
+  attempt: z.string(),
+  result: z.string(),
+  evidence: z.string(),
+  lesson: z.string(),
+  applicability: z.string(),
+  confidence: z.number().min(0).max(1).optional()
+});
+export type RecordLessonLearnedInput = z.infer<typeof RecordLessonLearnedInputSchema>;
+
+// 123. propose_improvement_candidate
+export const ProposeImprovementCandidateInputSchema = z.object({
+  baseDir: z.string().describe('Project root directory path'),
+  id: z.string().describe('Candidate ID, e.g. IMP-001'),
+  observation: z.string(),
+  evidence: z.string(),
+  proposedImprovement: z.string(),
+  scope: z.string(),
+  expectedBenefit: z.string(),
+  risk: z.enum(['LOW', 'MEDIUM', 'HIGH']).optional().default('LOW'),
+  confidence: z.number().min(0).max(1).optional()
+});
+export type ProposeImprovementCandidateInput = z.infer<typeof ProposeImprovementCandidateInputSchema>;
+
+// 124. evaluate_project_knowledge_health
+export const EvaluateProjectKnowledgeHealthInputSchema = z.object({
+  baseDir: z.string().describe('Project root directory path')
+});
+export type EvaluateProjectKnowledgeHealthInput = z.infer<typeof EvaluateProjectKnowledgeHealthInputSchema>;
+
+
 
 
 

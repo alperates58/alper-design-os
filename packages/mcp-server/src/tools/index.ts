@@ -96,7 +96,21 @@ import {
   createNewProjectBlueprint,
   createProjectImplementationPlan,
   scaffoldNewProject,
-  evaluateNewProjectCompletion
+  evaluateNewProjectCompletion,
+  initializeProjectIntelligence,
+  loadProjectIntelligence,
+  recordProjectDecision,
+  recordBusinessRule,
+  recordProjectInvariant,
+  buildProjectArchitectureGraph,
+  createProjectSnapshot,
+  detectProjectDrift,
+  analyzeChangeImpact,
+  buildTaskContext,
+  detectKnowledgeConflicts,
+  recordLessonLearned,
+  proposeImprovementCandidate,
+  evaluateProjectKnowledgeHealth
 } from '@alper-design-os/agent-governance';
 import {
   createDesignIntent,
@@ -1504,9 +1518,79 @@ export function handleEvaluateNewProjectCompletion(input: T.EvaluateNewProjectCo
   return evaluateNewProjectCompletion(input);
 }
 
+// 111. initialize_project_intelligence
+export function handleInitializeProjectIntelligence(input: T.InitializeProjectIntelligenceInput) {
+  return initializeProjectIntelligence(input.baseDir, input);
+}
+
+// 112. load_project_intelligence
+export function handleLoadProjectIntelligence(input: T.LoadProjectIntelligenceInput) {
+  return loadProjectIntelligence(input.baseDir);
+}
+
+// 113. record_project_decision
+export function handleRecordProjectDecision(input: T.RecordProjectDecisionInput) {
+  return recordProjectDecision(input.baseDir, input);
+}
+
+// 114. record_business_rule
+export function handleRecordBusinessRule(input: T.RecordBusinessRuleInput) {
+  return recordBusinessRule(input.baseDir, input);
+}
+
+// 115. record_project_invariant
+export function handleRecordProjectInvariant(input: T.RecordProjectInvariantInput) {
+  return recordProjectInvariant(input.baseDir, input);
+}
+
+// 116. build_project_architecture_graph
+export function handleBuildProjectArchitectureGraph(input: T.BuildProjectArchitectureGraphInput) {
+  return buildProjectArchitectureGraph(input.baseDir, input.codeArtifacts);
+}
+
+// 117. create_project_snapshot
+export function handleCreateProjectSnapshot(input: T.CreateProjectSnapshotInput) {
+  return createProjectSnapshot(input.baseDir, input.snapshotId, input);
+}
+
+// 118. detect_project_drift
+export function handleDetectProjectDrift(input: T.DetectProjectDriftInput) {
+  return detectProjectDrift(input.baseSnapshot, input.targetSnapshot);
+}
+
+// 119. analyze_change_impact
+export function handleAnalyzeChangeImpact(input: T.AnalyzeChangeImpactInput) {
+  return analyzeChangeImpact(input.baseDir, input.target, input.proposedChange);
+}
+
+// 120. build_task_context
+export function handleBuildTaskContext(input: T.BuildTaskContextInput) {
+  return buildTaskContext(input.baseDir, input);
+}
+
+// 121. detect_knowledge_conflicts
+export function handleDetectKnowledgeConflicts(input: T.DetectKnowledgeConflictsInput) {
+  return detectKnowledgeConflicts(input.baseDir, input.actualCodeFacts);
+}
+
+// 122. record_lesson_learned
+export function handleRecordLessonLearned(input: T.RecordLessonLearnedInput) {
+  return recordLessonLearned(input.baseDir, input);
+}
+
+// 123. propose_improvement_candidate
+export function handleProposeImprovementCandidate(input: T.ProposeImprovementCandidateInput) {
+  return proposeImprovementCandidate(input.baseDir, input);
+}
+
+// 124. evaluate_project_knowledge_health
+export function handleEvaluateProjectKnowledgeHealth(input: T.EvaluateProjectKnowledgeHealthInput) {
+  return evaluateProjectKnowledgeHealth(input.baseDir);
+}
+
 /**
  * Canonical Tool Registry Map:
- * Complete, typed mapping of all 97 registered Alper Design OS MCP tools to their handler functions.
+ * Complete, typed mapping of all 124 registered Alper Design OS MCP tools to their handler functions.
  */
 export const toolRegistry = new Map<string, Function>([
   ['analyze_project', handleAnalyzeProject],
@@ -1618,7 +1702,21 @@ export const toolRegistry = new Map<string, Function>([
   ['create_project_blueprint', handleCreateProjectBlueprint],
   ['create_project_implementation_plan', handleCreateProjectImplementationPlan],
   ['scaffold_new_project', handleScaffoldNewProject],
-  ['evaluate_new_project_completion', handleEvaluateNewProjectCompletion]
+  ['evaluate_new_project_completion', handleEvaluateNewProjectCompletion],
+  ['initialize_project_intelligence', handleInitializeProjectIntelligence],
+  ['load_project_intelligence', handleLoadProjectIntelligence],
+  ['record_project_decision', handleRecordProjectDecision],
+  ['record_business_rule', handleRecordBusinessRule],
+  ['record_project_invariant', handleRecordProjectInvariant],
+  ['build_project_architecture_graph', handleBuildProjectArchitectureGraph],
+  ['create_project_snapshot', handleCreateProjectSnapshot],
+  ['detect_project_drift', handleDetectProjectDrift],
+  ['analyze_change_impact', handleAnalyzeChangeImpact],
+  ['build_task_context', handleBuildTaskContext],
+  ['detect_knowledge_conflicts', handleDetectKnowledgeConflicts],
+  ['record_lesson_learned', handleRecordLessonLearned],
+  ['propose_improvement_candidate', handleProposeImprovementCandidate],
+  ['evaluate_project_knowledge_health', handleEvaluateProjectKnowledgeHealth]
 ]);
 
 
