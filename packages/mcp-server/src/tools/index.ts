@@ -343,7 +343,7 @@ export function handleCreateDesignPlan(input: T.CreateDesignPlanInput) {
       {
         phaseNumber: 4,
         title: 'Accessibility & Contrast Verification',
-        deliverables: ['WCAG 2.1 AA audit', 'Screen reader live regions', 'Keyboard focus ring audit']
+        deliverables: ['WCAG 2.2 AA audit', 'Screen reader live regions', 'Keyboard focus ring audit']
       }
     ]
   };
@@ -358,11 +358,8 @@ export function handleAuditExistingUI(input: T.AuditExistingUIInput) {
 // 11. audit_accessibility
 export function handleAuditAccessibility(input: T.AuditAccessibilityInput) {
   const files = collectProjectFiles(input.projectPath);
-  const audit = auditAccessibility(files);
-  return {
-    ...audit,
-    wcagLevelTarget: input.targetLevel || audit.wcagLevelTarget
-  };
+  const audit = auditAccessibility(files, input.targetLevel);
+  return audit;
 }
 
 // 12. audit_responsive

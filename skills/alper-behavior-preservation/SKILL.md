@@ -1,9 +1,12 @@
 ---
 name: alper-behavior-preservation
-description: Enforces preservation contract, freezes behavioral baselines, routes, DB invariants, and auth. Use when executing modernization tasks for behavior preservation. Do not use for unrelated capability domains or deprecated Phase 0 workflows.
+description: Enforces preservation contract, freezes behavioral baselines, routes, DB invariants, and auth. Use when establishing automated regression guardrails prior to modifying legacy code. Do not use for creating new greenfield requirements (use alper-requirements-engineering).
 status: ACTIVE
 capabilityFamily: MODERNIZATION
+userFacingType: USER_ENTRYPOINT
 userFacing: true
+modeApplicability:
+  - MODERNIZATION
 mcpTools:
   - create_preservation_contract
   - create_behavioral_baseline
@@ -11,98 +14,87 @@ mcpTools:
 relatedSkills:
   - alper-modernization-planner
   - alper-modernization-review
-  - alper-refactoring-strategy
+  - alper-contract-testing
 ---
 
-# Alper Behavior Preservation Skill
+# Alper Behavioral Preservation Skill
 
 ## PURPOSE
-Provides canonical, deterministic agent capability for **Behavior Preservation** within the **MODERNIZATION** capability family.
-Primary focus: Enforces preservation contract, freezes behavioral baselines, routes, DB invariants, and auth.
+Extracts and freezes behavioral contracts (HTTP routes, status codes, payload shapes, database constraints, auth sessions) before modernization edits begin, detecting any regression.
 
 ## USE WHEN
-- Initiating or progressing tasks requiring behavior preservation capabilities.
-- Operating within mode-specific pipelines requiring MODERNIZATION workflows.
-- Verifying requirements, technical blueprints, or evidence artifacts specifically owned by this capability.
+- Establishing automated regression guardrails prior to modifying legacy code.
+- Freezing existing API endpoints, request/response formats, and database invariants.
+- Verifying that modernization edits have zero impact on backend business logic.
 
 ## DO NOT USE WHEN
-- The task strictly belongs to another capability family (e.g. use `alper-greenfield-generator` for new full-stack builds, `alper-modernization-planner` for migrations, or `alper-design-repair` for surgical bug fixes).
-- Attempting to bypass verification gates or generate ungrounded code without prerequisite discovery.
-- Operating on deprecated Phase 0 workflows.
+- Creating new greenfield requirements (use alper-requirements-engineering).
+- Executing single-line CSS visual tweaks (use alper-design-repair).
+- Running external penetration testing (use alper-security-audit).
 
 ## MODE APPLICABILITY
-- Supported Modes: **GREENFIELD**, **MODERNIZATION**, **REPAIR**, and **CONTINUOUS_GOVERNANCE**.
-- Mode Relevance: Enforces capability boundaries whether operating on clean-sheet greenfield or legacy brownfield codebases.
+- Supported Modes: **MODERNIZATION**.
+- Applicability Context: Operates strictly within declared modes; does not execute outside its operational boundaries.
+
 
 ## REQUIRED CONTEXT
-- Validated workspace root and project configuration.
-- Task brief and structured user intent.
-- Up-to-date `.alper-design-os/project` intelligence snapshot (when initialized).
-- Relevant stack profiles and dependency manifests.
+- Workspace root path and active git branch.
+- Current task brief and AgentActionPlan.
+- Relevant project files and configuration manifests.
 
 ## PROJECT INTELLIGENCE LOADING
-- Consults durable project memory in `.alper-design-os/project` prior to action execution.
-- Reads verified architecture graphs, registered entities, and recorded project decisions (ADRs).
-- Strictly rejects hallucinated project memory; missing intelligence triggers truthful intake or initialization.
+**Status: REQUIRED**
+This skill strictly requires reading durable project memory from `.alper-design-os/project/` (manifest, architecture graph, ADRs, behavioral contracts) before planning or executing actions. Missing memory triggers explicit initialization or drift detection.
 
 ## DISCOVERY / AMBIGUITY BEHAVIOR
-- If task requirements are incomplete, ambiguous, or lack technical grounding:
-  1. Halt execution immediately before emitting ungrounded changes.
-  2. Emit prioritized clarifying questions to the operator.
-  3. Maintain derived acceptance criteria in `DEFINED` / `NOT_VERIFIED` state until ambiguity is formally resolved.
+**Protocol: NOT_APPLICABLE**
+Operates on concrete, localized technical artifacts (e.g. query plans, code diffs, DOM elements). Discovery ambiguity gates do not apply to direct inspection or repair of existing assets.
 
 ## WORKFLOW
-1. **Intake & Verification**: Ingest task parameters and verify workspace preconditions.
-2. **Context Assembly**: Load relevant project invariants, schema contracts, and active policies.
-3. **Execution & Tool Invocation**: Dispatch canonical MCP tools (`create_preservation_contract`, `create_behavioral_baseline`, `detect_regression`).
-4. **Evidence Collection**: Gather qualifying verification artifacts (logs, diffs, test evidence).
-5. **Quality Gate Evaluation**: Validate deliverables against release and safety gates.
-6. **Output Synthesis**: Produce structured deliverables and handoff packages for downstream skills.
+1. Scan legacy codebase for HTTP endpoints, route parameters, and auth guards.
+2. Record behavioral baseline snapshots into .alper-design-os/project/.
+3. Formulate BehavioralPreservationContract specifying frozen invariants.
+4. Execute comparison checks after modernization stages to verify 100% behavioral parity.
 
 ## DECISION RULES
-- **Invariant Enforcement**: Universal invariant **NO CLAIM WITHOUT EVIDENCE** applies unconditionally.
-- **Fail-Safe Principle**: If a tool returns `NEEDS_CLARIFICATION` or validation fails, stop execution and report truth state.
-- **Scope Guard**: Confine modifications strictly to designated module boundaries. Uninvited modifications to foreign files are blocked.
+- Zero tolerated behavioral breakage: Any alteration to route parameters or response schemas flags a regression.
+- Legacy quirks that clients depend on must be preserved unless an explicit ADR supersedes them.
 
 ## MCP TOOL STRATEGY
-- `create_preservation_contract`: Canonical handler for create preservation contract. Always supply required schema parameters and handle structured return states.
-- `create_behavioral_baseline`: Canonical handler for create behavioral baseline. Always supply required schema parameters and handle structured return states.
-- `detect_regression`: Canonical handler for detect regression. Always supply required schema parameters and handle structured return states.
+- `create_preservation_contract`: Canonical handler for create preservation contract. Always pass required schema arguments; handle return states deterministically.
+- `create_behavioral_baseline`: Canonical handler for create behavioral baseline. Always pass required schema arguments; handle return states deterministically.
+- `detect_regression`: Canonical handler for detect regression. Always pass required schema arguments; handle return states deterministically.
 
 ## SOURCE / RESEARCH STRATEGY
-- When referencing design systems, frameworks, or security standards, cite authoritative sources verified by `alper-source-intelligence`.
+- Authoritative Guidance: Existing project route tables, OpenAPI/HTTP contracts, session models, and database schemas.
 - Prohibit ad-hoc, unverified external advice.
 
 ## POLICY & GOVERNANCE
 - Complies strictly with `rules/AGENTS.md`.
-- Secret leakage prevention: Never log, store, or emit unredacted credentials or API keys.
-- Destructive command guard: High-risk operations (e.g., hard reset, clean, force push) require explicit operator confirmation.
+- Universal Evidence Invariant: **NO CLAIM WITHOUT EVIDENCE**.
+- Secret Redaction: All credentials, connection strings, and tokens must be masked with `[REDACTED]`.
 
 ## HUMAN CHECKPOINTS
-- Ambiguous architectural directions requiring trade-off resolution.
-- Destructive state changes or breaking schema migrations.
-- Visual approval on high-impact user interface changes.
+- Operator confirmation if legacy quirk must be deliberately broken or preserved.
 
 ## STOP CONDITIONS
-- Discovery readiness check returns `NEEDS_CLARIFICATION`.
+- Required context or prerequisite artifacts are missing.
+- Discovery readiness evaluation returns `NEEDS_CLARIFICATION` (for discovery-gated skills).
 - Tool execution reports critical validation or gate failure.
-- Scope boundary violation detected by `alper-scope-guard`.
 
 ## FAILURE HANDLING
-- On schema failure: Log exact validation error, preserve rollback checkpoint, and return non-zero exit state.
+- On schema failure: Log exact validation error, preserve rollback checkpoint, and return non-zero exit code.
 - On test failure: Mark gate as `FAILED`, capture diagnostic trace, and prevent downstream progression.
 - Never report simulated success or fake PASS results.
 
 ## EVIDENCE REQUIREMENTS
-- Every asserted completion must supply qualifying evidence (e.g. `LINT_CLEAN`, `UNIT_TESTS_PASS`, `BUILD_CLEAN`, `HUMAN_REVIEW`).
-- Missing evidence strictly resolves to `NOT_VERIFIED`.
+- Canonical Evidence Kinds: `INTEGRATION_TEST`, `UNIT_TEST`, `STATIC_ANALYSIS`.
+- Missing evidence strictly resolves to `VerificationStatus: NOT_VERIFIED`. Never emit fake PASS assertion.
 
 ## OUTPUT CONTRACT
-- Structured execution report detailing actions executed, tools invoked, and evidence captured.
-- Verified artifacts and updated project intelligence entries.
-- Explicit handoff envelope for next-phase skills.
+- BehavioralPreservationContract, BaselineSnapshot, and RegressionAuditReport.
 
 ## HANDOFF / RELATED SKILLS
-- `alper-modernization-planner`: Handoff target for sibling MODERNIZATION operations.
-- `alper-modernization-review`: Handoff target for sibling MODERNIZATION operations.
-- `alper-refactoring-strategy`: Handoff target for sibling MODERNIZATION operations.
+- `alper-modernization-planner`: Downstream or sibling capability for MODERNIZATION operations.
+- `alper-modernization-review`: Downstream or sibling capability for MODERNIZATION operations.
+- `alper-contract-testing`: Downstream or sibling capability for QA_TESTING operations.

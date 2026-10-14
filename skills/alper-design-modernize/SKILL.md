@@ -5,7 +5,10 @@ status: DEPRECATED
 deprecated: true
 replacement: alper-modernization-planner
 capabilityFamily: MODERNIZATION
+userFacingType: SUPPORTING_CAPABILITY
 userFacing: false
+modeApplicability:
+  - MODERNIZATION
 mcpTools: []
 relatedSkills:
   - alper-modernization-planner

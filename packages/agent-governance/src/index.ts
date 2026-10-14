@@ -37,4 +37,5 @@ export * from './greenfield-types.js';
 export * from './greenfield-engine.js';
 export * from './project-intelligence-types.js';
 export * from './project-intelligence-engine.js';
+export * from './skill-registry.js';
 

@@ -5,7 +5,10 @@ status: DEPRECATED
 deprecated: true
 replacement: alper-refactoring-strategy
 capabilityFamily: MODERNIZATION
+userFacingType: SUPPORTING_CAPABILITY
 userFacing: false
+modeApplicability:
+  - MODERNIZATION
 mcpTools: []
 relatedSkills:
   - alper-refactoring-strategy

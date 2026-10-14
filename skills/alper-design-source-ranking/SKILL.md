@@ -5,7 +5,11 @@ status: DEPRECATED
 deprecated: true
 replacement: alper-source-intelligence
 capabilityFamily: SOURCE_INTELLIGENCE
+userFacingType: SUPPORTING_CAPABILITY
 userFacing: false
+modeApplicability:
+  - GREENFIELD
+  - MODERNIZATION
 mcpTools: []
 relatedSkills:
   - alper-source-intelligence

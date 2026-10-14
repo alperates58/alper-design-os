@@ -1,112 +1,103 @@
 ---
 name: alper-ui-blueprint
-description: Declarative UI Blueprint DSL for pages, components, and app shells with state contracts. Use when executing design ux tasks for ui blueprint. Do not use for unrelated capability domains or deprecated Phase 0 workflows.
+description: Declarative UI Blueprint DSL for pages, components, and app shells with state contracts. Use when creating declarative pageblueprints and componentblueprints for application pages. Do not use for directly editing css classes or concrete html (use alper-cross-stack-rendering or alper-design-repair).
 status: ACTIVE
 capabilityFamily: DESIGN_UX
-userFacing: true
+userFacingType: INTERNAL_ORCHESTRATION
+userFacing: false
+modeApplicability:
+  - GREENFIELD
+  - MODERNIZATION
 mcpTools:
   - create_page_blueprint
   - create_component_blueprint
   - create_app_shell_blueprint
   - create_page_inventory
 relatedSkills:
-  - alper-design-language
-  - alper-design-personality
   - alper-pattern-graph
-  - alper-design-critic
+  - alper-cross-stack-rendering
+  - alper-design-language
 ---
 
-# Alper Ui Blueprint Skill
+# Alper UI Blueprint DSL Skill
 
 ## PURPOSE
-Provides canonical, deterministic agent capability for **Ui Blueprint** within the **DESIGN_UX** capability family.
-Primary focus: Declarative UI Blueprint DSL for pages, components, and app shells with state contracts.
+Internal DSL engine that models page layouts, responsive regions, navigation hierarchies, and component state machines in a technology-neutral declarative format prior to stack compilation.
 
 ## USE WHEN
-- Initiating or progressing tasks requiring ui blueprint capabilities.
-- Operating within mode-specific pipelines requiring DESIGN_UX workflows.
-- Verifying requirements, technical blueprints, or evidence artifacts specifically owned by this capability.
+- Creating declarative PageBlueprints and ComponentBlueprints for application pages.
+- Defining app shell structures with responsive navigation, headers, and status bars.
+- Establishing component state contracts (empty, loading, populated, error).
 
 ## DO NOT USE WHEN
-- The task strictly belongs to another capability family (e.g. use `alper-greenfield-generator` for new full-stack builds, `alper-modernization-planner` for migrations, or `alper-design-repair` for surgical bug fixes).
-- Attempting to bypass verification gates or generate ungrounded code without prerequisite discovery.
-- Operating on deprecated Phase 0 workflows.
+- Directly editing CSS classes or concrete HTML (use alper-cross-stack-rendering or alper-design-repair).
+- Designing backend database tables (use alper-database-designer).
+- Diagnosing slow SQL queries (use alper-sql-performance).
 
 ## MODE APPLICABILITY
-- Supported Modes: **GREENFIELD**, **MODERNIZATION**, **REPAIR**, and **CONTINUOUS_GOVERNANCE**.
-- Mode Relevance: Enforces capability boundaries whether operating on clean-sheet greenfield or legacy brownfield codebases.
+- Supported Modes: **GREENFIELD**, **MODERNIZATION**.
+- Applicability Context: Operates strictly within declared modes; does not execute outside its operational boundaries.
+
 
 ## REQUIRED CONTEXT
-- Validated workspace root and project configuration.
-- Task brief and structured user intent.
-- Up-to-date `.alper-design-os/project` intelligence snapshot (when initialized).
-- Relevant stack profiles and dependency manifests.
+- UI wireframes, page layouts, component markup, or browser DOM.
+- Design token definitions (tokens.json, tokens.css) and theme configurations.
+- Stated user personas and target operational density.
 
 ## PROJECT INTELLIGENCE LOADING
-- Consults durable project memory in `.alper-design-os/project` prior to action execution.
-- Reads verified architecture graphs, registered entities, and recorded project decisions (ADRs).
-- Strictly rejects hallucinated project memory; missing intelligence triggers truthful intake or initialization.
+**Status: NOT_REQUIRED**
+Operates as a self-contained, stateless capability. Does not require loading repository project intelligence snapshots to perform its core diagnosis or transformation.
 
 ## DISCOVERY / AMBIGUITY BEHAVIOR
-- If task requirements are incomplete, ambiguous, or lack technical grounding:
-  1. Halt execution immediately before emitting ungrounded changes.
-  2. Emit prioritized clarifying questions to the operator.
-  3. Maintain derived acceptance criteria in `DEFINED` / `NOT_VERIFIED` state until ambiguity is formally resolved.
+**Protocol: NOT_APPLICABLE**
+Operates on concrete, localized technical artifacts (e.g. query plans, code diffs, DOM elements). Discovery ambiguity gates do not apply to direct inspection or repair of existing assets.
 
 ## WORKFLOW
-1. **Intake & Verification**: Ingest task parameters and verify workspace preconditions.
-2. **Context Assembly**: Load relevant project invariants, schema contracts, and active policies.
-3. **Execution & Tool Invocation**: Dispatch canonical MCP tools (`create_page_blueprint`, `create_component_blueprint`, `create_app_shell_blueprint`, `create_page_inventory`).
-4. **Evidence Collection**: Gather qualifying verification artifacts (logs, diffs, test evidence).
-5. **Quality Gate Evaluation**: Validate deliverables against release and safety gates.
-6. **Output Synthesis**: Produce structured deliverables and handoff packages for downstream skills.
+1. Ingest page requirements and selected UX patterns.
+2. Assemble declarative PageBlueprint defining layout regions and component hierarchy.
+3. Specify state machines and accessibility roles for each component.
+4. Output validated blueprint to downstream renderers.
 
 ## DECISION RULES
-- **Invariant Enforcement**: Universal invariant **NO CLAIM WITHOUT EVIDENCE** applies unconditionally.
-- **Fail-Safe Principle**: If a tool returns `NEEDS_CLARIFICATION` or validation fails, stop execution and report truth state.
-- **Scope Guard**: Confine modifications strictly to designated module boundaries. Uninvited modifications to foreign files are blocked.
+- Technology Neutrality: Blueprints must never contain stack-specific JSX or Blade directives.
+- Every blueprint must define responsive behaviors across Mobile, Tablet, and Desktop.
 
 ## MCP TOOL STRATEGY
-- `create_page_blueprint`: Canonical handler for create page blueprint. Always supply required schema parameters and handle structured return states.
-- `create_component_blueprint`: Canonical handler for create component blueprint. Always supply required schema parameters and handle structured return states.
-- `create_app_shell_blueprint`: Canonical handler for create app shell blueprint. Always supply required schema parameters and handle structured return states.
-- `create_page_inventory`: Canonical handler for create page inventory. Always supply required schema parameters and handle structured return states.
+- `create_page_blueprint`: Canonical handler for create page blueprint. Always pass required schema arguments; handle return states deterministically.
+- `create_component_blueprint`: Canonical handler for create component blueprint. Always pass required schema arguments; handle return states deterministically.
+- `create_app_shell_blueprint`: Canonical handler for create app shell blueprint. Always pass required schema arguments; handle return states deterministically.
+- `create_page_inventory`: Canonical handler for create page inventory. Always pass required schema arguments; handle return states deterministically.
 
 ## SOURCE / RESEARCH STRATEGY
-- When referencing design systems, frameworks, or security standards, cite authoritative sources verified by `alper-source-intelligence`.
+- Authoritative Guidance: Declarative UI Blueprint DSL specification, component state machines, and ARIA contracts.
 - Prohibit ad-hoc, unverified external advice.
 
 ## POLICY & GOVERNANCE
 - Complies strictly with `rules/AGENTS.md`.
-- Secret leakage prevention: Never log, store, or emit unredacted credentials or API keys.
-- Destructive command guard: High-risk operations (e.g., hard reset, clean, force push) require explicit operator confirmation.
+- Universal Evidence Invariant: **NO CLAIM WITHOUT EVIDENCE**.
+- Secret Redaction: All credentials, connection strings, and tokens must be masked with `[REDACTED]`.
 
 ## HUMAN CHECKPOINTS
-- Ambiguous architectural directions requiring trade-off resolution.
-- Destructive state changes or breaking schema migrations.
-- Visual approval on high-impact user interface changes.
+- Designer / architect review of master PageBlueprint before stack rendering.
 
 ## STOP CONDITIONS
-- Discovery readiness check returns `NEEDS_CLARIFICATION`.
+- Required context or prerequisite artifacts are missing.
+- Discovery readiness evaluation returns `NEEDS_CLARIFICATION` (for discovery-gated skills).
 - Tool execution reports critical validation or gate failure.
-- Scope boundary violation detected by `alper-scope-guard`.
 
 ## FAILURE HANDLING
-- On schema failure: Log exact validation error, preserve rollback checkpoint, and return non-zero exit state.
+- On schema failure: Log exact validation error, preserve rollback checkpoint, and return non-zero exit code.
 - On test failure: Mark gate as `FAILED`, capture diagnostic trace, and prevent downstream progression.
 - Never report simulated success or fake PASS results.
 
 ## EVIDENCE REQUIREMENTS
-- Every asserted completion must supply qualifying evidence (e.g. `LINT_CLEAN`, `UNIT_TESTS_PASS`, `BUILD_CLEAN`, `HUMAN_REVIEW`).
-- Missing evidence strictly resolves to `NOT_VERIFIED`.
+- Canonical Evidence Kinds: `STATIC_ANALYSIS`.
+- Missing evidence strictly resolves to `VerificationStatus: NOT_VERIFIED`. Never emit fake PASS assertion.
 
 ## OUTPUT CONTRACT
-- Structured execution report detailing actions executed, tools invoked, and evidence captured.
-- Verified artifacts and updated project intelligence entries.
-- Explicit handoff envelope for next-phase skills.
+- PageBlueprint, ComponentBlueprint, and AppShellBlueprint specifications.
 
 ## HANDOFF / RELATED SKILLS
-- `alper-design-language`: Handoff target for sibling DESIGN_UX operations.
-- `alper-design-personality`: Handoff target for sibling DESIGN_UX operations.
-- `alper-pattern-graph`: Handoff target for sibling DESIGN_UX operations.
-- `alper-design-critic`: Handoff target for sibling DESIGN_UX operations.
+- `alper-pattern-graph`: Downstream or sibling capability for DESIGN_UX operations.
+- `alper-cross-stack-rendering`: Downstream or sibling capability for DESIGN_UX operations.
+- `alper-design-language`: Downstream or sibling capability for DESIGN_UX operations.

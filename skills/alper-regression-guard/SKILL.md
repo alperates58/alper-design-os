@@ -5,7 +5,10 @@ status: DEPRECATED
 deprecated: true
 replacement: alper-behavior-preservation
 capabilityFamily: MODERNIZATION
+userFacingType: SUPPORTING_CAPABILITY
 userFacing: false
+modeApplicability:
+  - MODERNIZATION
 mcpTools: []
 relatedSkills:
   - alper-behavior-preservation

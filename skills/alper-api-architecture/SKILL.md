@@ -5,7 +5,11 @@ status: DEPRECATED
 deprecated: true
 replacement: alper-api-designer
 capabilityFamily: API_ENGINEERING
+userFacingType: SUPPORTING_CAPABILITY
 userFacing: false
+modeApplicability:
+  - GREENFIELD
+  - MODERNIZATION
 mcpTools: []
 relatedSkills:
   - alper-api-designer

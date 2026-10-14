@@ -35,12 +35,12 @@ export function scoreSource(source: SourceMetadata, context: ScoreContext = {}):
 
   // 3. Accessibility Score (0-100)
   let accessibilityScore = 40;
-  if (source.accessibilityLevel === 'WCAG_2_1_AAA') {
+  if (source.accessibilityLevel === 'WCAG_2_2_AAA' || source.accessibilityLevel === 'WCAG_2_1_AAA') {
     accessibilityScore = 100;
-    matchReasons.push('Strict WCAG 2.1 AAA accessibility compliance');
-  } else if (source.accessibilityLevel === 'WCAG_2_1_AA') {
+    matchReasons.push('Strict WCAG 2.2/2.1 AAA accessibility compliance');
+  } else if (source.accessibilityLevel === 'WCAG_2_2_AA' || source.accessibilityLevel === 'WCAG_2_1_AA') {
     accessibilityScore = 90;
-    matchReasons.push('Production WCAG 2.1 AA accessibility baseline');
+    matchReasons.push('Production WCAG 2.2/2.1 AA accessibility baseline');
   } else if (source.accessibilityLevel === 'PARTIAL') {
     accessibilityScore = 55;
   } else {

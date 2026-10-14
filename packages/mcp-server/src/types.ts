@@ -80,7 +80,7 @@ export type AuditExistingUIInput = z.infer<typeof AuditExistingUIInputSchema>;
 // 11. audit_accessibility
 export const AuditAccessibilityInputSchema = z.object({
   projectPath: z.string(),
-  targetLevel: z.enum(['WCAG_2_1_AA', 'WCAG_2_1_AAA']).default('WCAG_2_1_AA')
+  targetLevel: z.enum(['WCAG_2_2_AA', 'WCAG_2_2_AAA', 'WCAG_2_1_AA', 'WCAG_2_1_AAA']).default('WCAG_2_2_AA')
 });
 export type AuditAccessibilityInput = z.infer<typeof AuditAccessibilityInputSchema>;
 
@@ -129,7 +129,7 @@ export const DiscoverSourcesInputSchema = z.object({
   ]).optional(),
   framework: z.string().optional(),
   domain: z.string().optional(),
-  accessibilityLevel: z.enum(['WCAG_2_1_AA', 'WCAG_2_1_AAA', 'PARTIAL', 'NOT_SPECIFIED']).optional(),
+  accessibilityLevel: z.enum(['WCAG_2_2_AA', 'WCAG_2_2_AAA', 'WCAG_2_1_AA', 'WCAG_2_1_AAA', 'PARTIAL', 'NOT_SPECIFIED']).optional(),
   minTrustScore: z.number().min(0).max(100).optional(),
   searchQuery: z.string().optional()
 });

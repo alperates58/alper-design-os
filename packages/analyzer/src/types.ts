@@ -39,7 +39,7 @@ export interface UIAuditResult {
 }
 
 export interface A11yAuditResult {
-  wcagLevelTarget: 'WCAG_2_1_AA' | 'WCAG_2_1_AAA';
+  wcagLevelTarget: 'WCAG_2_2_AA' | 'WCAG_2_2_AAA' | 'WCAG_2_1_AA' | 'WCAG_2_1_AAA';
   passedRatio: number;
   violations: AuditIssue[];
   recommendations: string[];

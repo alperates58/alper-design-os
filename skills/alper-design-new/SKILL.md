@@ -5,7 +5,10 @@ status: DEPRECATED
 deprecated: true
 replacement: alper-greenfield-generator
 capabilityFamily: GREENFIELD_ENGINEERING
+userFacingType: SUPPORTING_CAPABILITY
 userFacing: false
+modeApplicability:
+  - GREENFIELD
 mcpTools: []
 relatedSkills:
   - alper-greenfield-generator

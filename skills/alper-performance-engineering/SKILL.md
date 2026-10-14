@@ -1,106 +1,97 @@
 ---
 name: alper-performance-engineering
-description: Enforces Core Web Vitals (LCP, INP, CLS), asset budgets, pagination, and DevTools trace analysis. Use when executing performance reliability tasks for performance engineering. Do not use for unrelated capability domains or deprecated Phase 0 workflows.
+description: Enforces Core Web Vitals (LCP, INP, CLS), asset budgets, pagination, and DevTools trace analysis. Use when auditing page speed, bundle sizes, and core web vitals. Do not use for diagnosing database query plans (use alper-sql-performance).
 status: ACTIVE
 capabilityFamily: PERFORMANCE_RELIABILITY
+userFacingType: USER_ENTRYPOINT
 userFacing: true
+modeApplicability:
+  - GREENFIELD
+  - MODERNIZATION
+  - REPAIR
+  - CONTINUOUS_GOVERNANCE
 mcpTools:
   - generate_qa_report
 relatedSkills:
-  - alper-reliability
-  - alper-observability
-  - alper-release-safety
-  - alper-load-testing
+  - alper-browser-qa
+  - alper-sql-performance
 ---
 
 # Alper Performance Engineering Skill
 
 ## PURPOSE
-Provides canonical, deterministic agent capability for **Performance Engineering** within the **PERFORMANCE_RELIABILITY** capability family.
-Primary focus: Enforces Core Web Vitals (LCP, INP, CLS), asset budgets, pagination, and DevTools trace analysis.
+Audits and optimizes frontend web performance against Google Core Web Vitals (LCP < 2.5s, INP < 200ms, CLS < 0.1), enforcing bundle size budgets, font loading strategies, and sub-second interaction responsiveness.
 
 ## USE WHEN
-- Initiating or progressing tasks requiring performance engineering capabilities.
-- Operating within mode-specific pipelines requiring PERFORMANCE_RELIABILITY workflows.
-- Verifying requirements, technical blueprints, or evidence artifacts specifically owned by this capability.
+- Auditing page speed, bundle sizes, and Core Web Vitals.
+- Investigating layout shifts (CLS), long tasks causing high input delay (INP), or slow rendering (LCP).
+- Enforcing JavaScript asset budgets in build pipelines.
 
 ## DO NOT USE WHEN
-- The task strictly belongs to another capability family (e.g. use `alper-greenfield-generator` for new full-stack builds, `alper-modernization-planner` for migrations, or `alper-design-repair` for surgical bug fixes).
-- Attempting to bypass verification gates or generate ungrounded code without prerequisite discovery.
-- Operating on deprecated Phase 0 workflows.
+- Diagnosing database query plans (use alper-sql-performance).
+- Designing database schemas (use alper-database-designer).
+- Writing backend API controllers (use alper-api-designer).
 
 ## MODE APPLICABILITY
-- Supported Modes: **GREENFIELD**, **MODERNIZATION**, **REPAIR**, and **CONTINUOUS_GOVERNANCE**.
-- Mode Relevance: Enforces capability boundaries whether operating on clean-sheet greenfield or legacy brownfield codebases.
+- Supported Modes: **GREENFIELD**, **MODERNIZATION**, **REPAIR**, **CONTINUOUS_GOVERNANCE**.
+- Applicability Context: Operates strictly within declared modes; does not execute outside its operational boundaries.
+
 
 ## REQUIRED CONTEXT
-- Validated workspace root and project configuration.
-- Task brief and structured user intent.
-- Up-to-date `.alper-design-os/project` intelligence snapshot (when initialized).
-- Relevant stack profiles and dependency manifests.
+- Workspace root path and active git branch.
+- Current task brief and AgentActionPlan.
+- Relevant project files and configuration manifests.
 
 ## PROJECT INTELLIGENCE LOADING
-- Consults durable project memory in `.alper-design-os/project` prior to action execution.
-- Reads verified architecture graphs, registered entities, and recorded project decisions (ADRs).
-- Strictly rejects hallucinated project memory; missing intelligence triggers truthful intake or initialization.
+**Status: NOT_REQUIRED**
+Operates as a self-contained, stateless capability. Does not require loading repository project intelligence snapshots to perform its core diagnosis or transformation.
 
 ## DISCOVERY / AMBIGUITY BEHAVIOR
-- If task requirements are incomplete, ambiguous, or lack technical grounding:
-  1. Halt execution immediately before emitting ungrounded changes.
-  2. Emit prioritized clarifying questions to the operator.
-  3. Maintain derived acceptance criteria in `DEFINED` / `NOT_VERIFIED` state until ambiguity is formally resolved.
+**Protocol: NOT_APPLICABLE**
+Operates on concrete, localized technical artifacts (e.g. query plans, code diffs, DOM elements). Discovery ambiguity gates do not apply to direct inspection or repair of existing assets.
 
 ## WORKFLOW
-1. **Intake & Verification**: Ingest task parameters and verify workspace preconditions.
-2. **Context Assembly**: Load relevant project invariants, schema contracts, and active policies.
-3. **Execution & Tool Invocation**: Dispatch canonical MCP tools (`generate_qa_report`).
-4. **Evidence Collection**: Gather qualifying verification artifacts (logs, diffs, test evidence).
-5. **Quality Gate Evaluation**: Validate deliverables against release and safety gates.
-6. **Output Synthesis**: Produce structured deliverables and handoff packages for downstream skills.
+1. Capture Lighthouse performance audit and DevTools performance trace.
+2. Analyze Core Web Vitals (LCP, INP, CLS) and long-task waterfalls.
+3. Audit bundle sizes and identify unoptimized third-party scripts.
+4. Formulate prioritized performance remediations (code splitting, lazy loading, font preloading).
 
 ## DECISION RULES
-- **Invariant Enforcement**: Universal invariant **NO CLAIM WITHOUT EVIDENCE** applies unconditionally.
-- **Fail-Safe Principle**: If a tool returns `NEEDS_CLARIFICATION` or validation fails, stop execution and report truth state.
-- **Scope Guard**: Confine modifications strictly to designated module boundaries. Uninvited modifications to foreign files are blocked.
+- Core Web Vitals Thresholds: LCP must be under 2.5s, INP under 200ms, and CLS under 0.1 for production release.
+- Performance claims require measured before/after trace evidence.
 
 ## MCP TOOL STRATEGY
-- `generate_qa_report`: Canonical handler for generate qa report. Always supply required schema parameters and handle structured return states.
+- `generate_qa_report`: Canonical handler for generate qa report. Always pass required schema arguments; handle return states deterministically.
 
 ## SOURCE / RESEARCH STRATEGY
-- When referencing design systems, frameworks, or security standards, cite authoritative sources verified by `alper-source-intelligence`.
+- Authoritative Guidance: Google Core Web Vitals (LCP, INP, CLS), Lighthouse performance audits, and Chrome DevTools traces.
 - Prohibit ad-hoc, unverified external advice.
 
 ## POLICY & GOVERNANCE
 - Complies strictly with `rules/AGENTS.md`.
-- Secret leakage prevention: Never log, store, or emit unredacted credentials or API keys.
-- Destructive command guard: High-risk operations (e.g., hard reset, clean, force push) require explicit operator confirmation.
+- Universal Evidence Invariant: **NO CLAIM WITHOUT EVIDENCE**.
+- Secret Redaction: All credentials, connection strings, and tokens must be masked with `[REDACTED]`.
 
 ## HUMAN CHECKPOINTS
-- Ambiguous architectural directions requiring trade-off resolution.
-- Destructive state changes or breaking schema migrations.
-- Visual approval on high-impact user interface changes.
+- Operator review of bundle budget exemptions or performance optimization trade-offs.
 
 ## STOP CONDITIONS
-- Discovery readiness check returns `NEEDS_CLARIFICATION`.
+- Required context or prerequisite artifacts are missing.
+- Discovery readiness evaluation returns `NEEDS_CLARIFICATION` (for discovery-gated skills).
 - Tool execution reports critical validation or gate failure.
-- Scope boundary violation detected by `alper-scope-guard`.
 
 ## FAILURE HANDLING
-- On schema failure: Log exact validation error, preserve rollback checkpoint, and return non-zero exit state.
+- On schema failure: Log exact validation error, preserve rollback checkpoint, and return non-zero exit code.
 - On test failure: Mark gate as `FAILED`, capture diagnostic trace, and prevent downstream progression.
 - Never report simulated success or fake PASS results.
 
 ## EVIDENCE REQUIREMENTS
-- Every asserted completion must supply qualifying evidence (e.g. `LINT_CLEAN`, `UNIT_TESTS_PASS`, `BUILD_CLEAN`, `HUMAN_REVIEW`).
-- Missing evidence strictly resolves to `NOT_VERIFIED`.
+- Canonical Evidence Kinds: `PERFORMANCE_TRACE`, `BROWSER_TEST`.
+- Missing evidence strictly resolves to `VerificationStatus: NOT_VERIFIED`. Never emit fake PASS assertion.
 
 ## OUTPUT CONTRACT
-- Structured execution report detailing actions executed, tools invoked, and evidence captured.
-- Verified artifacts and updated project intelligence entries.
-- Explicit handoff envelope for next-phase skills.
+- PerformanceAuditReport with Core Web Vitals breakdown and optimization recommendations.
 
 ## HANDOFF / RELATED SKILLS
-- `alper-reliability`: Handoff target for sibling PERFORMANCE_RELIABILITY operations.
-- `alper-observability`: Handoff target for sibling PERFORMANCE_RELIABILITY operations.
-- `alper-release-safety`: Handoff target for sibling PERFORMANCE_RELIABILITY operations.
-- `alper-load-testing`: Handoff target for sibling PERFORMANCE_RELIABILITY operations.
+- `alper-browser-qa`: Downstream or sibling capability for QA_TESTING operations.
+- `alper-sql-performance`: Downstream or sibling capability for DATA_ENGINEERING operations.

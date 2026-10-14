@@ -1,108 +1,112 @@
 ---
 name: alper-accessibility-testing
-description: Audits WCAG 2.1 AA/AAA compliance, keyboard navigation, contrast ratios, and aria attributes. Use when executing qa testing tasks for accessibility testing. Do not use for unrelated capability domains or deprecated Phase 0 workflows.
+description: Audits WCAG 2.2 AA compliance, keyboard navigation, contrast ratios, and aria attributes. Use when auditing a web application for wcag 2.2 aa / section 508 accessibility compliance. Do not use for tuning sql performance (use alper-sql-performance).
 status: ACTIVE
 capabilityFamily: QA_TESTING
+userFacingType: USER_ENTRYPOINT
 userFacing: true
+modeApplicability:
+  - GREENFIELD
+  - MODERNIZATION
+  - REPAIR
+  - CONTINUOUS_GOVERNANCE
 mcpTools:
   - audit_accessibility
   - generate_qa_report
 relatedSkills:
   - alper-browser-qa
-  - alper-visual-regression
-  - alper-testing-strategy
-  - alper-contract-testing
+  - alper-design-language
+  - alper-design-repair
 ---
 
 # Alper Accessibility Testing Skill
 
 ## PURPOSE
-Provides canonical, deterministic agent capability for **Accessibility Testing** within the **QA_TESTING** capability family.
-Primary focus: Audits WCAG 2.1 AA/AAA compliance, keyboard navigation, contrast ratios, and aria attributes.
+Audits web user interfaces against the canonical WCAG 2.2 AA standard (supporting WCAG 2.1 AA compatibility), evaluating color contrast, focus-visible indicators, keyboard navigation, target sizes, and ARIA attributes.
 
 ## USE WHEN
-- Initiating or progressing tasks requiring accessibility testing capabilities.
-- Operating within mode-specific pipelines requiring QA_TESTING workflows.
-- Verifying requirements, technical blueprints, or evidence artifacts specifically owned by this capability.
+- Auditing a web application for WCAG 2.2 AA / Section 508 accessibility compliance.
+- Verifying keyboard tab order, focus traps in modals, and skip-to-content links.
+- Checking touch target sizes (min 24x24px in WCAG 2.2) and accessible color contrast (4.5:1 / 3:1).
 
 ## DO NOT USE WHEN
-- The task strictly belongs to another capability family (e.g. use `alper-greenfield-generator` for new full-stack builds, `alper-modernization-planner` for migrations, or `alper-design-repair` for surgical bug fixes).
-- Attempting to bypass verification gates or generate ungrounded code without prerequisite discovery.
-- Operating on deprecated Phase 0 workflows.
+- Tuning SQL performance (use alper-sql-performance).
+- Designing backend API contracts (use alper-api-designer).
+- Writing database migrations (use alper-migration-safety).
 
 ## MODE APPLICABILITY
-- Supported Modes: **GREENFIELD**, **MODERNIZATION**, **REPAIR**, and **CONTINUOUS_GOVERNANCE**.
-- Mode Relevance: Enforces capability boundaries whether operating on clean-sheet greenfield or legacy brownfield codebases.
+- Supported Modes: **GREENFIELD**, **MODERNIZATION**, **REPAIR**, **CONTINUOUS_GOVERNANCE**.
+- Applicability Context: Operates strictly within declared modes; does not execute outside its operational boundaries.
+
+## CANONICAL ACCESSIBILITY STANDARD: WCAG 2.2 AA
+- **Primary Target**: ALPER DESIGN OS standardizes on **WCAG 2.2 AA** (published October 2023).
+- **Backward Compatibility**: Fully satisfies legacy WCAG 2.1 AA requirements as a strict subset.
+- **Key Verification Areas**:
+  - **Color Contrast**: 4.5:1 minimum for normal text, 3:1 for large text and UI components/icons.
+  - **Focus Appearance (2.4.11 / 2.4.13)**: Focus indicators must have high contrast and minimum 2px visible area.
+  - **Target Size Minimum (2.5.8)**: Interactive targets must be at least 24x24px or have sufficient spacing.
+  - **Dragging Movements (2.5.7)**: Single-pointer alternative required for any drag-and-drop workflow.
+  - **Accessible Authentication (3.3.8)**: Cognitive tests (e.g. transcription) forbidden without alternative.
+  - **Keyboard Navigation**: Complete tab order traversal without keyboard traps; modals must trap and restore focus.
 
 ## REQUIRED CONTEXT
-- Validated workspace root and project configuration.
-- Task brief and structured user intent.
-- Up-to-date `.alper-design-os/project` intelligence snapshot (when initialized).
-- Relevant stack profiles and dependency manifests.
+- Target application route or staging URL.
+- User journey flow specifications and acceptance criteria.
+- Configured test runners (Playwright, Vitest) and viewport matrix (390px, 768px, 1440px).
 
 ## PROJECT INTELLIGENCE LOADING
-- Consults durable project memory in `.alper-design-os/project` prior to action execution.
-- Reads verified architecture graphs, registered entities, and recorded project decisions (ADRs).
-- Strictly rejects hallucinated project memory; missing intelligence triggers truthful intake or initialization.
+**Status: NOT_REQUIRED**
+Operates as a self-contained, stateless capability. Does not require loading repository project intelligence snapshots to perform its core diagnosis or transformation.
 
 ## DISCOVERY / AMBIGUITY BEHAVIOR
-- If task requirements are incomplete, ambiguous, or lack technical grounding:
-  1. Halt execution immediately before emitting ungrounded changes.
-  2. Emit prioritized clarifying questions to the operator.
-  3. Maintain derived acceptance criteria in `DEFINED` / `NOT_VERIFIED` state until ambiguity is formally resolved.
+**Protocol: NOT_APPLICABLE**
+Operates on concrete, localized technical artifacts (e.g. query plans, code diffs, DOM elements). Discovery ambiguity gates do not apply to direct inspection or repair of existing assets.
 
 ## WORKFLOW
-1. **Intake & Verification**: Ingest task parameters and verify workspace preconditions.
-2. **Context Assembly**: Load relevant project invariants, schema contracts, and active policies.
-3. **Execution & Tool Invocation**: Dispatch canonical MCP tools (`audit_accessibility`, `generate_qa_report`).
-4. **Evidence Collection**: Gather qualifying verification artifacts (logs, diffs, test evidence).
-5. **Quality Gate Evaluation**: Validate deliverables against release and safety gates.
-6. **Output Synthesis**: Produce structured deliverables and handoff packages for downstream skills.
+1. Execute axe-core automated audit on rendered DOM.
+2. Audit contrast ratios across light and dark modes against WCAG 2.2 AA thresholds.
+3. Verify keyboard navigation flow (logical tab order, no keyboard traps, visible focus rings).
+4. Verify target sizes meet WCAG 2.2 minimum spacing requirements.
+5. Output AccessibilityReport with prioritized violations.
 
 ## DECISION RULES
-- **Invariant Enforcement**: Universal invariant **NO CLAIM WITHOUT EVIDENCE** applies unconditionally.
-- **Fail-Safe Principle**: If a tool returns `NEEDS_CLARIFICATION` or validation fails, stop execution and report truth state.
-- **Scope Guard**: Confine modifications strictly to designated module boundaries. Uninvited modifications to foreign files are blocked.
+- Canonical Target: The primary accessibility baseline for ALPER DESIGN OS is WCAG 2.2 AA.
+- Critical A11y Violations (missing alt on images, low contrast text, broken focus trap) block release gate.
 
 ## MCP TOOL STRATEGY
-- `audit_accessibility`: Canonical handler for audit accessibility. Always supply required schema parameters and handle structured return states.
-- `generate_qa_report`: Canonical handler for generate qa report. Always supply required schema parameters and handle structured return states.
+- `audit_accessibility`: Canonical handler for audit accessibility. Always pass required schema arguments; handle return states deterministically.
+- `generate_qa_report`: Canonical handler for generate qa report. Always pass required schema arguments; handle return states deterministically.
 
 ## SOURCE / RESEARCH STRATEGY
-- When referencing design systems, frameworks, or security standards, cite authoritative sources verified by `alper-source-intelligence`.
+- Authoritative Guidance: W3C Web Content Accessibility Guidelines (WCAG 2.2 AA canonical standard, WCAG 2.1 AA compatibility), WAI-ARIA 1.2, and axe-core rule set.
 - Prohibit ad-hoc, unverified external advice.
 
 ## POLICY & GOVERNANCE
 - Complies strictly with `rules/AGENTS.md`.
-- Secret leakage prevention: Never log, store, or emit unredacted credentials or API keys.
-- Destructive command guard: High-risk operations (e.g., hard reset, clean, force push) require explicit operator confirmation.
+- Universal Evidence Invariant: **NO CLAIM WITHOUT EVIDENCE**.
+- Secret Redaction: All credentials, connection strings, and tokens must be masked with `[REDACTED]`.
 
 ## HUMAN CHECKPOINTS
-- Ambiguous architectural directions requiring trade-off resolution.
-- Destructive state changes or breaking schema migrations.
-- Visual approval on high-impact user interface changes.
+- Operator review of manual keyboard navigation verification and screen reader announcements.
 
 ## STOP CONDITIONS
-- Discovery readiness check returns `NEEDS_CLARIFICATION`.
+- Required context or prerequisite artifacts are missing.
+- Discovery readiness evaluation returns `NEEDS_CLARIFICATION` (for discovery-gated skills).
 - Tool execution reports critical validation or gate failure.
-- Scope boundary violation detected by `alper-scope-guard`.
 
 ## FAILURE HANDLING
-- On schema failure: Log exact validation error, preserve rollback checkpoint, and return non-zero exit state.
+- On schema failure: Log exact validation error, preserve rollback checkpoint, and return non-zero exit code.
 - On test failure: Mark gate as `FAILED`, capture diagnostic trace, and prevent downstream progression.
 - Never report simulated success or fake PASS results.
 
 ## EVIDENCE REQUIREMENTS
-- Every asserted completion must supply qualifying evidence (e.g. `LINT_CLEAN`, `UNIT_TESTS_PASS`, `BUILD_CLEAN`, `HUMAN_REVIEW`).
-- Missing evidence strictly resolves to `NOT_VERIFIED`.
+- Canonical Evidence Kinds: `ACCESSIBILITY_REPORT`, `BROWSER_TEST`, `STATIC_ANALYSIS`.
+- Missing evidence strictly resolves to `VerificationStatus: NOT_VERIFIED`. Never emit fake PASS assertion.
 
 ## OUTPUT CONTRACT
-- Structured execution report detailing actions executed, tools invoked, and evidence captured.
-- Verified artifacts and updated project intelligence entries.
-- Explicit handoff envelope for next-phase skills.
+- AccessibilityAuditReport (WCAG 2.2 AA) with violation locations and code remedies.
 
 ## HANDOFF / RELATED SKILLS
-- `alper-browser-qa`: Handoff target for sibling QA_TESTING operations.
-- `alper-visual-regression`: Handoff target for sibling QA_TESTING operations.
-- `alper-testing-strategy`: Handoff target for sibling QA_TESTING operations.
-- `alper-contract-testing`: Handoff target for sibling QA_TESTING operations.
+- `alper-browser-qa`: Downstream or sibling capability for QA_TESTING operations.
+- `alper-design-language`: Downstream or sibling capability for DESIGN_UX operations.
+- `alper-design-repair`: Downstream or sibling capability for REPAIR operations.

@@ -1,18 +1,25 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
+import { execSync } from 'node:child_process';
 import {
   routeContext,
   ALL_ACTIVE_SKILLS,
   DEPRECATED_SKILLS
 } from '../packages/agent-governance/src/context-router.js';
 import {
+  CANONICAL_SKILL_CATALOG,
+  USER_ENTRYPOINT_SKILLS,
+  INTERNAL_ORCHESTRATION_SKILLS,
+  CAPABILITY_FAMILIES
+} from '../packages/agent-governance/src/skill-registry.js';
+import {
   BUILTIN_TOOL_REGISTRY,
   CANONICAL_MCP_TOOL_NAMES,
   getToolRoutingMetadata
 } from '../packages/agent-governance/src/tool-router.js';
 import { CANONICAL_TOOL_DEFINITIONS } from '../packages/mcp-server/src/server.js';
-import { SKILL_MIGRATION_MAP, CAPABILITY_FAMILIES } from '../scripts/skill-standard.js';
+import { SKILL_MIGRATION_MAP } from '../scripts/skill-standard.js';
 
 describe('Phase 1H.2: Skill Architecture Remediation & Agent Orchestration Standardization', () => {
   const skillsDir = path.resolve('skills');
@@ -91,7 +98,9 @@ describe('Phase 1H.2: Skill Architecture Remediation & Agent Orchestration Stand
 
         expect(frontmatter).toContain(`name: ${skillName}`);
         expect(frontmatter).toContain('status: ACTIVE');
-        expect(frontmatter).toContain('userFacing: true');
+        expect(frontmatter).toMatch(/userFacing: (true|false)/);
+        expect(frontmatter).toContain('userFacingType:');
+        expect(frontmatter).toContain('modeApplicability:');
         expect(frontmatter).toContain('capabilityFamily:');
         expect(frontmatter).toContain('mcpTools:');
         expect(frontmatter).toContain('relatedSkills:');
@@ -105,6 +114,51 @@ describe('Phase 1H.2: Skill Architecture Remediation & Agent Orchestration Stand
           expect(content).toContain(section);
         }
       }
+    });
+
+    it('validates user-facing classification distribution (35 entrypoints vs 20 internal/supporting)', () => {
+      expect(USER_ENTRYPOINT_SKILLS.length).toBe(35);
+      expect(INTERNAL_ORCHESTRATION_SKILLS.length).toBe(20);
+      expect(USER_ENTRYPOINT_SKILLS.length + INTERNAL_ORCHESTRATION_SKILLS.length).toBe(55);
+    });
+
+    it('enforces semantic quality: non-visual skills have zero visual UI approval checkpoints', () => {
+      const nonVisualSkills = ['alper-sql-performance', 'alper-security-audit', 'alper-api-designer', 'alper-secret-management'];
+      for (const name of nonVisualSkills) {
+        const content = fs.readFileSync(path.join(skillsDir, name, 'SKILL.md'), 'utf-8');
+        const checkpointsMatch = content.match(/## HUMAN CHECKPOINTS\s*\n([\s\S]*?)(?=\n##|$)/);
+        expect(checkpointsMatch).toBeDefined();
+        const checkpointsText = checkpointsMatch![1].toLowerCase();
+        expect(checkpointsText).not.toContain('visual');
+        expect(checkpointsText).not.toContain('ui layout');
+        expect(checkpointsText).not.toContain('color token');
+      }
+    });
+
+    it('enforces semantic quality: alper-greenfield-generator mode applicability is strictly GREENFIELD', () => {
+      const content = fs.readFileSync(path.join(skillsDir, 'alper-greenfield-generator', 'SKILL.md'), 'utf-8');
+      expect(content).toContain('modeApplicability:\n  - GREENFIELD');
+      expect(content).not.toContain('  - MODERNIZATION');
+      expect(content).not.toContain('  - REPAIR');
+    });
+
+    it('enforces semantic quality: alper-sql-performance includes pagination trade-offs without dogmatic keyset claims', () => {
+      const content = fs.readFileSync(path.join(skillsDir, 'alper-sql-performance', 'SKILL.md'), 'utf-8');
+      expect(content).toContain('Keyset Pagination');
+      expect(content).toContain('Offset Pagination');
+      expect(content).toContain('Do NOT claim keyset is universally superior');
+    });
+
+    it('enforces semantic quality: alper-security-audit defines PASSIVE vs ACTIVE boundaries and STRIDE threat modeling', () => {
+      const content = fs.readFileSync(path.join(skillsDir, 'alper-security-audit', 'SKILL.md'), 'utf-8');
+      expect(content).toContain('PASSIVE AUDITING (Default)');
+      expect(content).toContain('ACTIVE SECURITY TESTING (Restricted)');
+      expect(content).toContain('STRIDE THREAT MODELING');
+    });
+
+    it('enforces accessibility baseline: WCAG 2.2 AA canonical standard across accessibility skills', () => {
+      const content = fs.readFileSync(path.join(skillsDir, 'alper-accessibility-testing', 'SKILL.md'), 'utf-8');
+      expect(content).toContain('WCAG 2.2 AA');
     });
 
     it('validates all 19 deprecated skills have explicit deprecation frontmatter and pointers', () => {
@@ -124,7 +178,7 @@ describe('Phase 1H.2: Skill Architecture Remediation & Agent Orchestration Stand
         expect(frontmatter).toContain('userFacing: false');
         expect(frontmatter).toContain('replacement:');
 
-        const replacement = SKILL_MIGRATION_MAP[skillName]?.replacement;
+        const replacement = CANONICAL_SKILL_CATALOG[skillName]?.replacement;
         expect(replacement).toBeDefined();
         expect(ALL_ACTIVE_SKILLS).toContain(replacement);
 
@@ -286,7 +340,7 @@ describe('Phase 1H.2: Skill Architecture Remediation & Agent Orchestration Stand
         mode: 'REPAIR'
       });
       expect(decision.requiredSkills).toContain('alper-sql-performance');
-      expect(decision.requiredSkills).toContain('alper-database-designer');
+      expect(decision.requiredSkills).not.toContain('alper-database-designer');
       expect(decision.requiredSkills).not.toContain('alper-database-engineering');
     });
 
@@ -339,7 +393,7 @@ describe('Phase 1H.2: Skill Architecture Remediation & Agent Orchestration Stand
   // ==========================================================
   // Gate 8: Safety Hooks & Destructive Command Guard
   // ==========================================================
-  describe('Gate 8: Safety Hooks Configuration', () => {
+  describe('Gate 8: Safety Hooks Configuration & Runtime Enforcement', () => {
     it('verifies hooks.json has destructive-command-guard configured', () => {
       const hooksPath = path.resolve('hooks.json');
       expect(fs.existsSync(hooksPath)).toBe(true);
@@ -360,6 +414,33 @@ describe('Phase 1H.2: Skill Architecture Remediation & Agent Orchestration Stand
       expect(text).toContain('git\\s+reset\\s+--hard');
       expect(text).toContain('git\\s+push\\s+.*--force');
       expect(text).toContain('git\\s+clean');
+    });
+
+    it('verifies runtime enforcement: blocks destructive git reset --hard', () => {
+      const input = JSON.stringify({ args: { CommandLine: 'git reset --hard HEAD~1' } });
+      let blocked = false;
+      try {
+        execSync('node scripts/guard-destructive-command.js', {
+          input,
+          stdio: ['pipe', 'pipe', 'pipe'],
+          cwd: process.cwd()
+        });
+      } catch (err: any) {
+        blocked = err.status === 1;
+        const stderr = err.stderr ? err.stderr.toString() : '';
+        expect(stderr).toContain('DESTRUCTIVE_COMMAND_GUARD');
+      }
+      expect(blocked).toBe(true);
+    });
+
+    it('verifies runtime enforcement: allows safe command execution', () => {
+      const input = JSON.stringify({ args: { CommandLine: 'git status' } });
+      const output = execSync('node scripts/guard-destructive-command.js', {
+        input,
+        stdio: ['pipe', 'pipe', 'pipe'],
+        cwd: process.cwd()
+      });
+      expect(output).toBeDefined();
     });
   });
 
@@ -388,6 +469,95 @@ describe('Phase 1H.2: Skill Architecture Remediation & Agent Orchestration Stand
         expect(text).toContain('## Output Contract');
         expect(text).toContain('## Collaboration Boundaries & Handoff Protocol');
       }
+    });
+  });
+
+  // ==========================================================
+  // Gate 10: Red Team Routing Scenarios (Section 20 Verification)
+  // ==========================================================
+  describe('Gate 10: Red Team Routing Scenarios (Section 20 Verification)', () => {
+    it('Scenario A: "Build me an APS" -> PRODUCT DISCOVERY and no scaffolding', () => {
+      const decision = routeContext({
+        taskId: 'rt-a',
+        taskBrief: 'Build me an APS',
+        mode: 'NEW'
+      });
+      expect(decision.requiredSkills).toContain('alper-greenfield-product-analysis');
+      expect(decision.requiredSkills).toContain('alper-domain-intelligence');
+      expect(decision.requiredTools).not.toContain('scaffold_new_project');
+      expect(decision.rationale).toContain('scaffolding is blocked');
+    });
+
+    it('Scenario B: "Fix the padding of the login button" -> REPAIR and no security audit', () => {
+      const decision = routeContext({
+        taskId: 'rt-b',
+        taskBrief: 'Fix the padding of the login button',
+        mode: 'REPAIR'
+      });
+      expect(decision.requiredSkills).toContain('alper-design-repair');
+      expect(decision.requiredSkills).not.toContain('alper-security-audit');
+    });
+
+    it('Scenario C: "Investigate slow SQL query" -> SQL PERFORMANCE and no schema redesign', () => {
+      const decision = routeContext({
+        taskId: 'rt-c',
+        taskBrief: 'Investigate slow SQL query in order processing',
+        mode: 'REPAIR'
+      });
+      expect(decision.requiredSkills).toContain('alper-sql-performance');
+      expect(decision.requiredSkills).not.toContain('alper-database-designer');
+    });
+
+    it('Scenario D: "Perform an active penetration test against production" -> SECURITY with explicit authorization required', () => {
+      const decision = routeContext({
+        taskId: 'rt-d',
+        taskBrief: 'Perform an active penetration test against production environment',
+        mode: 'REPAIR'
+      });
+      expect(decision.requiredSkills).toContain('alper-security-audit');
+      expect(decision.rationale).toContain('ACTIVE PENETRATION TESTING REQUIRES EXPLICIT HUMAN OPERATOR AUTHORIZATION');
+    });
+
+    it('Scenario E: "Use this Dribbble page as visual inspiration" -> DESIGN / SOURCE AUTHORITY, not layout source-of-truth', () => {
+      const decision = routeContext({
+        taskId: 'rt-e',
+        taskBrief: 'Use this Dribbble page as visual inspiration for dashboard theme',
+        mode: 'NEW'
+      });
+      expect(decision.requiredSkills).toContain('alper-source-intelligence');
+      expect(decision.rationale).toContain('External visual inspiration is non-authoritative');
+    });
+
+    it('Scenario F: "Continue yesterday" -> PROJECT INTELLIGENCE / CONTINUATION', () => {
+      const decision = routeContext({
+        taskId: 'rt-f',
+        taskBrief: 'Continue yesterday task on payment gateway integration',
+        mode: 'NEW'
+      });
+      expect(decision.requiredSkills).toContain('alper-project-continuation');
+      expect(decision.requiredSkills).toContain('alper-project-intelligence');
+    });
+
+    it('Scenario G: "Should we move from monolith to microservices?" -> ARCHITECTURE with no immediate implementation', () => {
+      const decision = routeContext({
+        taskId: 'rt-g',
+        taskBrief: 'Should we move from monolith to microservices architecture?',
+        mode: 'NEW'
+      });
+      expect(decision.requiredSkills).toContain('alper-architecture');
+      expect(decision.requiredSkills).toContain('alper-decision-management');
+      expect(decision.requiredTools).not.toContain('scaffold_new_project');
+    });
+
+    it('Scenario H: Ambiguous task without mode -> clarification / discovery and NOT REPAIR default', () => {
+      const decision = routeContext({
+        taskId: 'rt-h',
+        taskBrief: 'Improve warehouse operations workflow'
+      });
+      expect(decision.requiredSkills).toContain('alper-greenfield-product-analysis');
+      expect(decision.requiredSkills).toContain('alper-domain-intelligence');
+      expect(decision.requiredSkills).not.toContain('alper-design-repair');
+      expect(decision.rationale).toContain('routed to product discovery for clarification');
     });
   });
 });

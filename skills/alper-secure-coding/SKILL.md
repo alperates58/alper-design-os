@@ -1,9 +1,15 @@
 ---
 name: alper-secure-coding
-description: Enforces proactive secure coding practices based on OWASP Top 10 2025, ASVS 5.0, and engineering policies. Use when executing security tasks for secure coding. Do not use for unrelated capability domains or deprecated Phase 0 workflows.
+description: Enforces proactive secure coding practices based on OWASP Top 10 2025, ASVS 5.0, and engineering policies. Use when establishing secure coding standards and engineering policies for a project. Do not use for fixing visual button padding or responsive css layouts (use alper-design-repair).
 status: ACTIVE
 capabilityFamily: SECURITY
+userFacingType: USER_ENTRYPOINT
 userFacing: true
+modeApplicability:
+  - GREENFIELD
+  - MODERNIZATION
+  - REPAIR
+  - CONTINUOUS_GOVERNANCE
 mcpTools:
   - generate_engineering_policy
   - create_auth_model
@@ -11,98 +17,85 @@ relatedSkills:
   - alper-security-audit
   - alper-api-security
   - alper-secret-management
-  - alper-supply-chain-security
 ---
 
 # Alper Secure Coding Skill
 
 ## PURPOSE
-Provides canonical, deterministic agent capability for **Secure Coding** within the **SECURITY** capability family.
-Primary focus: Enforces proactive secure coding practices based on OWASP Top 10 2025, ASVS 5.0, and engineering policies.
+Enforces proactive secure coding standards based on OWASP ASVS 5.0, OWASP Top 10 2025, and CWE Top 25, generating stack-aware security policies covering input validation, parameterized queries, and auth token lifetimes.
 
 ## USE WHEN
-- Initiating or progressing tasks requiring secure coding capabilities.
-- Operating within mode-specific pipelines requiring SECURITY workflows.
-- Verifying requirements, technical blueprints, or evidence artifacts specifically owned by this capability.
+- Establishing secure coding standards and engineering policies for a project.
+- Writing or reviewing authentication, authorization, or session handling code.
+- Enforcing parameterized database queries, CSRF protections, and secure cookie directives.
 
 ## DO NOT USE WHEN
-- The task strictly belongs to another capability family (e.g. use `alper-greenfield-generator` for new full-stack builds, `alper-modernization-planner` for migrations, or `alper-design-repair` for surgical bug fixes).
-- Attempting to bypass verification gates or generate ungrounded code without prerequisite discovery.
-- Operating on deprecated Phase 0 workflows.
+- Fixing visual button padding or responsive CSS layouts (use alper-design-repair).
+- Searching for design tokens and icon libraries (use alper-source-intelligence).
+- Tuning database indexing (use alper-sql-performance).
 
 ## MODE APPLICABILITY
-- Supported Modes: **GREENFIELD**, **MODERNIZATION**, **REPAIR**, and **CONTINUOUS_GOVERNANCE**.
-- Mode Relevance: Enforces capability boundaries whether operating on clean-sheet greenfield or legacy brownfield codebases.
+- Supported Modes: **GREENFIELD**, **MODERNIZATION**, **REPAIR**, **CONTINUOUS_GOVERNANCE**.
+- Applicability Context: Operates strictly within declared modes; does not execute outside its operational boundaries.
+
 
 ## REQUIRED CONTEXT
-- Validated workspace root and project configuration.
-- Task brief and structured user intent.
-- Up-to-date `.alper-design-os/project` intelligence snapshot (when initialized).
-- Relevant stack profiles and dependency manifests.
+- Target source code repository, configuration files, and package manifests.
+- Declared trust boundaries, authentication endpoints, and sensitive data flows.
+- Environment classification (local development, staging, production).
 
 ## PROJECT INTELLIGENCE LOADING
-- Consults durable project memory in `.alper-design-os/project` prior to action execution.
-- Reads verified architecture graphs, registered entities, and recorded project decisions (ADRs).
-- Strictly rejects hallucinated project memory; missing intelligence triggers truthful intake or initialization.
+**Status: NOT_REQUIRED**
+Operates as a self-contained, stateless capability. Does not require loading repository project intelligence snapshots to perform its core diagnosis or transformation.
 
 ## DISCOVERY / AMBIGUITY BEHAVIOR
-- If task requirements are incomplete, ambiguous, or lack technical grounding:
-  1. Halt execution immediately before emitting ungrounded changes.
-  2. Emit prioritized clarifying questions to the operator.
-  3. Maintain derived acceptance criteria in `DEFINED` / `NOT_VERIFIED` state until ambiguity is formally resolved.
+**Protocol: NOT_APPLICABLE**
+Operates on concrete, localized technical artifacts (e.g. query plans, code diffs, DOM elements). Discovery ambiguity gates do not apply to direct inspection or repair of existing assets.
 
 ## WORKFLOW
-1. **Intake & Verification**: Ingest task parameters and verify workspace preconditions.
-2. **Context Assembly**: Load relevant project invariants, schema contracts, and active policies.
-3. **Execution & Tool Invocation**: Dispatch canonical MCP tools (`generate_engineering_policy`, `create_auth_model`).
-4. **Evidence Collection**: Gather qualifying verification artifacts (logs, diffs, test evidence).
-5. **Quality Gate Evaluation**: Validate deliverables against release and safety gates.
-6. **Output Synthesis**: Produce structured deliverables and handoff packages for downstream skills.
+1. Ingest target stack and security level requirements (ASVS L1, L2, L3).
+2. Generate stack-aware EngineeringPolicy covering injection, auth, cryptography, and headers.
+3. Formulate secure coding directives for developers and CI/CD pipelines.
+4. Output EngineeringPolicyDocument.
 
 ## DECISION RULES
-- **Invariant Enforcement**: Universal invariant **NO CLAIM WITHOUT EVIDENCE** applies unconditionally.
-- **Fail-Safe Principle**: If a tool returns `NEEDS_CLARIFICATION` or validation fails, stop execution and report truth state.
-- **Scope Guard**: Confine modifications strictly to designated module boundaries. Uninvited modifications to foreign files are blocked.
+- SQL Injection Zero Tolerance: Parameterized queries or type-safe ORM query builders are mandatory.
+- Secure Cookie Directives: All session cookies must enforce HttpOnly, Secure, and SameSite=Strict/Lax.
 
 ## MCP TOOL STRATEGY
-- `generate_engineering_policy`: Canonical handler for generate engineering policy. Always supply required schema parameters and handle structured return states.
-- `create_auth_model`: Canonical handler for create auth model. Always supply required schema parameters and handle structured return states.
+- `generate_engineering_policy`: Canonical handler for generate engineering policy. Always pass required schema arguments; handle return states deterministically.
+- `create_auth_model`: Canonical handler for create auth model. Always pass required schema arguments; handle return states deterministically.
 
 ## SOURCE / RESEARCH STRATEGY
-- When referencing design systems, frameworks, or security standards, cite authoritative sources verified by `alper-source-intelligence`.
+- Authoritative Guidance: OWASP Top 10 2025, OWASP ASVS 5.0, OWASP Cheat Sheet Series, and CWE Top 25.
 - Prohibit ad-hoc, unverified external advice.
 
 ## POLICY & GOVERNANCE
 - Complies strictly with `rules/AGENTS.md`.
-- Secret leakage prevention: Never log, store, or emit unredacted credentials or API keys.
-- Destructive command guard: High-risk operations (e.g., hard reset, clean, force push) require explicit operator confirmation.
+- Universal Evidence Invariant: **NO CLAIM WITHOUT EVIDENCE**.
+- Secret Redaction: All credentials, connection strings, and tokens must be masked with `[REDACTED]`.
 
 ## HUMAN CHECKPOINTS
-- Ambiguous architectural directions requiring trade-off resolution.
-- Destructive state changes or breaking schema migrations.
-- Visual approval on high-impact user interface changes.
+- Operator approval for security policy modifications or rule exemptions.
 
 ## STOP CONDITIONS
-- Discovery readiness check returns `NEEDS_CLARIFICATION`.
+- Required context or prerequisite artifacts are missing.
+- Discovery readiness evaluation returns `NEEDS_CLARIFICATION` (for discovery-gated skills).
 - Tool execution reports critical validation or gate failure.
-- Scope boundary violation detected by `alper-scope-guard`.
 
 ## FAILURE HANDLING
-- On schema failure: Log exact validation error, preserve rollback checkpoint, and return non-zero exit state.
+- On schema failure: Log exact validation error, preserve rollback checkpoint, and return non-zero exit code.
 - On test failure: Mark gate as `FAILED`, capture diagnostic trace, and prevent downstream progression.
 - Never report simulated success or fake PASS results.
 
 ## EVIDENCE REQUIREMENTS
-- Every asserted completion must supply qualifying evidence (e.g. `LINT_CLEAN`, `UNIT_TESTS_PASS`, `BUILD_CLEAN`, `HUMAN_REVIEW`).
-- Missing evidence strictly resolves to `NOT_VERIFIED`.
+- Canonical Evidence Kinds: `STATIC_ANALYSIS`.
+- Missing evidence strictly resolves to `VerificationStatus: NOT_VERIFIED`. Never emit fake PASS assertion.
 
 ## OUTPUT CONTRACT
-- Structured execution report detailing actions executed, tools invoked, and evidence captured.
-- Verified artifacts and updated project intelligence entries.
-- Explicit handoff envelope for next-phase skills.
+- EngineeringPolicyDocument and SecurityComplianceChecklist.
 
 ## HANDOFF / RELATED SKILLS
-- `alper-security-audit`: Handoff target for sibling SECURITY operations.
-- `alper-api-security`: Handoff target for sibling SECURITY operations.
-- `alper-secret-management`: Handoff target for sibling SECURITY operations.
-- `alper-supply-chain-security`: Handoff target for sibling SECURITY operations.
+- `alper-security-audit`: Downstream or sibling capability for SECURITY operations.
+- `alper-api-security`: Downstream or sibling capability for SECURITY operations.
+- `alper-secret-management`: Downstream or sibling capability for SECURITY operations.

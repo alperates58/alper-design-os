@@ -5,7 +5,11 @@ status: DEPRECATED
 deprecated: true
 replacement: alper-database-designer
 capabilityFamily: DATA_ENGINEERING
+userFacingType: SUPPORTING_CAPABILITY
 userFacing: false
+modeApplicability:
+  - GREENFIELD
+  - MODERNIZATION
 mcpTools: []
 relatedSkills:
   - alper-database-designer

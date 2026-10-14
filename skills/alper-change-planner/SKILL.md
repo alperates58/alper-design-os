@@ -1,9 +1,14 @@
 ---
 name: alper-change-planner
-description: 17-step change lifecycle, AgentActionPlan generation, and blast radius assessment. Use when executing governance tasks for change planner. Do not use for unrelated capability domains or deprecated Phase 0 workflows.
+description: 17-step change lifecycle, AgentActionPlan generation, and blast radius assessment. Use when planning file modifications that touch multiple components, database schemas, or apis. Do not use for pure read-only codebase exploration or research (use alper-existing-project-analysis).
 status: ACTIVE
 capabilityFamily: GOVERNANCE
+userFacingType: USER_ENTRYPOINT
 userFacing: true
+modeApplicability:
+  - MODERNIZATION
+  - REPAIR
+  - CONTINUOUS_GOVERNANCE
 mcpTools:
   - create_action_plan
   - evaluate_change_risk
@@ -21,96 +26,86 @@ relatedSkills:
 # Alper Change Planner Skill
 
 ## PURPOSE
-Provides canonical, deterministic agent capability for **Change Planner** within the **GOVERNANCE** capability family.
-Primary focus: 17-step change lifecycle, AgentActionPlan generation, and blast radius assessment.
+Governs significant codebase mutations by producing typed AgentActionPlans with explicit scope bounds, 10-dimension risk evaluations, verification criteria, and rollback strategies.
 
 ## USE WHEN
-- Initiating or progressing tasks requiring change planner capabilities.
-- Operating within mode-specific pipelines requiring GOVERNANCE workflows.
-- Verifying requirements, technical blueprints, or evidence artifacts specifically owned by this capability.
+- Planning file modifications that touch multiple components, database schemas, or APIs.
+- Evaluating change risk across architecture, security, and dependency dimensions.
+- Establishing an execution journal and rollback plan before modifying files.
 
 ## DO NOT USE WHEN
-- The task strictly belongs to another capability family (e.g. use `alper-greenfield-generator` for new full-stack builds, `alper-modernization-planner` for migrations, or `alper-design-repair` for surgical bug fixes).
-- Attempting to bypass verification gates or generate ungrounded code without prerequisite discovery.
-- Operating on deprecated Phase 0 workflows.
+- Pure read-only codebase exploration or research (use alper-existing-project-analysis).
+- Scaffolding a brand new greenfield project (use alper-greenfield-generator).
+- Executing single-line CSS edits where ScopeGuard alone suffices (use alper-design-repair).
 
 ## MODE APPLICABILITY
-- Supported Modes: **GREENFIELD**, **MODERNIZATION**, **REPAIR**, and **CONTINUOUS_GOVERNANCE**.
-- Mode Relevance: Enforces capability boundaries whether operating on clean-sheet greenfield or legacy brownfield codebases.
+- Supported Modes: **MODERNIZATION**, **REPAIR**, **CONTINUOUS_GOVERNANCE**.
+- Applicability Context: Operates strictly within declared modes; does not execute outside its operational boundaries.
+
 
 ## REQUIRED CONTEXT
-- Validated workspace root and project configuration.
-- Task brief and structured user intent.
-- Up-to-date `.alper-design-os/project` intelligence snapshot (when initialized).
-- Relevant stack profiles and dependency manifests.
+- Workspace root path and active git branch.
+- Current task brief and AgentActionPlan.
+- Relevant project files and configuration manifests.
 
 ## PROJECT INTELLIGENCE LOADING
-- Consults durable project memory in `.alper-design-os/project` prior to action execution.
-- Reads verified architecture graphs, registered entities, and recorded project decisions (ADRs).
-- Strictly rejects hallucinated project memory; missing intelligence triggers truthful intake or initialization.
+**Status: CONDITIONAL**
+Consults `.alper-design-os/project/` if persistent project memory has been initialized. For clean-sheet greenfield tasks prior to blueprinting, intelligence loading is optional and initializes upon completion.
 
 ## DISCOVERY / AMBIGUITY BEHAVIOR
-- If task requirements are incomplete, ambiguous, or lack technical grounding:
-  1. Halt execution immediately before emitting ungrounded changes.
-  2. Emit prioritized clarifying questions to the operator.
-  3. Maintain derived acceptance criteria in `DEFINED` / `NOT_VERIFIED` state until ambiguity is formally resolved.
+**Protocol: NOT_APPLICABLE**
+Operates on concrete, localized technical artifacts (e.g. query plans, code diffs, DOM elements). Discovery ambiguity gates do not apply to direct inspection or repair of existing assets.
 
 ## WORKFLOW
-1. **Intake & Verification**: Ingest task parameters and verify workspace preconditions.
-2. **Context Assembly**: Load relevant project invariants, schema contracts, and active policies.
-3. **Execution & Tool Invocation**: Dispatch canonical MCP tools (`create_action_plan`, `evaluate_change_risk`, `classify_code_paths`, `create_execution_journal`, `route_context`, `route_tool`).
-4. **Evidence Collection**: Gather qualifying verification artifacts (logs, diffs, test evidence).
-5. **Quality Gate Evaluation**: Validate deliverables against release and safety gates.
-6. **Output Synthesis**: Produce structured deliverables and handoff packages for downstream skills.
+1. Define objective and identify target files.
+2. Classify code paths (IN_SCOPE, REQUIRED_DEPENDENCY, OUT_OF_SCOPE, FORBIDDEN).
+3. Evaluate change risk across 10 dimensions.
+4. Formulate AgentActionPlan with verification plan and rollback commands.
+5. Initialize execution journal.
 
 ## DECISION RULES
-- **Invariant Enforcement**: Universal invariant **NO CLAIM WITHOUT EVIDENCE** applies unconditionally.
-- **Fail-Safe Principle**: If a tool returns `NEEDS_CLARIFICATION` or validation fails, stop execution and report truth state.
-- **Scope Guard**: Confine modifications strictly to designated module boundaries. Uninvited modifications to foreign files are blocked.
+- Mandatory Plan Rule: Never execute multi-file changes without an approved AgentActionPlan.
+- High/Critical Risk Rule: Changes rated HIGH or CRITICAL require mandatory git checkpointing.
 
 ## MCP TOOL STRATEGY
-- `create_action_plan`: Canonical handler for create action plan. Always supply required schema parameters and handle structured return states.
-- `evaluate_change_risk`: Canonical handler for evaluate change risk. Always supply required schema parameters and handle structured return states.
-- `classify_code_paths`: Canonical handler for classify code paths. Always supply required schema parameters and handle structured return states.
-- `create_execution_journal`: Canonical handler for create execution journal. Always supply required schema parameters and handle structured return states.
-- `route_context`: Canonical handler for route context. Always supply required schema parameters and handle structured return states.
-- `route_tool`: Canonical handler for route tool. Always supply required schema parameters and handle structured return states.
+- `create_action_plan`: Canonical handler for create action plan. Always pass required schema arguments; handle return states deterministically.
+- `evaluate_change_risk`: Canonical handler for evaluate change risk. Always pass required schema arguments; handle return states deterministically.
+- `classify_code_paths`: Canonical handler for classify code paths. Always pass required schema arguments; handle return states deterministically.
+- `create_execution_journal`: Canonical handler for create execution journal. Always pass required schema arguments; handle return states deterministically.
+- `route_context`: Canonical handler for route context. Always pass required schema arguments; handle return states deterministically.
+- `route_tool`: Canonical handler for route tool. Always pass required schema arguments; handle return states deterministically.
 
 ## SOURCE / RESEARCH STRATEGY
-- When referencing design systems, frameworks, or security standards, cite authoritative sources verified by `alper-source-intelligence`.
+- Authoritative Guidance: 17-step change lifecycle, git status, and risk evaluation matrix.
 - Prohibit ad-hoc, unverified external advice.
 
 ## POLICY & GOVERNANCE
 - Complies strictly with `rules/AGENTS.md`.
-- Secret leakage prevention: Never log, store, or emit unredacted credentials or API keys.
-- Destructive command guard: High-risk operations (e.g., hard reset, clean, force push) require explicit operator confirmation.
+- Universal Evidence Invariant: **NO CLAIM WITHOUT EVIDENCE**.
+- Secret Redaction: All credentials, connection strings, and tokens must be masked with `[REDACTED]`.
 
 ## HUMAN CHECKPOINTS
-- Ambiguous architectural directions requiring trade-off resolution.
-- Destructive state changes or breaking schema migrations.
-- Visual approval on high-impact user interface changes.
+- Operator approval of AgentActionPlan for HIGH and CRITICAL risk changes.
 
 ## STOP CONDITIONS
-- Discovery readiness check returns `NEEDS_CLARIFICATION`.
+- Required context or prerequisite artifacts are missing.
+- Discovery readiness evaluation returns `NEEDS_CLARIFICATION` (for discovery-gated skills).
 - Tool execution reports critical validation or gate failure.
-- Scope boundary violation detected by `alper-scope-guard`.
 
 ## FAILURE HANDLING
-- On schema failure: Log exact validation error, preserve rollback checkpoint, and return non-zero exit state.
+- On schema failure: Log exact validation error, preserve rollback checkpoint, and return non-zero exit code.
 - On test failure: Mark gate as `FAILED`, capture diagnostic trace, and prevent downstream progression.
 - Never report simulated success or fake PASS results.
 
 ## EVIDENCE REQUIREMENTS
-- Every asserted completion must supply qualifying evidence (e.g. `LINT_CLEAN`, `UNIT_TESTS_PASS`, `BUILD_CLEAN`, `HUMAN_REVIEW`).
-- Missing evidence strictly resolves to `NOT_VERIFIED`.
+- Canonical Evidence Kinds: `STATIC_ANALYSIS`.
+- Missing evidence strictly resolves to `VerificationStatus: NOT_VERIFIED`. Never emit fake PASS assertion.
 
 ## OUTPUT CONTRACT
-- Structured execution report detailing actions executed, tools invoked, and evidence captured.
-- Verified artifacts and updated project intelligence entries.
-- Explicit handoff envelope for next-phase skills.
+- AgentActionPlan with risk evaluation, verification criteria, and rollback strategy.
 
 ## HANDOFF / RELATED SKILLS
-- `alper-scope-guard`: Handoff target for sibling GOVERNANCE operations.
-- `alper-git-safety`: Handoff target for sibling GOVERNANCE operations.
-- `alper-independent-review`: Handoff target for sibling GOVERNANCE operations.
-- `alper-evidence-review`: Handoff target for sibling GOVERNANCE operations.
+- `alper-scope-guard`: Downstream or sibling capability for GOVERNANCE operations.
+- `alper-git-safety`: Downstream or sibling capability for GOVERNANCE operations.
+- `alper-independent-review`: Downstream or sibling capability for GOVERNANCE operations.
+- `alper-evidence-review`: Downstream or sibling capability for GOVERNANCE operations.

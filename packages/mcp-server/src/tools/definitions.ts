@@ -282,12 +282,12 @@ export function createCanonicalToolDefinitions(h: ToolHandlersMap): McpToolDefin
     },
     {
       name: 'audit_accessibility',
-      description: 'Checks markup for WCAG 2.1 AA/AAA compliance issues (contrast, labels, aria).',
+      description: 'Checks markup for WCAG 2.2 AA/AAA (or 2.1 AA/AAA) compliance issues (contrast, labels, aria, target size).',
       inputSchema: {
         type: 'object',
         properties: {
           projectPath: { type: 'string' },
-          targetLevel: { type: 'string', enum: ['WCAG_2_1_AA', 'WCAG_2_1_AAA'], default: 'WCAG_2_1_AA' }
+          targetLevel: { type: 'string', enum: ['WCAG_2_2_AA', 'WCAG_2_2_AAA', 'WCAG_2_1_AA', 'WCAG_2_1_AAA'], default: 'WCAG_2_2_AA' }
         },
         required: ['projectPath']
       },

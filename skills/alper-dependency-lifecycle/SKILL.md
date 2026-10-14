@@ -5,7 +5,11 @@ status: DEPRECATED
 deprecated: true
 replacement: alper-supply-chain-security
 capabilityFamily: SECURITY
+userFacingType: SUPPORTING_CAPABILITY
 userFacing: false
+modeApplicability:
+  - CONTINUOUS_GOVERNANCE
+  - MODERNIZATION
 mcpTools: []
 relatedSkills:
   - alper-supply-chain-security

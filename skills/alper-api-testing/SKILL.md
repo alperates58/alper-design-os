@@ -5,7 +5,11 @@ status: DEPRECATED
 deprecated: true
 replacement: alper-contract-testing
 capabilityFamily: QA_TESTING
+userFacingType: SUPPORTING_CAPABILITY
 userFacing: false
+modeApplicability:
+  - MODERNIZATION
+  - CONTINUOUS_GOVERNANCE
 mcpTools: []
 relatedSkills:
   - alper-contract-testing

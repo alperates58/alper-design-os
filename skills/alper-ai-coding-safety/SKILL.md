@@ -5,7 +5,12 @@ status: DEPRECATED
 deprecated: true
 replacement: alper-secure-coding
 capabilityFamily: SECURITY
+userFacingType: SUPPORTING_CAPABILITY
 userFacing: false
+modeApplicability:
+  - GREENFIELD
+  - MODERNIZATION
+  - REPAIR
 mcpTools: []
 relatedSkills:
   - alper-secure-coding

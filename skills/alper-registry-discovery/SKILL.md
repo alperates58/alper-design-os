@@ -1,9 +1,13 @@
 ---
 name: alper-registry-discovery
-description: Discovers and inspects community blocks and component registries (shadcn/ui, Aceternity, Kokonut). Use when executing source intelligence tasks for registry discovery. Do not use for unrelated capability domains or deprecated Phase 0 workflows.
+description: Discovers and inspects community blocks and component registries (shadcn/ui, Aceternity, Kokonut). Use when searching for ready-made shadcn/ui or community registry components (e.g. date-range picker, multi-select). Do not use for designing relational database schemas (use alper-database-designer).
 status: ACTIVE
 capabilityFamily: SOURCE_INTELLIGENCE
+userFacingType: USER_ENTRYPOINT
 userFacing: true
+modeApplicability:
+  - GREENFIELD
+  - MODERNIZATION
 mcpTools:
   - search_registries
   - search_registry_components
@@ -11,96 +15,87 @@ mcpTools:
   - inspect_alper_registry
 relatedSkills:
   - alper-source-intelligence
+  - alper-design-language
 ---
 
 # Alper Registry Discovery Skill
 
 ## PURPOSE
-Provides canonical, deterministic agent capability for **Registry Discovery** within the **SOURCE_INTELLIGENCE** capability family.
-Primary focus: Discovers and inspects community blocks and component registries (shadcn/ui, Aceternity, Kokonut).
+Discovers, searches, and inspects modular UI blocks and components from the shadcn registry ecosystem and curated community registries, verifying component dependencies and styling compatibility.
 
 ## USE WHEN
-- Initiating or progressing tasks requiring registry discovery capabilities.
-- Operating within mode-specific pipelines requiring SOURCE_INTELLIGENCE workflows.
-- Verifying requirements, technical blueprints, or evidence artifacts specifically owned by this capability.
+- Searching for ready-made shadcn/ui or community registry components (e.g. date-range picker, multi-select).
+- Inspecting component code and required sub-dependencies before installation.
+- Finding specialized UI blocks for dashboard, auth, or settings pages.
 
 ## DO NOT USE WHEN
-- The task strictly belongs to another capability family (e.g. use `alper-greenfield-generator` for new full-stack builds, `alper-modernization-planner` for migrations, or `alper-design-repair` for surgical bug fixes).
-- Attempting to bypass verification gates or generate ungrounded code without prerequisite discovery.
-- Operating on deprecated Phase 0 workflows.
+- Designing relational database schemas (use alper-database-designer).
+- Analyzing legacy backend PHP/ASP code (use alper-existing-project-analysis).
+- Running SQL performance diagnoses (use alper-sql-performance).
 
 ## MODE APPLICABILITY
-- Supported Modes: **GREENFIELD**, **MODERNIZATION**, **REPAIR**, and **CONTINUOUS_GOVERNANCE**.
-- Mode Relevance: Enforces capability boundaries whether operating on clean-sheet greenfield or legacy brownfield codebases.
+- Supported Modes: **GREENFIELD**, **MODERNIZATION**.
+- Applicability Context: Operates strictly within declared modes; does not execute outside its operational boundaries.
+
 
 ## REQUIRED CONTEXT
-- Validated workspace root and project configuration.
-- Task brief and structured user intent.
-- Up-to-date `.alper-design-os/project` intelligence snapshot (when initialized).
-- Relevant stack profiles and dependency manifests.
+- Workspace root path and active git branch.
+- Current task brief and AgentActionPlan.
+- Relevant project files and configuration manifests.
 
 ## PROJECT INTELLIGENCE LOADING
-- Consults durable project memory in `.alper-design-os/project` prior to action execution.
-- Reads verified architecture graphs, registered entities, and recorded project decisions (ADRs).
-- Strictly rejects hallucinated project memory; missing intelligence triggers truthful intake or initialization.
+**Status: NOT_REQUIRED**
+Operates as a self-contained, stateless capability. Does not require loading repository project intelligence snapshots to perform its core diagnosis or transformation.
 
 ## DISCOVERY / AMBIGUITY BEHAVIOR
-- If task requirements are incomplete, ambiguous, or lack technical grounding:
-  1. Halt execution immediately before emitting ungrounded changes.
-  2. Emit prioritized clarifying questions to the operator.
-  3. Maintain derived acceptance criteria in `DEFINED` / `NOT_VERIFIED` state until ambiguity is formally resolved.
+**Protocol: NOT_APPLICABLE**
+Operates on concrete, localized technical artifacts (e.g. query plans, code diffs, DOM elements). Discovery ambiguity gates do not apply to direct inspection or repair of existing assets.
 
 ## WORKFLOW
-1. **Intake & Verification**: Ingest task parameters and verify workspace preconditions.
-2. **Context Assembly**: Load relevant project invariants, schema contracts, and active policies.
-3. **Execution & Tool Invocation**: Dispatch canonical MCP tools (`search_registries`, `search_registry_components`, `inspect_registry_component`, `inspect_alper_registry`).
-4. **Evidence Collection**: Gather qualifying verification artifacts (logs, diffs, test evidence).
-5. **Quality Gate Evaluation**: Validate deliverables against release and safety gates.
-6. **Output Synthesis**: Produce structured deliverables and handoff packages for downstream skills.
+1. Query registry index with target component name.
+2. Inspect component schema, props, and dependency requirements.
+3. Verify compatibility with existing design tokens and Tailwind config.
+4. Output installation command and component code.
 
 ## DECISION RULES
-- **Invariant Enforcement**: Universal invariant **NO CLAIM WITHOUT EVIDENCE** applies unconditionally.
-- **Fail-Safe Principle**: If a tool returns `NEEDS_CLARIFICATION` or validation fails, stop execution and report truth state.
-- **Scope Guard**: Confine modifications strictly to designated module boundaries. Uninvited modifications to foreign files are blocked.
+- Audit dependencies: Flag any component requiring heavy unrequested external npm packages.
+- Verify Tailwind / CSS custom property compatibility before recommending installation.
 
 ## MCP TOOL STRATEGY
-- `search_registries`: Canonical handler for search registries. Always supply required schema parameters and handle structured return states.
-- `search_registry_components`: Canonical handler for search registry components. Always supply required schema parameters and handle structured return states.
-- `inspect_registry_component`: Canonical handler for inspect registry component. Always supply required schema parameters and handle structured return states.
-- `inspect_alper_registry`: Canonical handler for inspect alper registry. Always supply required schema parameters and handle structured return states.
+- `search_registries`: Canonical handler for search registries. Always pass required schema arguments; handle return states deterministically.
+- `search_registry_components`: Canonical handler for search registry components. Always pass required schema arguments; handle return states deterministically.
+- `inspect_registry_component`: Canonical handler for inspect registry component. Always pass required schema arguments; handle return states deterministically.
+- `inspect_alper_registry`: Canonical handler for inspect alper registry. Always pass required schema arguments; handle return states deterministically.
 
 ## SOURCE / RESEARCH STRATEGY
-- When referencing design systems, frameworks, or security standards, cite authoritative sources verified by `alper-source-intelligence`.
+- Authoritative Guidance: Shadcn UI registry index, community block registries, and npm metadata.
 - Prohibit ad-hoc, unverified external advice.
 
 ## POLICY & GOVERNANCE
 - Complies strictly with `rules/AGENTS.md`.
-- Secret leakage prevention: Never log, store, or emit unredacted credentials or API keys.
-- Destructive command guard: High-risk operations (e.g., hard reset, clean, force push) require explicit operator confirmation.
+- Universal Evidence Invariant: **NO CLAIM WITHOUT EVIDENCE**.
+- Secret Redaction: All credentials, connection strings, and tokens must be masked with `[REDACTED]`.
 
 ## HUMAN CHECKPOINTS
-- Ambiguous architectural directions requiring trade-off resolution.
-- Destructive state changes or breaking schema migrations.
-- Visual approval on high-impact user interface changes.
+- Operator review before installing third-party community registry blocks.
 
 ## STOP CONDITIONS
-- Discovery readiness check returns `NEEDS_CLARIFICATION`.
+- Required context or prerequisite artifacts are missing.
+- Discovery readiness evaluation returns `NEEDS_CLARIFICATION` (for discovery-gated skills).
 - Tool execution reports critical validation or gate failure.
-- Scope boundary violation detected by `alper-scope-guard`.
 
 ## FAILURE HANDLING
-- On schema failure: Log exact validation error, preserve rollback checkpoint, and return non-zero exit state.
+- On schema failure: Log exact validation error, preserve rollback checkpoint, and return non-zero exit code.
 - On test failure: Mark gate as `FAILED`, capture diagnostic trace, and prevent downstream progression.
 - Never report simulated success or fake PASS results.
 
 ## EVIDENCE REQUIREMENTS
-- Every asserted completion must supply qualifying evidence (e.g. `LINT_CLEAN`, `UNIT_TESTS_PASS`, `BUILD_CLEAN`, `HUMAN_REVIEW`).
-- Missing evidence strictly resolves to `NOT_VERIFIED`.
+- Canonical Evidence Kinds: `STATIC_ANALYSIS`.
+- Missing evidence strictly resolves to `VerificationStatus: NOT_VERIFIED`. Never emit fake PASS assertion.
 
 ## OUTPUT CONTRACT
-- Structured execution report detailing actions executed, tools invoked, and evidence captured.
-- Verified artifacts and updated project intelligence entries.
-- Explicit handoff envelope for next-phase skills.
+- RegistryComponentInspectionReport and installation instructions.
 
 ## HANDOFF / RELATED SKILLS
-- `alper-source-intelligence`: Handoff target for sibling SOURCE_INTELLIGENCE operations.
+- `alper-source-intelligence`: Downstream or sibling capability for SOURCE_INTELLIGENCE operations.
+- `alper-design-language`: Downstream or sibling capability for DESIGN_UX operations.

@@ -5,7 +5,11 @@ status: DEPRECATED
 deprecated: true
 replacement: alper-performance-engineering
 capabilityFamily: PERFORMANCE_RELIABILITY
+userFacingType: SUPPORTING_CAPABILITY
 userFacing: false
+modeApplicability:
+  - REPAIR
+  - CONTINUOUS_GOVERNANCE
 mcpTools: []
 relatedSkills:
   - alper-performance-engineering

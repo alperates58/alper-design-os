@@ -5,7 +5,11 @@ status: DEPRECATED
 deprecated: true
 replacement: alper-architecture
 capabilityFamily: ARCHITECTURE
+userFacingType: SUPPORTING_CAPABILITY
 userFacing: false
+modeApplicability:
+  - GREENFIELD
+  - MODERNIZATION
 mcpTools: []
 relatedSkills:
   - alper-architecture

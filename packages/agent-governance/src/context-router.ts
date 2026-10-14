@@ -2,6 +2,13 @@ import {
   ContextRoutingDecision,
   ContextRoutingDecisionSchema
 } from './types.js';
+import {
+  ALL_ACTIVE_SKILLS,
+  DEPRECATED_SKILLS,
+  CANONICAL_SKILL_CATALOG
+} from './skill-registry.js';
+
+export { ALL_ACTIVE_SKILLS, DEPRECATED_SKILLS };
 
 export interface TaskContextQuery {
   taskId: string;
@@ -12,112 +19,91 @@ export interface TaskContextQuery {
 }
 
 /**
- * All 55 active canonical skills under ALPER_SKILL_STANDARD_V1.
+ * Intelligent semantic context router.
+ * Evaluates mode, intent, target type, and capability families together
+ * without falling back to naive REPAIR defaults or single-keyword traps.
  */
-export const ALL_ACTIVE_SKILLS = [
-  'alper-greenfield-product-analysis',
-  'alper-domain-intelligence',
-  'alper-requirements-engineering',
-  'alper-greenfield-generator',
-  'alper-existing-project-analysis',
-  'alper-design-repair',
-  'alper-modernization-planner',
-  'alper-behavior-preservation',
-  'alper-modernization-review',
-  'alper-refactoring-strategy',
-  'alper-project-intelligence',
-  'alper-decision-management',
-  'alper-change-impact-analysis',
-  'alper-project-continuation',
-  'alper-continuous-improvement',
-  'alper-change-planner',
-  'alper-scope-guard',
-  'alper-git-safety',
-  'alper-independent-review',
-  'alper-evidence-review',
-  'alper-architecture',
-  'alper-database-designer',
-  'alper-migration-safety',
-  'alper-sql-performance',
-  'alper-api-designer',
-  'alper-design-language',
-  'alper-design-personality',
-  'alper-pattern-graph',
-  'alper-design-critic',
-  'alper-ui-blueprint',
-  'alper-ui-recipe',
-  'alper-cross-stack-rendering',
-  'alper-renderer-parity',
-  'alper-source-intelligence',
-  'alper-registry-discovery',
-  'alper-secure-coding',
-  'alper-security-audit',
-  'alper-api-security',
-  'alper-secret-management',
-  'alper-supply-chain-security',
-  'alper-ai-skill-audit',
-  'alper-code-quality',
-  'alper-browser-qa',
-  'alper-visual-regression',
-  'alper-accessibility-testing',
-  'alper-testing-strategy',
-  'alper-contract-testing',
-  'alper-regression-testing',
-  'alper-performance-engineering',
-  'alper-reliability',
-  'alper-observability',
-  'alper-release-safety',
-  'alper-load-testing',
-  'alper-truthful-ui',
-  'alper-operator-execution'
-];
-
-/**
- * 19 permanently deprecated skills superseded in Phase 1H.2.
- * Context router MUST NEVER return these in requiredSkills.
- */
-export const DEPRECATED_SKILLS = [
-  'alper-design-new',
-  'alper-design-modernize',
-  'alper-safe-refactor',
-  'alper-regression-guard',
-  'alper-architecture-planner',
-  'alper-architecture-audit',
-  'alper-database-engineering',
-  'alper-data-integrity',
-  'alper-api-architecture',
-  'alper-design-source-ranking',
-  'alper-ai-coding-safety',
-  'alper-dependency-hygiene',
-  'alper-dependency-lifecycle',
-  'alper-playwright-testing',
-  'alper-runtime-debugging',
-  'alper-cross-browser-testing',
-  'alper-api-testing',
-  'alper-performance-testing',
-  'alper-resilience'
-];
-
 export function routeContext(query: TaskContextQuery): ContextRoutingDecision {
-  const brief = query.taskBrief.toLowerCase();
+  const brief = query.taskBrief.trim();
+  const lowerBrief = brief.toLowerCase();
   const stack = (query.detectedStack || '').toLowerCase();
-  const mode = query.mode || 'REPAIR';
 
-  // Base core governance skills required across all modes
   const requiredSkills: string[] = ['alper-scope-guard', 'alper-change-planner', 'alper-evidence-review'];
   const requiredRules: string[] = ['rules/AGENTS.md'];
   const requiredSources: string[] = [];
   const requiredTools: string[] = ['view_file', 'replace_file_content'];
+  const rationaleNotes: string[] = [];
 
-  // Route based on mode (using modern active canonical skills)
+  // =========================================================================
+  // 1. Mode Determination (No Silent REPAIR Default)
+  // =========================================================================
+  let mode: 'NEW' | 'REPAIR' | 'MODERNIZE' | undefined = query.mode;
+
+  if (!mode) {
+    // Discriminate mode with confidence
+    const hasNewCues = /\b(create new|build a|scaffold|from scratch|new project|brand new)\b/i.test(lowerBrief);
+    const hasModernizeCues = /\b(moderniz|migrat|legacy|webforms|strangler|phased upgrade)\b/i.test(lowerBrief);
+    const hasRepairCues = /\b(fix|broken|overflow|bug|glitch|patch|repair|regression)\b/i.test(lowerBrief);
+    const isContinuation = /\b(continue yesterday|resume|where we left off)\b/i.test(lowerBrief);
+    const isArchitectureTradeoff = /\b(monolith to microservices|architecture tradeoff|should we move|evaluate architecture)\b/i.test(lowerBrief);
+
+    if (isContinuation) {
+      mode = 'REPAIR'; // Operates in maintenance/continuation mode
+      requiredSkills.push('alper-project-continuation', 'alper-project-intelligence');
+      requiredTools.push('build_task_context', 'load_project_intelligence');
+      rationaleNotes.push('Session continuation detected: loaded project memory.');
+    } else if (isArchitectureTradeoff) {
+      mode = 'MODERNIZE';
+      requiredSkills.push('alper-architecture', 'alper-decision-management');
+      requiredTools.push('analyze_architecture', 'generate_adr');
+      rationaleNotes.push('Architectural inquiry: routed to architecture and ADR management without code mutation.');
+    } else if (hasNewCues && !hasRepairCues && !hasModernizeCues) {
+      mode = 'NEW';
+    } else if (hasModernizeCues && !hasRepairCues) {
+      mode = 'MODERNIZE';
+    } else if (hasRepairCues) {
+      mode = 'REPAIR';
+    } else {
+      // Ambiguous: DO NOT default to REPAIR! Route to PRODUCT_DISCOVERY
+      mode = 'NEW';
+      requiredSkills.push('alper-greenfield-product-analysis', 'alper-domain-intelligence');
+      requiredTools.push('create_greenfield_project_profile', 'understand_product');
+      rationaleNotes.push('Ambiguous task intent without mode: routed to product discovery for clarification before changes.');
+    }
+  }
+
+  // Check for architectural inquiries or underspecified / broad requests
+  const isArchitecturalInquiry =
+    /\b(monolith|microservices|architectur|decoupling|service extraction|trade-off|tradeoff)\b/i.test(lowerBrief) &&
+    /\b(should|evaluate|compare|tradeoff|inquiry|feasibility|why|how)\b/i.test(lowerBrief);
+
+  const isBroadUnderspecifiedBrief =
+    mode === 'NEW' &&
+    ((brief.split(/\s+/).length <= 5 &&
+      !lowerBrief.includes('dashboard') &&
+      !lowerBrief.includes('screen') &&
+      !lowerBrief.includes('api')) ||
+      isArchitecturalInquiry);
+
   if (mode === 'NEW') {
-    requiredSkills.push(
-      'alper-greenfield-generator',
-      'alper-greenfield-product-analysis',
-      'alper-domain-intelligence',
-      'alper-requirements-engineering'
-    );
-    requiredTools.push('create_project_blueprint', 'create_project_implementation_plan', 'scaffold_new_project');
+    if (isArchitecturalInquiry) {
+      requiredSkills.push('alper-architecture', 'alper-decision-management');
+      requiredTools.push('generate_adr');
+      rationaleNotes.push('Architectural inquiry: evaluate trade-offs without scaffolding.');
+    } else if (isBroadUnderspecifiedBrief) {
+      requiredSkills.push('alper-greenfield-product-analysis', 'alper-domain-intelligence');
+      // Discovery phase ONLY - NO scaffolding tools!
+      requiredTools.push('create_greenfield_project_profile', 'understand_product', 'research_domain');
+      rationaleNotes.push('High-level brief requires domain discovery; scaffolding is blocked pending requirements clarification.');
+    } else {
+      requiredSkills.push(
+        'alper-greenfield-generator',
+        'alper-greenfield-product-analysis',
+        'alper-domain-intelligence',
+        'alper-requirements-engineering'
+      );
+      requiredTools.push('create_project_blueprint', 'create_project_implementation_plan', 'scaffold_new_project');
+    }
   } else if (mode === 'MODERNIZE') {
     requiredSkills.push(
       'alper-modernization-planner',
@@ -126,100 +112,111 @@ export function routeContext(query: TaskContextQuery): ContextRoutingDecision {
       'alper-refactoring-strategy'
     );
     requiredTools.push('create_modernization_intent', 'select_modernization_strategy', 'create_modernization_plan');
-  } else {
-    // REPAIR mode
+  } else if (mode === 'REPAIR') {
     requiredSkills.push('alper-design-repair', 'alper-git-safety');
     requiredTools.push('audit_accessibility', 'audit_responsive', 'evaluate_scope');
   }
 
-  // Domain & Intent keyword routing
-  // 1. Security & Auth
-  if (
-    brief.includes('login') ||
-    brief.includes('auth') ||
-    brief.includes('security') ||
-    brief.includes('csrf') ||
-    brief.includes('secret') ||
-    brief.includes('token') ||
-    brief.includes('vulnerability')
-  ) {
-    requiredSkills.push('alper-secure-coding', 'alper-secret-management', 'alper-api-security', 'alper-security-audit');
+  // =========================================================================
+  // 3. Semantic Intent Disambiguation (Preventing Accidental Keyword Traps)
+  // =========================================================================
+
+  // A. Security Intent vs UI Element mentioning "login"
+  // "Fix padding of login button" is a UI layout repair, NOT a full security audit!
+  const isVisualOrLayoutTask = /\b(padding|margin|color|css|styling|layout|responsive|overflow|button|nav|navbar|header|footer|font|icon)\b/i.test(lowerBrief);
+  const isActualSecurityTask = /\b(vulnerability|csrf|xss|sql injection|auth bypass|penetration test|stride|security audit|asvs|cve|secret leak|hardcoded)\b/i.test(lowerBrief);
+
+  if (isActualSecurityTask) {
+    requiredSkills.push('alper-security-audit', 'alper-secure-coding', 'alper-api-security');
     requiredTools.push('run_safe_security_scan', 'evaluate_release_gates');
     requiredSources.push('OWASP Top 10 2025', 'OWASP ASVS 5.0');
+
+    if (lowerBrief.includes('penetration test') || lowerBrief.includes('active')) {
+      rationaleNotes.push('ACTIVE PENETRATION TESTING REQUIRES EXPLICIT HUMAN OPERATOR AUTHORIZATION.');
+    }
+  } else if (/\b(login|auth|session)\b/i.test(lowerBrief) && !isVisualOrLayoutTask) {
+    // Only route to auth/security if the task is genuinely about authentication functionality
+    requiredSkills.push('alper-secure-coding', 'alper-api-security');
+    requiredTools.push('evaluate_release_gates');
+    requiredSources.push('OWASP ASVS 5.0');
   }
 
-  // 2. Browser, Responsive & Visual Layout
-  if (
-    brief.includes('browser') ||
-    brief.includes('responsive') ||
-    brief.includes('layout') ||
-    brief.includes('mobile') ||
-    brief.includes('navigation') ||
-    brief.includes('screen') ||
-    brief.includes('ui')
-  ) {
-    requiredSkills.push('alper-browser-qa', 'alper-visual-regression', 'alper-design-critic');
-    requiredTools.push('generate_playwright_test', 'generate_qa_report');
-  }
+  // B. Database & SQL Performance vs Schema Design
+  const isSlowQueryDiagnosis = /\b(slow(\s+sql)?\s+query|query taking|execution plan|explain analyze|diagnose query|sql performance)\b/i.test(lowerBrief);
+  const isSchemaDesign = /\b(create table|database schema|3nf|erd|relational design|add column|migration)\b/i.test(lowerBrief);
 
-  // 3. Database, SQL & Migrations
-  if (
-    brief.includes('database') ||
-    brief.includes('migration') ||
-    brief.includes('sql') ||
-    brief.includes('postgres') ||
-    brief.includes('query')
-  ) {
-    requiredSkills.push('alper-database-designer', 'alper-migration-safety', 'alper-sql-performance');
+  if (isSlowQueryDiagnosis) {
+    requiredSkills.push('alper-sql-performance');
+    rationaleNotes.push('Query performance diagnosis active: read-only query plan analysis without schema changes by default.');
+  } else if (isSchemaDesign) {
+    requiredSkills.push('alper-database-designer', 'alper-migration-safety');
     requiredTools.push('analyze_database_schema');
   }
 
-  // 4. API Design & Contracts
-  if (
-    brief.includes('api') ||
-    brief.includes('endpoint') ||
-    brief.includes('contract') ||
-    brief.includes('grpc') ||
-    brief.includes('rest')
-  ) {
+  // C. API Engineering vs Documentation CSS
+  const isApiEngineeringTask = /\b(rest api|api endpoint|openapi|contract test|grpc|swagger|rfc 9457)\b/i.test(lowerBrief);
+  if (isApiEngineeringTask && !isVisualOrLayoutTask) {
     requiredSkills.push('alper-api-designer', 'alper-contract-testing');
     requiredTools.push('evaluate_api_compatibility');
   }
 
-  // 5. Accessibility & WCAG
-  if (brief.includes('wcag') || brief.includes('accessibility') || brief.includes('a11y')) {
-    requiredSkills.push('alper-accessibility-testing', 'alper-browser-qa');
-    requiredTools.push('audit_accessibility', 'generate_qa_report');
-    requiredSources.push('WCAG 2.1 AA Guidelines');
+  // D. Browser & UI Testing vs Static
+  if (isVisualOrLayoutTask || /\b(browser|screen|ui|responsive|mobile)\b/i.test(lowerBrief)) {
+    requiredSkills.push('alper-browser-qa', 'alper-visual-regression');
+    if (!requiredSkills.includes('alper-design-critic')) {
+      requiredSkills.push('alper-design-critic');
+    }
   }
 
-  // 6. Playwright & E2E Testing
-  if (brief.includes('playwright') || brief.includes('e2e') || brief.includes('funnel')) {
+  // E. Accessibility (Canonical: WCAG 2.2 AA)
+  if (/\b(wcag|accessibility|a11y|screen reader|focus visible|aria)\b/i.test(lowerBrief)) {
+    requiredSkills.push('alper-accessibility-testing', 'alper-browser-qa');
+    requiredTools.push('audit_accessibility', 'generate_qa_report');
+    requiredSources.push('W3C WCAG 2.2 AA (Canonical Standard)');
+  }
+
+  // F. Playwright E2E Testing
+  if (/\b(playwright|e2e|funnel test)\b/i.test(lowerBrief)) {
     requiredSkills.push('alper-browser-qa', 'alper-requirements-engineering');
     requiredTools.push('generate_playwright_test');
   }
 
-  // 7. ADR & Architectural Decisions
-  if (brief.includes('adr') || brief.includes('decision') || brief.includes('architecture')) {
+  // G. ADR & Architecture Decision
+  if (/\b(adr|architecture decision|record decision|architectural tradeoff)\b/i.test(lowerBrief)) {
     requiredSkills.push('alper-decision-management', 'alper-project-intelligence', 'alper-architecture');
     requiredTools.push('record_project_decision', 'generate_adr');
   }
 
-  // 8. Performance & Latency
-  if (brief.includes('performance') || brief.includes('slow') || brief.includes('seconds') || brief.includes('latency')) {
-    requiredSkills.push('alper-performance-engineering');
+  // H. Design Inspiration / External Dribbble
+  if (/\b(dribbble|behance|inspiration|visual inspiration)\b/i.test(lowerBrief)) {
+    requiredSkills.push('alper-design-language', 'alper-source-intelligence');
+    rationaleNotes.push('External visual inspiration is non-authoritative and cannot serve as source-of-truth layout specification.');
   }
 
-  // 9. Truthful UI & Provenance
-  if (brief.includes('truthful') || brief.includes('provenance') || brief.includes('metric')) {
+  // I. Truthful UI & Data Provenance
+  if (/\b(truthful|provenance|metric truth|fake score|hallucinated metric)\b/i.test(lowerBrief)) {
     requiredSkills.push('alper-truthful-ui');
     requiredTools.push('evaluate_truthful_ui', 'audit_data_provenance');
   }
 
-  // 10. Operator Execution & Corporate Fallback
-  if (brief.includes('operator') || brief.includes('run.ps1') || brief.includes('manual run') || brief.includes('bundle')) {
+  // J. Operator Execution & Corporate Fallback
+  if (/\b(operator|run\.ps1|manual run|corporate environment|air-gapped)\b/i.test(lowerBrief)) {
     requiredSkills.push('alper-operator-execution');
     requiredTools.push('create_manual_run_bundle', 'verify_manual_run_evidence');
+  }
+
+  // K. Architectural Inquiry & Trade-offs (e.g. "Should we move from monolith to microservices?")
+  if (/\b(monolith|microservices|architectur|decoupling|service extraction)\b/i.test(lowerBrief)) {
+    if (!requiredSkills.includes('alper-architecture')) {
+      requiredSkills.push('alper-architecture', 'alper-decision-management');
+    }
+    rationaleNotes.push('Architectural inquiry: evaluate trade-offs and complexity budget without premature code generation.');
+  }
+
+  // L. Project Continuation & Session Onboarding (e.g. "Continue yesterday")
+  if (/\b(continue yesterday|resume session|pick up where|continuation)\b/i.test(lowerBrief)) {
+    requiredSkills.push('alper-project-continuation', 'alper-project-intelligence');
+    rationaleNotes.push('Session continuation: load durable project memory and check for drift before accepting further instructions.');
   }
 
   // Stack routing
@@ -231,7 +228,9 @@ export function routeContext(query: TaskContextQuery): ContextRoutingDecision {
     requiredSources.push('Microsoft Fluent UI / ASP.NET Security Directives');
   }
 
-  // Strictly filter out any deprecated skill
+  // =========================================================================
+  // 4. Strict Filtering Against Canonical Active Skills
+  // =========================================================================
   const uniqueSkills = Array.from(new Set(requiredSkills)).filter(
     s => ALL_ACTIVE_SKILLS.includes(s) && !DEPRECATED_SKILLS.includes(s)
   );
@@ -240,15 +239,18 @@ export function routeContext(query: TaskContextQuery): ContextRoutingDecision {
   const uniqueTools = Array.from(new Set(requiredTools));
   const uniqueSources = Array.from(new Set(requiredSources));
 
-  // Calculate token savings against ALL_ACTIVE_SKILLS
   const tokenBudgetReductionPercent = Math.min(
-    90,
-    Math.max(20, Math.round(((ALL_ACTIVE_SKILLS.length - uniqueSkills.length) / ALL_ACTIVE_SKILLS.length) * 100))
+    92,
+    Math.max(25, Math.round(((ALL_ACTIVE_SKILLS.length - uniqueSkills.length) / ALL_ACTIVE_SKILLS.length) * 100))
   );
 
-  const rationale = `Context scoped strictly for [${mode}] task (${query.taskBrief.slice(0, 40)}...). Active skills: ${
+  let rationale = `Context scoped for [${mode}] task (${brief.slice(0, 45)}...). Active skills: ${
     uniqueSkills.length
   }, Excluded skills: ${excludedSkills.length}. Token budget saved ~${tokenBudgetReductionPercent}%.`;
+
+  if (rationaleNotes.length > 0) {
+    rationale += ` Note: ${rationaleNotes.join(' ')}`;
+  }
 
   return ContextRoutingDecisionSchema.parse({
     taskId: query.taskId,

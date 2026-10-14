@@ -64,6 +64,8 @@ export const UsageModeSchema = z.enum([
 export type UsageMode = z.infer<typeof UsageModeSchema>;
 
 export const AccessibilityLevelSchema = z.enum([
+  'WCAG_2_2_AA',
+  'WCAG_2_2_AAA',
   'WCAG_2_1_AA',
   'WCAG_2_1_AAA',
   'PARTIAL',

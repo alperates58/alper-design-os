@@ -5,7 +5,11 @@ status: DEPRECATED
 deprecated: true
 replacement: alper-browser-qa
 capabilityFamily: QA_TESTING
+userFacingType: SUPPORTING_CAPABILITY
 userFacing: false
+modeApplicability:
+  - REPAIR
+  - CONTINUOUS_GOVERNANCE
 mcpTools: []
 relatedSkills:
   - alper-browser-qa

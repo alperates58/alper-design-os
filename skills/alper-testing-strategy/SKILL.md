@@ -1,108 +1,100 @@
 ---
 name: alper-testing-strategy
-description: Synthesizes project-appropriate test pyramids across Static, Unit, Integration, API, E2E, and Performance. Use when executing qa testing tasks for testing strategy. Do not use for unrelated capability domains or deprecated Phase 0 workflows.
+description: Synthesizes project-appropriate test pyramids across Static, Unit, Integration, API, E2E, and Performance. Use when formulating a comprehensive testing strategy for a greenfield or modernization project. Do not use for writing individual playwright test scripts (use alper-browser-qa).
 status: ACTIVE
 capabilityFamily: QA_TESTING
-userFacing: true
+userFacingType: SUPPORTING_CAPABILITY
+userFacing: false
+modeApplicability:
+  - GREENFIELD
+  - MODERNIZATION
+  - CONTINUOUS_GOVERNANCE
 mcpTools:
   - generate_test_pyramid
   - generate_qa_report
 relatedSkills:
   - alper-browser-qa
-  - alper-visual-regression
-  - alper-accessibility-testing
   - alper-contract-testing
+  - alper-regression-testing
 ---
 
 # Alper Testing Strategy Skill
 
 ## PURPOSE
-Provides canonical, deterministic agent capability for **Testing Strategy** within the **QA_TESTING** capability family.
-Primary focus: Synthesizes project-appropriate test pyramids across Static, Unit, Integration, API, E2E, and Performance.
+Synthesizes balanced, cost-effective test pyramids (Static -> Unit -> Integration -> API -> E2E -> Performance) tailored to project risk, avoiding inverted ice-cream cone anti-patterns.
 
 ## USE WHEN
-- Initiating or progressing tasks requiring testing strategy capabilities.
-- Operating within mode-specific pipelines requiring QA_TESTING workflows.
-- Verifying requirements, technical blueprints, or evidence artifacts specifically owned by this capability.
+- Formulating a comprehensive testing strategy for a greenfield or modernization project.
+- Allocating testing budgets across unit, integration, and end-to-end tiers.
+- Auditing existing test distributions to eliminate redundant or slow test suites.
 
 ## DO NOT USE WHEN
-- The task strictly belongs to another capability family (e.g. use `alper-greenfield-generator` for new full-stack builds, `alper-modernization-planner` for migrations, or `alper-design-repair` for surgical bug fixes).
-- Attempting to bypass verification gates or generate ungrounded code without prerequisite discovery.
-- Operating on deprecated Phase 0 workflows.
+- Writing individual Playwright test scripts (use alper-browser-qa).
+- Designing database schemas (use alper-database-designer).
+- Fixing CSS visual bugs (use alper-design-repair).
 
 ## MODE APPLICABILITY
-- Supported Modes: **GREENFIELD**, **MODERNIZATION**, **REPAIR**, and **CONTINUOUS_GOVERNANCE**.
-- Mode Relevance: Enforces capability boundaries whether operating on clean-sheet greenfield or legacy brownfield codebases.
+- Supported Modes: **GREENFIELD**, **MODERNIZATION**, **CONTINUOUS_GOVERNANCE**.
+- Applicability Context: Operates strictly within declared modes; does not execute outside its operational boundaries.
+
 
 ## REQUIRED CONTEXT
-- Validated workspace root and project configuration.
-- Task brief and structured user intent.
-- Up-to-date `.alper-design-os/project` intelligence snapshot (when initialized).
-- Relevant stack profiles and dependency manifests.
+- Target application route or staging URL.
+- User journey flow specifications and acceptance criteria.
+- Configured test runners (Playwright, Vitest) and viewport matrix (390px, 768px, 1440px).
 
 ## PROJECT INTELLIGENCE LOADING
-- Consults durable project memory in `.alper-design-os/project` prior to action execution.
-- Reads verified architecture graphs, registered entities, and recorded project decisions (ADRs).
-- Strictly rejects hallucinated project memory; missing intelligence triggers truthful intake or initialization.
+**Status: CONDITIONAL**
+Consults `.alper-design-os/project/` if persistent project memory has been initialized. For clean-sheet greenfield tasks prior to blueprinting, intelligence loading is optional and initializes upon completion.
 
 ## DISCOVERY / AMBIGUITY BEHAVIOR
-- If task requirements are incomplete, ambiguous, or lack technical grounding:
-  1. Halt execution immediately before emitting ungrounded changes.
-  2. Emit prioritized clarifying questions to the operator.
-  3. Maintain derived acceptance criteria in `DEFINED` / `NOT_VERIFIED` state until ambiguity is formally resolved.
+**Protocol: NOT_APPLICABLE**
+Operates on concrete, localized technical artifacts (e.g. query plans, code diffs, DOM elements). Discovery ambiguity gates do not apply to direct inspection or repair of existing assets.
 
 ## WORKFLOW
-1. **Intake & Verification**: Ingest task parameters and verify workspace preconditions.
-2. **Context Assembly**: Load relevant project invariants, schema contracts, and active policies.
-3. **Execution & Tool Invocation**: Dispatch canonical MCP tools (`generate_test_pyramid`, `generate_qa_report`).
-4. **Evidence Collection**: Gather qualifying verification artifacts (logs, diffs, test evidence).
-5. **Quality Gate Evaluation**: Validate deliverables against release and safety gates.
-6. **Output Synthesis**: Produce structured deliverables and handoff packages for downstream skills.
+1. Analyze project criticality, change frequency, and deployment cadence.
+2. Allocate test distribution percentages across 6 pyramid tiers.
+3. Formulate TestPyramidSpecification defining toolchains for each tier.
+4. Establish coverage targets and CI/CD execution pipeline order.
 
 ## DECISION RULES
-- **Invariant Enforcement**: Universal invariant **NO CLAIM WITHOUT EVIDENCE** applies unconditionally.
-- **Fail-Safe Principle**: If a tool returns `NEEDS_CLARIFICATION` or validation fails, stop execution and report truth state.
-- **Scope Guard**: Confine modifications strictly to designated module boundaries. Uninvited modifications to foreign files are blocked.
+- Pyramid Balance: Heavy reliance on slow E2E tests over fast unit/integration tests is rejected.
+- Every critical user conversion funnel must have at least one integration or E2E smoke test.
 
 ## MCP TOOL STRATEGY
-- `generate_test_pyramid`: Canonical handler for generate test pyramid. Always supply required schema parameters and handle structured return states.
-- `generate_qa_report`: Canonical handler for generate qa report. Always supply required schema parameters and handle structured return states.
+- `generate_test_pyramid`: Canonical handler for generate test pyramid. Always pass required schema arguments; handle return states deterministically.
+- `generate_qa_report`: Canonical handler for generate qa report. Always pass required schema arguments; handle return states deterministically.
 
 ## SOURCE / RESEARCH STRATEGY
-- When referencing design systems, frameworks, or security standards, cite authoritative sources verified by `alper-source-intelligence`.
+- Authoritative Guidance: Test Pyramid principles (Martin Fowler), shift-left testing models, and coverage heuristics.
 - Prohibit ad-hoc, unverified external advice.
 
 ## POLICY & GOVERNANCE
 - Complies strictly with `rules/AGENTS.md`.
-- Secret leakage prevention: Never log, store, or emit unredacted credentials or API keys.
-- Destructive command guard: High-risk operations (e.g., hard reset, clean, force push) require explicit operator confirmation.
+- Universal Evidence Invariant: **NO CLAIM WITHOUT EVIDENCE**.
+- Secret Redaction: All credentials, connection strings, and tokens must be masked with `[REDACTED]`.
 
 ## HUMAN CHECKPOINTS
-- Ambiguous architectural directions requiring trade-off resolution.
-- Destructive state changes or breaking schema migrations.
-- Visual approval on high-impact user interface changes.
+- Operator review of testing pyramid budget and target coverage allocations.
 
 ## STOP CONDITIONS
-- Discovery readiness check returns `NEEDS_CLARIFICATION`.
+- Required context or prerequisite artifacts are missing.
+- Discovery readiness evaluation returns `NEEDS_CLARIFICATION` (for discovery-gated skills).
 - Tool execution reports critical validation or gate failure.
-- Scope boundary violation detected by `alper-scope-guard`.
 
 ## FAILURE HANDLING
-- On schema failure: Log exact validation error, preserve rollback checkpoint, and return non-zero exit state.
+- On schema failure: Log exact validation error, preserve rollback checkpoint, and return non-zero exit code.
 - On test failure: Mark gate as `FAILED`, capture diagnostic trace, and prevent downstream progression.
 - Never report simulated success or fake PASS results.
 
 ## EVIDENCE REQUIREMENTS
-- Every asserted completion must supply qualifying evidence (e.g. `LINT_CLEAN`, `UNIT_TESTS_PASS`, `BUILD_CLEAN`, `HUMAN_REVIEW`).
-- Missing evidence strictly resolves to `NOT_VERIFIED`.
+- Canonical Evidence Kinds: `STATIC_ANALYSIS`.
+- Missing evidence strictly resolves to `VerificationStatus: NOT_VERIFIED`. Never emit fake PASS assertion.
 
 ## OUTPUT CONTRACT
-- Structured execution report detailing actions executed, tools invoked, and evidence captured.
-- Verified artifacts and updated project intelligence entries.
-- Explicit handoff envelope for next-phase skills.
+- TestPyramidSpecification with tier distributions and tool recommendations.
 
 ## HANDOFF / RELATED SKILLS
-- `alper-browser-qa`: Handoff target for sibling QA_TESTING operations.
-- `alper-visual-regression`: Handoff target for sibling QA_TESTING operations.
-- `alper-accessibility-testing`: Handoff target for sibling QA_TESTING operations.
-- `alper-contract-testing`: Handoff target for sibling QA_TESTING operations.
+- `alper-browser-qa`: Downstream or sibling capability for QA_TESTING operations.
+- `alper-contract-testing`: Downstream or sibling capability for QA_TESTING operations.
+- `alper-regression-testing`: Downstream or sibling capability for QA_TESTING operations.

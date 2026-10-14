@@ -44,7 +44,10 @@ export function auditExistingUI(files: ProjectFile[]): UIAuditResult {
   };
 }
 
-export function auditAccessibility(files: ProjectFile[]): A11yAuditResult {
+export function auditAccessibility(
+  files: ProjectFile[],
+  targetLevel: 'WCAG_2_2_AA' | 'WCAG_2_2_AAA' | 'WCAG_2_1_AA' | 'WCAG_2_1_AAA' = 'WCAG_2_2_AA'
+): A11yAuditResult {
   const violations: AuditIssue[] = [];
 
   for (const file of files) {
@@ -91,12 +94,13 @@ export function auditAccessibility(files: ProjectFile[]): A11yAuditResult {
   const passedRatio = violations.length === 0 ? 1.0 : Math.max(0.4, 1.0 - violations.length * 0.15);
 
   return {
-    wcagLevelTarget: 'WCAG_2_1_AA',
+    wcagLevelTarget: targetLevel,
     passedRatio,
     violations,
     recommendations: [
       'Ensure all interactive controls are reachable via Tab and activatable via Enter/Space.',
       'Maintain at least 4.5:1 color contrast for normal text and 3:1 for large text.',
+      'Ensure interactive targets meet WCAG 2.2 minimum size (24x24px) or spacing.',
       'Announce dynamic status updates using aria-live regions.'
     ]
   };

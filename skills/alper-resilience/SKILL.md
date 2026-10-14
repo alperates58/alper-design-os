@@ -5,7 +5,11 @@ status: DEPRECATED
 deprecated: true
 replacement: alper-reliability
 capabilityFamily: PERFORMANCE_RELIABILITY
+userFacingType: SUPPORTING_CAPABILITY
 userFacing: false
+modeApplicability:
+  - MODERNIZATION
+  - CONTINUOUS_GOVERNANCE
 mcpTools: []
 relatedSkills:
   - alper-reliability
