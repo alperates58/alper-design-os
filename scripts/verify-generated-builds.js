@@ -74,46 +74,92 @@ export async function verifyGeneratedBuilds(options = {}) {
           buildRecord.verificationStatus = 'VERIFIED';
         }
       } else if (stack === 'REACT_TYPESCRIPT') {
-        // React + TS: Run TypeScript compiler check
-        let tscPath = path.join(repoRoot, 'node_modules', 'typescript', 'bin', 'tsc');
-        let cmd = `node "${tscPath}" --noEmit -p "${path.join(stackDir, 'tsconfig.json')}"`;
-        let out = '';
+        // React + TS: Real production build via Vite
+        let logs = 'Executing React + TypeScript production build...\n';
+        const installCmd = process.platform === 'win32' ? 'npm.cmd install --no-audit' : 'npm install --no-audit';
+        const buildCmd = process.platform === 'win32' ? 'npm.cmd run build' : 'npm run build';
         try {
-          out = execSync(cmd, { cwd: stackDir, encoding: 'utf-8' });
-          buildRecord.command = cmd;
+          const installOut = execSync(installCmd, { cwd: stackDir, encoding: 'utf-8', shell: true });
+          logs += `Install:\n${installOut}\n`;
+
+          const buildOut = execSync(buildCmd, { cwd: stackDir, encoding: 'utf-8', shell: true });
+          logs += `Build:\n${buildOut}\n`;
+
+          const distIndex = path.join(stackDir, 'dist', 'index.html');
+          if (!fs.existsSync(distIndex) || fs.statSync(distIndex).size === 0) {
+            throw new Error(`dist/index.html was not generated or is empty at "${distIndex}"`);
+          }
+
+          logs += `Vite production bundle verified: dist/index.html exists (${fs.statSync(distIndex).size} bytes).\n`;
+          buildRecord.command = `${installCmd} && ${buildCmd}`;
           buildRecord.exitCode = 0;
-          buildRecord.toolchainVersion = `TypeScript 5.x via ${process.version}`;
-          buildRecord.logs = out || 'tsc --noEmit passed without errors.\n';
+          buildRecord.toolchainVersion = `Vite 5.x / React 18 / Node.js ${process.version}`;
+          buildRecord.logs = logs;
           buildRecord.verificationStatus = 'VERIFIED';
         } catch (err) {
-          buildRecord.command = cmd;
+          buildRecord.command = `${installCmd} && ${buildCmd}`;
           buildRecord.exitCode = err.status || 1;
-          buildRecord.logs = err.stdout || err.stderr || err.message;
+          buildRecord.logs = `${logs}\nError: ${err.stdout || err.stderr || err.message}`;
           buildRecord.verificationStatus = 'FAILED';
         }
       } else if (stack === 'LARAVEL_BLADE') {
-        // Laravel Blade: PHP syntax check on all PHP files
+        // Laravel Blade: PHP syntax check, artisan test, and composer validate
         try {
           const phpV = execSync('php -v', { encoding: 'utf-8' }).split('\n')[0].trim();
-          const phpFiles = ['routes/web.php'].filter(f => fs.existsSync(path.join(stackDir, f)));
           let logs = `PHP Toolchain: ${phpV}\n`;
-          let allPassed = true;
-          for (const pf of phpFiles) {
+
+          // Find all PHP files + artisan
+          const phpFilesToCheck = [
+            'artisan',
+            'bootstrap/app.php',
+            'routes/web.php',
+            'app/Http/Controllers/DirectoryController.php',
+            'app/Models/Entity.php'
+          ].filter(f => fs.existsSync(path.join(stackDir, f)));
+
+          for (const pf of phpFilesToCheck) {
             const out = execSync(`php -l "${path.join(stackDir, pf)}"`, { encoding: 'utf-8' });
-            logs += out.trim() + '\n';
+            logs += `php -l ${pf}: ${out.trim()}\n`;
           }
+
+          // Test artisan CLI execution
+          const artisanOut = execSync('php artisan --version', { cwd: stackDir, encoding: 'utf-8' });
+          logs += `php artisan --version: ${artisanOut.trim()}\n`;
+
+          // Test composer validate if composer is installed
+          let composerAvailable = false;
+          try {
+            execSync('composer --version', { stdio: 'pipe' });
+            composerAvailable = true;
+          } catch {}
+
+          if (composerAvailable) {
+            const compOut = execSync('composer validate --strict', { cwd: stackDir, encoding: 'utf-8' });
+            logs += `composer validate --strict: OK\n${compOut.trim()}\n`;
+          } else {
+            logs += 'composer CLI not present in host environment; validated composer.json syntax & schema directly.\n';
+            const compJson = JSON.parse(fs.readFileSync(path.join(stackDir, 'composer.json'), 'utf-8'));
+            if (!compJson.name || !compJson.require) {
+              throw new Error('composer.json is missing required fields (name, require)');
+            }
+          }
+
           if (fs.existsSync(path.join(stackDir, 'resources', 'views', 'layouts', 'app.blade.php'))) {
-            logs += 'app.blade.php layout verified.\n';
+            logs += 'resources/views/layouts/app.blade.php layout verified.\n';
           }
-          buildRecord.command = 'php -l routes/web.php';
+          if (fs.existsSync(path.join(stackDir, 'resources', 'views', 'dashboard.blade.php'))) {
+            logs += 'resources/views/dashboard.blade.php view verified.\n';
+          }
+
+          buildRecord.command = 'php -l [files] && php artisan --version';
           buildRecord.exitCode = 0;
           buildRecord.toolchainVersion = phpV;
           buildRecord.logs = logs;
           buildRecord.verificationStatus = 'VERIFIED';
         } catch (err) {
-          buildRecord.command = 'php -l';
+          buildRecord.command = 'php -l && php artisan';
           buildRecord.exitCode = 1;
-          buildRecord.logs = `PHP syntax check failed or PHP not installed: ${err.message}`;
+          buildRecord.logs = `Laravel validation failed: ${err.message}`;
           buildRecord.verificationStatus = 'FAILED';
         }
       } else if (stack === 'ASPNET_RAZOR') {
@@ -148,6 +194,7 @@ export async function verifyGeneratedBuilds(options = {}) {
   const summary = {
     evaluatedAt: new Date().toISOString(),
     globalDebtStatus: allVerified ? 'VERIFIED' : (someVerified ? 'PARTIALLY_VERIFIED' : 'NOT_VERIFIED'),
+    allVerified,
     totalStacks: stacks.length,
     verifiedCount: results.filter(r => r.verificationStatus === 'VERIFIED').length,
     failedCount: results.filter(r => r.verificationStatus === 'FAILED').length,
@@ -172,9 +219,12 @@ if (isDirectRun) {
     for (const r of res.results) {
       const badge = r.verificationStatus === 'VERIFIED' ? '[VERIFIED] ' : '[FAILED]   ';
       console.log(`${badge} ${r.stack.padEnd(20)}: ${r.command} (Toolchain: ${r.toolchainVersion})`);
+      if (r.verificationStatus === 'FAILED') {
+        console.error(`       Error details: ${r.logs}`);
+      }
     }
     console.log('========================================================');
-    process.exit(res.allVerified ? 0 : 0);
+    process.exit(res.allVerified ? 0 : 1);
   }).catch(err => {
     console.error('Build matrix error:', err);
     process.exit(1);

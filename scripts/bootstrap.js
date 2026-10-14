@@ -37,7 +37,7 @@ export async function bootstrapSystem(options = {}) {
     process.exit(1);
   }
 
-  // 3. Package Manager Detection & Dependency State (Idempotent Resolution)
+  // 3. Package Manager Detection & Dependency State (Strict pnpm 9.15.4)
   console.log('[3/7] Package Manager & Dependency Verification...');
   const hasInstalledDependencies =
     fs.existsSync(path.join(repoRoot, 'node_modules', 'typescript')) &&
@@ -47,28 +47,46 @@ export async function bootstrapSystem(options = {}) {
   if (hasInstalledDependencies && !options.forceInstall) {
     console.log('      Existing dependencies verified intact in node_modules (idempotent step).');
   } else {
-    let pm = 'npm';
-    let installCmd = 'npm install';
+    let pnpmCmd = 'pnpm';
+    let isPnpmAvailable = false;
 
-    // Test if pnpm is actually working
+    // Check system pnpm
     try {
       const pnpmV = execSync('pnpm -v', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
-      pm = `pnpm@${pnpmV}`;
-      installCmd = 'pnpm install --frozen-lockfile';
-    } catch {
-      pm = 'npm';
-      if (fs.existsSync(path.join(repoRoot, 'package-lock.json'))) {
-        installCmd = 'npm ci';
-      } else {
-        installCmd = 'npm install';
+      console.log(`      Found system pnpm: ${pnpmV}`);
+      isPnpmAvailable = true;
+    } catch {}
+
+    // If absent, attempt safe provisioning via Corepack
+    if (!isPnpmAvailable) {
+      console.log('      pnpm not found in PATH. Attempting Corepack provisioning...');
+      try {
+        execSync('corepack enable && corepack prepare pnpm@9.15.4 --activate', { stdio: 'inherit' });
+        const pnpmV = execSync('pnpm -v', { encoding: 'utf-8' }).trim();
+        console.log(`      Corepack provisioned pnpm: ${pnpmV}`);
+        isPnpmAvailable = true;
+      } catch (cpErr) {
+        console.warn(`      Corepack provisioning unsuccessful: ${cpErr.message}`);
       }
     }
-    console.log(`      Executing dependency install using ${pm} -> "${installCmd}"`);
+
+    // Fail closed: Never silently fall back to npm for this pnpm workspace!
+    if (!isPnpmAvailable) {
+      console.error('\n[FATAL] Canonical package manager pnpm@9.15.4 is required for this workspace.');
+      console.error('Silently falling back to npm is strictly forbidden to preserve deterministic pnpm-lock.yaml integrity.');
+      console.error('\nAction Required:');
+      console.error('  1. Enable corepack: corepack enable');
+      console.error('  2. Or install pnpm: npm install -g pnpm@9.15.4\n');
+      process.exit(1);
+    }
+
+    const installCmd = `${pnpmCmd} install --frozen-lockfile`;
+    console.log(`      Executing dependency install: "${installCmd}"`);
     try {
       execSync(installCmd, { cwd: repoRoot, stdio: 'inherit' });
       console.log('      Dependencies installed successfully.');
     } catch (err) {
-      console.error('FATAL: Failed installing dependencies:', err.message);
+      console.error('FATAL: Frozen dependency installation failed:', err.message);
       process.exit(1);
     }
   }

@@ -205,4 +205,67 @@ describe('Phase 1I: Portability, CI/CD, Bootstrap & Distribution V1', () => {
 
     expect(summary.globalDebtStatus).toBe('VERIFIED');
   });
+
+  // 11. Doctor Preflight Mode
+  it('11. verifies doctor --preflight checks prerequisites without requiring build artifacts', async () => {
+    const doc = await runDoctor({ projectRoot: repoRoot, preflight: true });
+    expect(doc.mode).toBe('PREFLIGHT');
+    expect(doc.status).toMatch(/^READY/);
+    expect(doc.checks.repositoryIntegrity.status).toBe('PASS');
+    expect(doc.checks.nodeRuntime.status).toBe('PASS');
+    expect(doc.checks.environmentManifest.status).toBe('PASS');
+    expect(doc.checks.secretSafety.status).toBe('PASS');
+    // Preflight does not require built mcpServer or dist files
+    expect(doc.checks.mcpServer).toBeUndefined();
+    expect(doc.checks.monorepoBuild).toBeUndefined();
+  });
+
+  // 12. Register MCP Scoping & Pinned Opt-in Dependencies
+  it('12. verifies registerMcp registers only alper-design-os by default and pins optional tools without @latest', async () => {
+    const { registerMcp } = await import('../scripts/register-mcp.js');
+    const tempDir = path.join(repoRoot, 'tests', 'workspaces', 'temp-mcp-test');
+    if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+
+    try {
+      // Default: Only alper-design-os in local .agents/
+      const resDefault = registerMcp({ projectRoot: tempDir, args: [] });
+      expect(resDefault.success).toBe(true);
+      expect(resDefault.configFile).toBe(path.join(tempDir, '.agents', 'mcp_config.json'));
+      expect(resDefault.servers).toEqual(['alper-design-os']);
+
+      const cfgDefault = JSON.parse(fs.readFileSync(resDefault.configFile, 'utf-8'));
+      expect(cfgDefault.mcpServers['alper-design-os']).toBeDefined();
+      expect(cfgDefault.mcpServers['chrome-devtools']).toBeUndefined();
+      expect(cfgDefault.mcpServers['playwright']).toBeUndefined();
+
+      // Opt-in: Includes pinned versions, never @latest
+      const resOptIn = registerMcp({
+        projectRoot: tempDir,
+        withDevtools: true,
+        withPlaywright: true,
+        args: []
+      });
+      expect(resOptIn.servers).toContain('chrome-devtools');
+      expect(resOptIn.servers).toContain('playwright');
+
+      const cfgOptIn = JSON.parse(fs.readFileSync(resOptIn.configFile, 'utf-8'));
+      const devtoolsArgs = cfgOptIn.mcpServers['chrome-devtools'].args.join(' ');
+      const playwrightArgs = cfgOptIn.mcpServers['playwright'].args.join(' ');
+
+      expect(devtoolsArgs).toContain('0.12.0');
+      expect(devtoolsArgs).not.toContain('@latest');
+      expect(playwrightArgs).toContain('0.0.6');
+      expect(playwrightArgs).not.toContain('@latest');
+    } finally {
+      if (fs.existsSync(tempDir)) fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  // 13. Package Distribution Fail-Closed
+  it('13. verifies packageDistribution throws and fails closed when git archive is missing or invalid', async () => {
+    const { packageDistribution } = await import('../scripts/package-distribution.js');
+    // Calling packageDistribution on non-git directory must fail closed
+    const nonGitDir = path.join(repoRoot, 'tests', 'fixtures');
+    await expect(packageDistribution({ repoRoot: nonGitDir })).rejects.toThrow();
+  });
 });

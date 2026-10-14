@@ -16,14 +16,13 @@
       },
       {
         "id": "packageManager",
-        "name": "Package Manager (pnpm / npm)",
+        "name": "Package Manager (pnpm)",
         "canonical": "pnpm",
+        "pinnedVersion": "9.15.4",
         "minVersion": "9.0.0",
-        "fallback": "npm",
-        "fallbackMinVersion": "10.0.0",
         "category": "CORE_REQUIRED",
-        "verificationCommand": "pnpm -v || npm -v",
-        "description": "Used for deterministic frozen dependency installation and monorepo script execution."
+        "verificationCommand": "pnpm -v",
+        "description": "Required package manager for deterministic frozen pnpm-lock.yaml resolution. Non-deterministic npm fallback is strictly forbidden."
       },
       {
         "id": "git",

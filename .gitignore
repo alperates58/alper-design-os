@@ -17,6 +17,7 @@ coverage/
 Thumbs.db
 .vscode/
 .idea/
+.agents/
 *.log
 npm-debug.log*
 pnpm-debug.log*

@@ -100,10 +100,15 @@ export async function packageDistribution(options = {}) {
   console.log(`[2/4] Generating reproducible source archive: "${archiveName}"...`);
 
   try {
-    execSync(`git archive --format=tar.gz --prefix=alper-design-os/ -o "${archivePath}" HEAD`, { cwd: repoRoot });
+    execSync(`git archive --format=tar.gz --prefix=alper-design-os/ -o "${archivePath}" HEAD`, { cwd: repoRoot, stdio: 'pipe' });
     console.log(`      Source archive created (${archivePath})`);
   } catch (err) {
-    console.warn(`[WARN] git archive failed: ${err.message}.`);
+    console.error(`FATAL: git archive failed: ${err.message}`);
+    throw new Error(`Failed to generate source archive via git archive: ${err.message}`);
+  }
+
+  if (!fs.existsSync(archivePath) || fs.statSync(archivePath).size === 0) {
+    throw new Error(`Archive was not created or is empty at "${archivePath}"`);
   }
 
   // 5. Generate Release Manifest & SHA256 Checksums
@@ -132,14 +137,17 @@ export async function packageDistribution(options = {}) {
   };
 
   const checksumLines = [];
-  if (fs.existsSync(archivePath)) {
-    const sha = computeFileSha256(archivePath);
-    manifest.artifacts.push({
-      file: archiveName,
-      sizeBytes: fs.statSync(archivePath).size,
-      sha256: sha
-    });
-    checksumLines.push(`${sha}  ${archiveName}`);
+  const sha = computeFileSha256(archivePath);
+  const size = fs.statSync(archivePath).size;
+  manifest.artifacts.push({
+    file: archiveName,
+    sizeBytes: size,
+    sha256: sha
+  });
+  checksumLines.push(`${sha}  ${archiveName}`);
+
+  if (manifest.artifacts.length === 0 || checksumLines.length === 0) {
+    throw new Error('No distribution artifacts were generated for release packaging.');
   }
 
   const manifestPath = path.join(distDir, 'release-manifest.json');

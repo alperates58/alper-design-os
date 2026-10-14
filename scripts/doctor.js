@@ -7,13 +7,74 @@ import { pathToFileURL } from 'node:url';
 /**
  * ALPER DESIGN OS - Doctor V2
  * Comprehensive repository, runtime, and ecosystem diagnostics.
+ * Supports:
+ *   --preflight: validates only prerequisites before installation (Node, Git, pnpm, manifests)
+ *   --json: output raw JSON results
  */
+
+export function scanSecrets(projectRoot = '.') {
+  let trackedFiles = [];
+  try {
+    trackedFiles = execSync('git ls-files', { cwd: projectRoot, encoding: 'utf-8' })
+      .split('\n')
+      .map(f => f.trim())
+      .filter(f => f.length > 0);
+  } catch {
+    return { clean: true, scannedFiles: 0, violations: [] };
+  }
+
+  const secretPatterns = [
+    { name: 'Private Key', pattern: /-----BEGIN (?:RSA|EC|DSA|OPENSSH|PGP) PRIVATE KEY/ },
+    { name: 'GitHub Token', pattern: /(?:ghp|gho|ghu|ghs|ghr)_[a-zA-Z0-9]{36}|github_pat_[a-zA-Z0-9_]{82}/ },
+    { name: 'AWS Access Key', pattern: /AKIA[0-9A-Z]{16}/ },
+    { name: 'Tracked .env file', pattern: /(?:^|\/)\.env(?:\..+)?$/ }
+  ];
+
+  const violations = [];
+
+  for (const relFile of trackedFiles) {
+    // Ignore test suites (which test secret redaction with dummy tokens) and scanner itself
+    if (
+      relFile.startsWith('tests/') ||
+      relFile === 'scripts/scan-secrets.js' ||
+      relFile === 'scripts/doctor.js'
+    ) {
+      continue;
+    }
+
+    if (secretPatterns[3].pattern.test(relFile) && !relFile.endsWith('.example')) {
+      violations.push({ file: relFile, rule: 'Tracked .env file' });
+      continue;
+    }
+
+    const fullPath = path.join(projectRoot, relFile);
+    if (!fs.existsSync(fullPath) || fs.statSync(fullPath).size > 1024 * 1024) continue;
+
+    try {
+      const content = fs.readFileSync(fullPath, 'utf-8');
+      for (const sp of secretPatterns.slice(0, 3)) {
+        if (sp.pattern.test(content)) {
+          violations.push({ file: relFile, rule: sp.name });
+        }
+      }
+    } catch {}
+  }
+
+  return {
+    clean: violations.length === 0,
+    scannedFiles: trackedFiles.length,
+    violations
+  };
+}
 
 export async function runDoctor(options = {}) {
   const projectRoot = options.projectRoot ? path.resolve(options.projectRoot) : path.resolve('.');
+  const isPreflight = Boolean(options.preflight ?? process.argv.includes('--preflight'));
+
   const results = {
     timestamp: new Date().toISOString(),
     projectRoot,
+    mode: isPreflight ? 'PREFLIGHT' : 'FULL',
     status: 'READY',
     checks: {},
     summary: {
@@ -57,41 +118,90 @@ export async function runDoctor(options = {}) {
     results.recommendations.push('Upgrade Node.js to version 20.x or 22.x LTS.');
   }
 
-  // 3. Package Manager & Lockfile Consistency
-  let pmDetected = 'none';
+  // 3. Package Manager & Lockfile Consistency (Strict pnpm 9.x)
+  let pnpmDetected = false;
+  let pnpmVersion = 'none';
   try {
-    const pnpmV = execSync('pnpm -v', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
-    pmDetected = `pnpm ${pnpmV}`;
+    pnpmVersion = execSync('pnpm -v', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
+    pnpmDetected = true;
   } catch {
-    try {
-      const npmV = execSync('npm -v', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
-      pmDetected = `npm ${npmV}`;
-    } catch {
-      pmDetected = 'none';
-    }
+    pnpmDetected = false;
   }
 
   const lockfileExists = fs.existsSync(path.join(projectRoot, 'pnpm-lock.yaml'));
-  if (pmDetected !== 'none' && lockfileExists) {
-    recordCheck('packageManager', 'CORE_REQUIRED', 'PASS', `Package manager detected (${pmDetected}) with frozen pnpm-lock.yaml present`, { pm: pmDetected, lockfile: 'pnpm-lock.yaml' });
+  const workspaceConfigExists = fs.existsSync(path.join(projectRoot, 'pnpm-workspace.yaml'));
+
+  if (pnpmDetected && lockfileExists && workspaceConfigExists) {
+    recordCheck('packageManager', 'CORE_REQUIRED', 'PASS', `Canonical package manager verified: pnpm ${pnpmVersion} with frozen lockfile`, { pm: `pnpm ${pnpmVersion}`, lockfile: 'pnpm-lock.yaml' });
   } else if (!lockfileExists) {
     recordCheck('packageManager', 'CORE_REQUIRED', 'FAIL', 'pnpm-lock.yaml missing from repository root');
+  } else if (!workspaceConfigExists) {
+    recordCheck('packageManager', 'CORE_REQUIRED', 'FAIL', 'pnpm-workspace.yaml missing from repository root');
   } else {
-    recordCheck('packageManager', 'CORE_REQUIRED', 'FAIL', 'Neither pnpm nor npm executable found in PATH');
+    recordCheck('packageManager', 'CORE_REQUIRED', 'WARN', 'pnpm executable not found in PATH. Corepack provisioning required.', { lockfile: 'pnpm-lock.yaml' });
   }
 
-  // 4. Dependencies State
+  // 4. Environment Manifest Contract
+  const manifestPath = path.join(projectRoot, 'environment-manifest.json');
+  if (fs.existsSync(manifestPath)) {
+    try {
+      const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
+      if (manifest.system === 'alper-design-os' && manifest.contract) {
+        recordCheck('environmentManifest', 'FEATURE_REQUIRED', 'PASS', 'Environment manifest contract verified', { version: manifest.version });
+      } else {
+        recordCheck('environmentManifest', 'FEATURE_REQUIRED', 'WARN', 'Environment manifest contract schema incomplete');
+      }
+    } catch {
+      recordCheck('environmentManifest', 'FEATURE_REQUIRED', 'WARN', 'Environment manifest unparseable');
+    }
+  } else {
+    recordCheck('environmentManifest', 'FEATURE_REQUIRED', 'FAIL', 'environment-manifest.json missing');
+  }
+
+  // 5. Git Status & Deterministic Secret Scan
+  try {
+    const branch = execSync('git branch --show-current', { encoding: 'utf-8', cwd: projectRoot }).trim();
+    const gitStatus = execSync('git status -s', { encoding: 'utf-8', cwd: projectRoot });
+    recordCheck('gitState', 'CORE_REQUIRED', 'PASS', `Git tracking active on branch "${branch}"`, { branch, dirty: gitStatus.trim().length > 0 });
+  } catch (e) {
+    recordCheck('gitState', 'CORE_REQUIRED', 'FAIL', `Git command execution failed: ${e.message}`);
+  }
+
+  const secretReport = scanSecrets(projectRoot);
+  if (secretReport.clean) {
+    recordCheck('secretSafety', 'SECURITY', 'PASS', `Deterministic secret scan verified clean across ${secretReport.scannedFiles} tracked files`);
+  } else {
+    recordCheck('secretSafety', 'SECURITY', 'FAIL', `CRITICAL: Secrets or tracked .env files detected (${secretReport.violations.length} violations)!`, {
+      violations: secretReport.violations.map(v => ({ file: v.file, rule: v.rule })) // Redacted, no secrets logged!
+    });
+    results.recommendations.push('Remove all tracked .env and credential files from git.');
+  }
+
+  // If in PREFLIGHT mode, stop here and return!
+  if (isPreflight) {
+    if (results.summary.failed > 0) {
+      results.status = 'BLOCKED';
+    } else if (results.summary.warnings > 0) {
+      results.status = 'READY_WITH_OPTIONAL_LIMITATIONS';
+    } else {
+      results.status = 'READY';
+    }
+    return results;
+  }
+
+  // FULL MODE CONTINUATION:
+  // 6. Dependencies State
   const nodeModulesExists = fs.existsSync(path.join(projectRoot, 'node_modules'));
   const vitestExists = fs.existsSync(path.join(projectRoot, 'node_modules', 'vitest'));
   const tscExists = fs.existsSync(path.join(projectRoot, 'node_modules', 'typescript'));
   if (nodeModulesExists && vitestExists && tscExists) {
     recordCheck('dependenciesState', 'CORE_REQUIRED', 'PASS', 'Monorepo dependencies installed and verified', { nodeModules: true, vitest: true, typescript: true });
   } else {
-    recordCheck('dependenciesState', 'CORE_REQUIRED', 'FAIL', 'Dependencies incomplete or uninstalled. Run bootstrap or npm/pnpm install');
-    results.recommendations.push('Run bootstrap script or install dependencies.');
+    recordCheck('dependenciesState', 'CORE_REQUIRED', 'FAIL', 'Dependencies incomplete or uninstalled. Run pnpm install --frozen-lockfile');
+    results.recommendations.push('Run bootstrap script or install dependencies with pnpm install.');
   }
 
-  // 5. TypeScript Monorepo Build Availability
+  // 7. TypeScript Monorepo Build Availability
   const expectedDistTargets = [
     'design-core/dist/index.js',
     'adapters/contract/dist/index.js',
@@ -116,11 +226,11 @@ export async function runDoctor(options = {}) {
   if (missingDists.length === 0) {
     recordCheck('monorepoBuild', 'FEATURE_REQUIRED', 'PASS', 'All 18 monorepo build artifacts compiled and present', { targetsChecked: expectedDistTargets.length });
   } else {
-    recordCheck('monorepoBuild', 'FEATURE_REQUIRED', 'FAIL', `Missing build artifacts (${missingDists.length}): ${missingDists.slice(0, 3).join(', ')}... Run "npm run build"`);
-    results.recommendations.push('Build the monorepo using "npm run build" or "pnpm build".');
+    recordCheck('monorepoBuild', 'FEATURE_REQUIRED', 'FAIL', `Missing build artifacts (${missingDists.length}): ${missingDists.slice(0, 3).join(', ')}... Run "pnpm run build"`);
+    results.recommendations.push('Build the monorepo using "pnpm run build".');
   }
 
-  // 6. MCP Server Build & Canonical Tool Count (124 tools)
+  // 8. MCP Server Build & Canonical Tool Count (124 tools)
   const mcpServerDist = path.join(projectRoot, 'packages', 'mcp-server', 'dist', 'index.js');
   if (fs.existsSync(mcpServerDist)) {
     try {
@@ -139,7 +249,7 @@ export async function runDoctor(options = {}) {
     recordCheck('mcpServer', 'FEATURE_REQUIRED', 'FAIL', 'packages/mcp-server/dist/index.js is missing');
   }
 
-  // 7. Skill Registry Parity (74 skills: 55 active + 19 deprecated)
+  // 9. Skill Registry Parity (74 skills: 55 active + 19 deprecated)
   const skillsDir = path.join(projectRoot, 'skills');
   if (fs.existsSync(skillsDir)) {
     try {
@@ -173,7 +283,7 @@ export async function runDoctor(options = {}) {
     recordCheck('skillRegistry', 'FEATURE_REQUIRED', 'FAIL', 'skills directory missing');
   }
 
-  // 8. Hooks Static Configuration
+  // 10. Hooks Static Configuration
   const hooksConfigPath = path.join(projectRoot, 'hooks.json');
   const guardScriptPath = path.join(projectRoot, 'scripts', 'guard-destructive-command.js');
   if (fs.existsSync(hooksConfigPath) && fs.existsSync(guardScriptPath)) {
@@ -182,42 +292,7 @@ export async function runDoctor(options = {}) {
     recordCheck('hooksConfiguration', 'FEATURE_REQUIRED', 'WARN', 'hooks.json or guard script missing');
   }
 
-  // 9. Environment Manifest Contract
-  const manifestPath = path.join(projectRoot, 'environment-manifest.json');
-  if (fs.existsSync(manifestPath)) {
-    try {
-      const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
-      if (manifest.system === 'alper-design-os' && manifest.contract) {
-        recordCheck('environmentManifest', 'FEATURE_REQUIRED', 'PASS', 'Environment manifest contract verified', { version: manifest.version });
-      } else {
-        recordCheck('environmentManifest', 'FEATURE_REQUIRED', 'WARN', 'Environment manifest contract schema incomplete');
-      }
-    } catch {
-      recordCheck('environmentManifest', 'FEATURE_REQUIRED', 'WARN', 'Environment manifest unparseable');
-    }
-  } else {
-    recordCheck('environmentManifest', 'FEATURE_REQUIRED', 'FAIL', 'environment-manifest.json missing');
-  }
-
-  // 10. Git Status & Secret Leak Prevention
-  try {
-    const gitStatus = execSync('git status -s', { encoding: 'utf-8', cwd: projectRoot });
-    const isEnvTracked = /(^|\n)\s*\S+\s+\.env(\n|$)/.test(gitStatus);
-    if (isEnvTracked) {
-      recordCheck('secretSafety', 'SECURITY', 'FAIL', 'CRITICAL: .env file is tracked by git repository!');
-      results.recommendations.push('Remove .env from git tracking immediately: git rm --cached .env');
-    } else {
-      recordCheck('secretSafety', 'SECURITY', 'PASS', 'No sensitive .env files tracked in version control');
-    }
-
-    const branch = execSync('git branch --show-current', { encoding: 'utf-8', cwd: projectRoot }).trim();
-    recordCheck('gitState', 'CORE_REQUIRED', 'PASS', `Git tracking active on branch "${branch}"`, { branch, dirty: gitStatus.trim().length > 0 });
-  } catch (e) {
-    recordCheck('gitState', 'CORE_REQUIRED', 'FAIL', `Git command execution failed: ${e.message}`);
-  }
-
   // 11. Optional Tools Detection (Docker, Browser, .NET, PHP)
-  // Docker
   try {
     const dockerV = execSync('docker --version', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
     recordCheck('dockerRuntime', 'OPTIONAL', 'PASS', `Docker available (${dockerV})`);
@@ -225,7 +300,6 @@ export async function runDoctor(options = {}) {
     recordCheck('dockerRuntime', 'OPTIONAL', 'OPTIONAL_NOT_FOUND', 'Docker not found. Optional containerized execution unavailable.');
   }
 
-  // Headless Browser / Playwright
   try {
     const pwV = execSync('npx playwright --version', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'], cwd: projectRoot }).trim();
     recordCheck('browserRuntime', 'OPTIONAL', 'PASS', `Playwright available (${pwV})`);
@@ -233,7 +307,6 @@ export async function runDoctor(options = {}) {
     recordCheck('browserRuntime', 'OPTIONAL', 'OPTIONAL_NOT_FOUND', 'Playwright runtime not installed. E2E browser tests run in operator fallback mode.');
   }
 
-  // .NET SDK
   try {
     const dotnetV = execSync('dotnet --version', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
     recordCheck('dotnetSdk', 'OPTIONAL', 'PASS', `.NET SDK available (${dotnetV})`);
@@ -241,7 +314,6 @@ export async function runDoctor(options = {}) {
     recordCheck('dotnetSdk', 'OPTIONAL', 'OPTIONAL_NOT_FOUND', '.NET SDK not found. ASPNET_RAZOR builds will require host toolchain or container.');
   }
 
-  // PHP & Composer
   try {
     const phpV = execSync('php -v', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).split('\n')[0].trim();
     recordCheck('phpRuntime', 'OPTIONAL', 'PASS', `PHP available (${phpV})`);
@@ -251,7 +323,6 @@ export async function runDoctor(options = {}) {
 
   // Compute Overall Status
   if (results.summary.failed > 0) {
-    // Check if failure is core vs action
     const hasCoreFail = Object.values(results.checks).some(c => c.category === 'CORE_REQUIRED' && c.status === 'FAIL');
     const hasSecurityFail = Object.values(results.checks).some(c => c.category === 'SECURITY' && c.status === 'FAIL');
     if (hasCoreFail || hasSecurityFail) {
@@ -279,10 +350,11 @@ if (isDirectRun || process.argv.includes('--run-direct')) {
     }
 
     console.log('========================================================');
-    console.log('  ALPER DESIGN OS - Doctor V2 System Health Diagnostic');
+    console.log(`  ALPER DESIGN OS - Doctor V2 System Health Diagnostic [${res.mode}]`);
     console.log('========================================================');
     console.log(`Timestamp: ${res.timestamp}`);
     console.log(`Project:   ${res.projectRoot}`);
+    console.log(`Mode:      ${res.mode}`);
     console.log(`Status:    ${res.status}`);
     console.log('--------------------------------------------------------\n');
 

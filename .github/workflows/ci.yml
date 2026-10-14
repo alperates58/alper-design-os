@@ -10,8 +10,8 @@ permissions:
   contents: read
 
 jobs:
-  matrix-build-test:
-    name: Build & Test (${{ matrix.os }}, Node ${{ matrix.node-version }})
+  core-portability-matrix:
+    name: Core Portability (${{ matrix.os }}, Node ${{ matrix.node-version }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -20,44 +20,83 @@ jobs:
         node-version: [20.x, 22.x]
 
     steps:
-      - name: Checkout Code
+      - name: Checkout Repository
         uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
 
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+          cache: 'pnpm'
+          cache-dependency-path: 'pnpm-lock.yaml'
 
-      - name: Setup .NET SDK (for ASPNET_RAZOR generated builds)
+      - name: Preflight Doctor Check (Prerequisites & Clean Topology)
+        run: node scripts/doctor.js --preflight
+
+      - name: Install Monorepo Dependencies (Deterministic Frozen Lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Monorepo (TypeScript Composite Build)
+        run: pnpm run build
+
+      - name: Run Test Suite (Vitest)
+        run: pnpm test
+
+      - name: Full System Doctor Check
+        run: node scripts/doctor.js --json
+
+  generated-project-certification:
+    name: Generated Project Native Build Certification & Packaging
+    needs: [core-portability-matrix]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - name: Setup Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'pnpm'
+          cache-dependency-path: 'pnpm-lock.yaml'
+
+      - name: Setup .NET SDK 8.0 (for ASPNET_RAZOR native builds)
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
 
-      - name: Setup PHP (for LARAVEL_BLADE generated builds)
-        if: runner.os == 'Linux'
+      - name: Setup PHP 8.2 & Composer (for LARAVEL_BLADE native builds)
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
           tools: composer
 
-      - name: Verify Environment Contract
-        run: node scripts/doctor.js
-
       - name: Install Monorepo Dependencies
-        run: npm ci || npm install
+        run: pnpm install --frozen-lockfile
 
-      - name: Build Monorepo (TypeScript Composite Build)
-        run: npm run build
+      - name: Build Monorepo
+        run: pnpm run build
 
-      - name: Run Test Suite (Vitest)
-        run: npm test
-
-      - name: Verify Doctor V2 Health
-        run: node scripts/doctor.js --json
-
-      - name: Run Generated Project Native Build Matrix
+      - name: Execute Real Generated Project Native Build Matrix
         run: node scripts/verify-generated-builds.js
 
       - name: Validate Version Consistency & Release Packaging
         run: node scripts/package-distribution.js
+
+      - name: Upload Pre-v1 Release Candidate Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: alper-design-os-release-candidate
+          path: dist-release/
+          if-no-files-found: error
