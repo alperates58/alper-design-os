@@ -183,6 +183,7 @@ describe('Phase 1I: Portability, CI/CD, Bootstrap & Distribution V1', () => {
 
   // 10. Generated Project Native Build Evidence Ingestion
   it('10. verifies generated project build matrix produces verifiable evidence records across all 4 stacks', async () => {
+    const { execSync } = await import('node:child_process');
     const summary = await verifyGeneratedBuilds({ repoRoot });
     expect(summary.totalStacks).toBe(4);
     expect(summary.results.length).toBe(4);
@@ -197,17 +198,40 @@ describe('Phase 1I: Portability, CI/CD, Bootstrap & Distribution V1', () => {
     expect(reactRes?.evidenceKind).toBe('STATIC_ANALYSIS');
     expect(reactRes?.verificationStatus).toBe('VERIFIED');
 
+    // Optional toolchain detection
+    let hasPhp = false;
+    try {
+      execSync('php -v', { stdio: 'pipe' });
+      hasPhp = true;
+    } catch {}
+
     const laravelRes = summary.results.find(r => r.stack === 'LARAVEL_BLADE');
     expect(laravelRes).toBeDefined();
     expect(laravelRes?.evidenceKind).toBe('STATIC_ANALYSIS');
-    expect(laravelRes?.verificationStatus).toBe('VERIFIED');
+    if (hasPhp) {
+      expect(laravelRes?.verificationStatus).toBe('VERIFIED');
+    }
+
+    let hasDotnet = false;
+    try {
+      execSync('dotnet --version', { stdio: 'pipe' });
+      hasDotnet = true;
+    } catch {}
 
     const aspnetRes = summary.results.find(r => r.stack === 'ASPNET_RAZOR');
     expect(aspnetRes).toBeDefined();
     expect(aspnetRes?.evidenceKind).toBe('STATIC_ANALYSIS');
-    expect(aspnetRes?.verificationStatus).toBe('VERIFIED');
+    if (hasDotnet) {
+      expect(aspnetRes?.verificationStatus).toBe('VERIFIED');
+    }
 
-    expect(summary.globalDebtStatus).toBe('VERIFIED');
+    if (hasPhp && hasDotnet) {
+      expect(summary.globalDebtStatus).toBe('VERIFIED');
+      expect(summary.allVerified).toBe(true);
+    } else {
+      expect(['PARTIALLY_VERIFIED', 'NOT_VERIFIED']).toContain(summary.globalDebtStatus);
+      expect(summary.allVerified).toBe(false);
+    }
   });
 
   // 11. Doctor Preflight Mode
