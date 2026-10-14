@@ -946,7 +946,9 @@ export const EvaluateModernizationCompletionInputSchema = z.object({
         'NOT_VERIFIED'
       ])
     )
-    .optional()
+    .optional(),
+  gateEvidence: z.record(z.any()).optional(),
+  gatePolicies: z.record(z.any()).optional()
 });
 export type EvaluateModernizationCompletionInput = z.infer<typeof EvaluateModernizationCompletionInputSchema>;
 

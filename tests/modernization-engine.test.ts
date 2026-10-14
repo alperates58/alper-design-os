@@ -30,7 +30,14 @@ import {
   runBladeModernizationDrill,
   runRazorModernizationDrill,
   runPlainWebModernizationDrill,
-  runMultiStackModernizationDrill
+  runMultiStackModernizationDrill,
+  EvidenceKindSchema,
+  VerificationStatusSchema,
+  AssuranceLevelSchema,
+  DEFAULT_GATE_EVIDENCE_POLICIES,
+  evaluateGateEvidencePolicy,
+  mapLegacyEvidenceLevel,
+  GateEvidenceRequirement
 } from '@alper-design-os/agent-governance';
 
 describe('ALPER DESIGN OS - FAZ 1F.0: Existing Project Modernization Engine Foundation', () => {
@@ -1121,4 +1128,226 @@ describe('ALPER DESIGN OS - FAZ 1F.0.2: Evidence Provenance Hardening & Multi-St
     expect(completion.evidenceLevels?.humanVisualApproval).toBe('NOT_VERIFIED');
   });
 });
+
+// =========================================================================
+// FAZ 1F.0.2.1: Evidence Taxonomy & Gate-Specific Assurance Hotfix
+// =========================================================================
+
+describe('ALPER DESIGN OS - FAZ 1F.0.2.1: Evidence Taxonomy & Gate-Specific Assurance Hotfix', () => {
+  const fixturesDir = path.resolve('tests/fixtures');
+  const workspacesDir = path.resolve('tests/workspaces');
+
+  // 1. NOT_VERIFIED is status, not evidence kind
+  it('1. NOT_VERIFIED is status, not evidence kind: schema validation confirms separation', () => {
+    // EvidenceKind accepts only actual methodologies
+    expect(EvidenceKindSchema.safeParse('NOT_VERIFIED').success).toBe(false);
+    expect(EvidenceKindSchema.safeParse('STATIC_ANALYSIS').success).toBe(true);
+    expect(EvidenceKindSchema.safeParse('HEURISTIC_REVIEW').success).toBe(true);
+    expect(EvidenceKindSchema.safeParse('UNIT_TEST').success).toBe(true);
+    expect(EvidenceKindSchema.safeParse('INTEGRATION_TEST').success).toBe(true);
+    expect(EvidenceKindSchema.safeParse('RUNTIME_CHECK').success).toBe(true);
+    expect(EvidenceKindSchema.safeParse('BROWSER_TEST').success).toBe(true);
+    expect(EvidenceKindSchema.safeParse('HUMAN_REVIEW').success).toBe(true);
+
+    // VerificationStatus accepts verification states including NOT_VERIFIED
+    expect(VerificationStatusSchema.safeParse('NOT_VERIFIED').success).toBe(true);
+    expect(VerificationStatusSchema.safeParse('VERIFIED').success).toBe(true);
+    expect(VerificationStatusSchema.safeParse('PARTIALLY_VERIFIED').success).toBe(true);
+    expect(VerificationStatusSchema.safeParse('FAILED').success).toBe(true);
+    expect(VerificationStatusSchema.safeParse('NOT_APPLICABLE').success).toBe(true);
+  });
+
+  // 2. Human visual review cannot satisfy security gate
+  it('2. human visual review cannot satisfy security gate: casual comment is rejected by security policy', () => {
+    const securityPolicy = DEFAULT_GATE_EVIDENCE_POLICIES.security;
+    const result = evaluateGateEvidencePolicy(
+      securityPolicy,
+      [{ kind: 'HUMAN_REVIEW', status: 'VERIFIED', description: 'User stated: looks secure to me' }],
+      'PASS'
+    );
+    expect(result.policySatisfied).toBe(false);
+    expect(result.status).toBe('NOT_VERIFIED');
+    expect(result.missingEvidence.some(m => m.includes("Evidence kind 'HUMAN_REVIEW' is NOT accepted by gate 'security'"))).toBe(true);
+  });
+
+  // 3. Browser test cannot automatically satisfy static security requirement
+  it('3. browser test cannot automatically satisfy static security requirement', () => {
+    const securityPolicy = DEFAULT_GATE_EVIDENCE_POLICIES.security;
+    const result = evaluateGateEvidencePolicy(
+      securityPolicy,
+      [{ kind: 'BROWSER_TEST', status: 'VERIFIED', description: 'E2E browser smoke test passed' }],
+      'PASS'
+    );
+    expect(result.policySatisfied).toBe(false);
+    expect(result.status).toBe('NOT_VERIFIED');
+    expect(result.missingEvidence.some(m => m.includes("Evidence kind 'BROWSER_TEST' is NOT accepted by gate 'security'"))).toBe(true);
+  });
+
+  // 4. Heuristic review cannot satisfy human approval gate
+  it('4. heuristic review cannot satisfy human approval gate in production', () => {
+    const humanGatePolicy = DEFAULT_GATE_EVIDENCE_POLICIES.humanVisualApproval;
+    const result = evaluateGateEvidencePolicy(
+      humanGatePolicy,
+      [{ kind: 'HEURISTIC_REVIEW', status: 'VERIFIED', description: 'Visual AI rated aesthetics 96/100' }],
+      'PASS',
+      { isSyntheticDrill: false }
+    );
+    expect(result.policySatisfied).toBe(false);
+    expect(result.missingEvidence.some(m => m.includes("strictly requires human review ('HUMAN_REVIEW')"))).toBe(true);
+  });
+
+  // 5. Unit test cannot masquerade as runtime execution
+  it('5. unit test cannot masquerade as runtime execution', () => {
+    const integrity = validateEvidenceLevelIntegrity('technical', 'RUNTIME_CHECK', {
+      hasUnitTestExecution: true,
+      hasRealRuntimeOutput: false,
+      hasBrowserExecution: false,
+      isStaticAnalysis: true
+    });
+    expect(integrity.valid).toBe(false);
+    expect(integrity.inflationDetected).toBe(true);
+    expect(integrity.reason).toContain('Static analysis cannot masquerade as runtime/browser');
+  });
+
+  // 6. Multiple evidence kinds can satisfy composite gate with HIGH assurance
+  it('6. multiple evidence kinds can satisfy composite gate with HIGH assurance', () => {
+    const a11yPolicy = DEFAULT_GATE_EVIDENCE_POLICIES.accessibility;
+    const result = evaluateGateEvidencePolicy(
+      a11yPolicy,
+      [
+        { kind: 'STATIC_ANALYSIS', status: 'VERIFIED', description: 'Static ARIA & contrast source audit' },
+        { kind: 'BROWSER_TEST', status: 'VERIFIED', description: 'Live axe-core keyboard/focus runtime audit' }
+      ],
+      'PASS'
+    );
+    expect(result.policySatisfied).toBe(true);
+    expect(result.status).toBe('VERIFIED');
+    expect(result.evidence.length).toBe(2);
+    expect(result.assurance).toBe('HIGH');
+  });
+
+  // 7. Gate-specific evidence policy evaluates contextual acceptance per gate
+  it('7. gate-specific evidence policy evaluates contextual acceptance per gate', () => {
+    const customPolicy: GateEvidenceRequirement = {
+      gate: 'databaseInvariants',
+      acceptedKinds: ['INTEGRATION_TEST', 'RUNTIME_CHECK'],
+      requiredKinds: ['INTEGRATION_TEST'],
+      supportingKinds: ['RUNTIME_CHECK'],
+      minimumEvidenceCount: 1,
+      humanRequired: false,
+      runtimeRequired: false,
+      browserRequired: false,
+      allowSyntheticExemption: false
+    };
+
+    // Unit test alone cannot satisfy database invariants requirement
+    const failRes = evaluateGateEvidencePolicy(
+      customPolicy,
+      [{ kind: 'UNIT_TEST', status: 'VERIFIED' }],
+      'PASS'
+    );
+    expect(failRes.policySatisfied).toBe(false);
+
+    // Integration test satisfies policy
+    const passRes = evaluateGateEvidencePolicy(
+      customPolicy,
+      [{ kind: 'INTEGRATION_TEST', status: 'VERIFIED' }],
+      'PASS'
+    );
+    expect(passRes.policySatisfied).toBe(true);
+    expect(passRes.status).toBe('VERIFIED');
+  });
+
+  // 8. Synthetic fixture remains valid without human review via synthetic exemption
+  it('8. synthetic fixture remains valid without human review via synthetic exemption', () => {
+    const humanGatePolicy = DEFAULT_GATE_EVIDENCE_POLICIES.humanVisualApproval;
+    const result = evaluateGateEvidencePolicy(
+      humanGatePolicy,
+      [],
+      'NOT_APPLICABLE_SYNTHETIC_FIXTURE',
+      { isSyntheticDrill: true }
+    );
+    expect(result.policySatisfied).toBe(true);
+    expect(result.status).toBe('NOT_APPLICABLE');
+    expect(result.missingEvidence.length).toBe(0);
+    expect(result.assurance).toBe('HIGH');
+  });
+
+  // 9. Production human visual gate requires HUMAN_REVIEW and blocks release when missing
+  it('9. production human visual gate requires HUMAN_REVIEW and blocks release when missing', () => {
+    const contract = evaluateModernizationCompletion({
+      technical: 'PASS',
+      visualAI: 'PASS',
+      ux: 'PASS',
+      accessibility: 'PASS',
+      security: 'PASS',
+      regression: 'PASS',
+      contentTruth: 'PASS',
+      humanVisualApproval: 'PENDING',
+      isSyntheticDrill: false
+    });
+    expect(contract.isComplete).toBe(false);
+    expect(contract.blockReasons.some(r => r.includes('HUMAN_VISUAL_APPROVAL is mandatory'))).toBe(true);
+    expect(contract.gateResults?.humanVisualApproval.status).toBe('NOT_VERIFIED');
+  });
+
+  // 10. No global ordinal evidence comparison: kinds do not have numeric hierarchy
+  it('10. no global ordinal evidence comparison: kinds do not have numeric hierarchy', () => {
+    // BROWSER_TEST does not satisfy static security
+    const secResult = evaluateGateEvidencePolicy(
+      DEFAULT_GATE_EVIDENCE_POLICIES.security,
+      [{ kind: 'BROWSER_TEST', status: 'VERIFIED' }],
+      'PASS'
+    );
+    expect(secResult.policySatisfied).toBe(false);
+
+    // HUMAN_REVIEW does not satisfy API regression
+    const regResult = evaluateGateEvidencePolicy(
+      DEFAULT_GATE_EVIDENCE_POLICIES.regression,
+      [{ kind: 'HUMAN_REVIEW', status: 'VERIFIED' }],
+      'PASS'
+    );
+    expect(regResult.policySatisfied).toBe(false);
+
+    // HEURISTIC_REVIEW does not satisfy unit test or static analysis in technical gate
+    const techResult = evaluateGateEvidencePolicy(
+      DEFAULT_GATE_EVIDENCE_POLICIES.technical,
+      [{ kind: 'HEURISTIC_REVIEW', status: 'VERIFIED' }],
+      'PASS'
+    );
+    expect(techResult.policySatisfied).toBe(false);
+  });
+
+  // 11. Migration safety & legacy evidence parser maps legacy levels to kind and status
+  it('11. migration safety & legacy evidence parser maps legacy levels to kind and status', () => {
+    expect(mapLegacyEvidenceLevel('STATIC')).toEqual({ kind: 'STATIC_ANALYSIS', status: 'VERIFIED' });
+    expect(mapLegacyEvidenceLevel('HEURISTIC')).toEqual({ kind: 'HEURISTIC_REVIEW', status: 'VERIFIED' });
+    expect(mapLegacyEvidenceLevel('UNIT_TEST')).toEqual({ kind: 'UNIT_TEST', status: 'VERIFIED' });
+    expect(mapLegacyEvidenceLevel('INTEGRATION')).toEqual({ kind: 'INTEGRATION_TEST', status: 'VERIFIED' });
+    expect(mapLegacyEvidenceLevel('RUNTIME')).toEqual({ kind: 'RUNTIME_CHECK', status: 'VERIFIED' });
+    expect(mapLegacyEvidenceLevel('BROWSER')).toEqual({ kind: 'BROWSER_TEST', status: 'VERIFIED' });
+    expect(mapLegacyEvidenceLevel('HUMAN')).toEqual({ kind: 'HUMAN_REVIEW', status: 'VERIFIED' });
+    expect(mapLegacyEvidenceLevel('NOT_VERIFIED')).toEqual({ status: 'NOT_VERIFIED' });
+  });
+
+  // 12. Multi-stack end-to-end drill completion contract carries truthful gateResults
+  it('12. multi-stack end-to-end drill completion contract carries truthful gateResults', () => {
+    const multiDrill = runMultiStackModernizationDrill({
+      baseFixturesDir: fixturesDir,
+      baseWorkspacesDir: workspacesDir
+    });
+    expect(multiDrill.allPassed).toBe(true);
+
+    for (const drill of [multiDrill.react, multiDrill.blade, multiDrill.razor, multiDrill.plain]) {
+      expect(drill.completionContract.isComplete).toBe(true);
+      expect(drill.completionContract.gateResults).toBeDefined();
+      expect(drill.completionContract.gateResults?.technical.status).toBe('VERIFIED');
+      expect(drill.completionContract.gateResults?.visualAI.status).toBe('VERIFIED');
+      expect(drill.completionContract.gateResults?.regression.status).toBe('VERIFIED');
+      expect(drill.completionContract.gateResults?.humanVisualApproval.status).toBe('NOT_APPLICABLE');
+      expect(drill.completionContract.overallAssurance).toBeDefined();
+    }
+  });
+});
+
 

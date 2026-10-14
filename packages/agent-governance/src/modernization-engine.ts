@@ -40,7 +40,19 @@ import {
   ProjectModeTransitionSchema,
   CheckpointPlan,
   VerificationEvidenceLevel,
-  VerificationEvidenceLevelSchema
+  VerificationEvidenceLevelSchema,
+  EvidenceKind,
+  EvidenceKindSchema,
+  VerificationStatus,
+  VerificationStatusSchema,
+  AssuranceLevel,
+  AssuranceLevelSchema,
+  EvidenceItem,
+  EvidenceItemSchema,
+  GateEvidenceRequirement,
+  GateEvidenceRequirementSchema,
+  GateVerificationResult,
+  GateVerificationResultSchema
 } from './types.js';
 
 // =========================================================================
@@ -1926,6 +1938,8 @@ export interface ModernizationCompletionInput {
   contentTruth: 'PASS' | 'FAIL';
   humanVisualApproval: 'APPROVED' | 'PENDING' | 'REJECTED' | 'NOT_APPLICABLE_SYNTHETIC_FIXTURE';
   evidenceLevels?: Record<string, VerificationEvidenceLevel>;
+  gateEvidence?: Record<string, EvidenceItem[] | EvidenceItem>;
+  gatePolicies?: Record<string, GateEvidenceRequirement>;
   evidenceAudits?: Record<string, EvidenceArtifactAudit>;
   isSyntheticDrill?: boolean;
 }
@@ -1940,9 +1954,256 @@ export interface EvidenceArtifactAudit {
   hasHumanApprovalSignature?: boolean;
 }
 
+// -------------------------------------------------------------------------
+// Evidence Taxonomy & Backward Compatibility Parser (FAZ 1F.0.2.1)
+// -------------------------------------------------------------------------
+
+export function mapLegacyEvidenceLevel(legacy: string): { kind?: EvidenceKind; status: VerificationStatus } {
+  switch (legacy) {
+    case 'STATIC':
+      return { kind: 'STATIC_ANALYSIS', status: 'VERIFIED' };
+    case 'HEURISTIC':
+      return { kind: 'HEURISTIC_REVIEW', status: 'VERIFIED' };
+    case 'UNIT_TEST':
+      return { kind: 'UNIT_TEST', status: 'VERIFIED' };
+    case 'INTEGRATION':
+      return { kind: 'INTEGRATION_TEST', status: 'VERIFIED' };
+    case 'RUNTIME':
+      return { kind: 'RUNTIME_CHECK', status: 'VERIFIED' };
+    case 'BROWSER':
+      return { kind: 'BROWSER_TEST', status: 'VERIFIED' };
+    case 'HUMAN':
+      return { kind: 'HUMAN_REVIEW', status: 'VERIFIED' };
+    case 'NOT_VERIFIED':
+      return { status: 'NOT_VERIFIED' };
+    default:
+      if (['STATIC_ANALYSIS', 'HEURISTIC_REVIEW', 'UNIT_TEST', 'INTEGRATION_TEST', 'RUNTIME_CHECK', 'BROWSER_TEST', 'HUMAN_REVIEW'].includes(legacy)) {
+        return { kind: legacy as EvidenceKind, status: 'VERIFIED' };
+      }
+      return { status: 'NOT_VERIFIED' };
+  }
+}
+
+// -------------------------------------------------------------------------
+// Gate-Specific Evidence Policies (Section 4 & 5)
+// -------------------------------------------------------------------------
+
+export const DEFAULT_GATE_EVIDENCE_POLICIES: Record<string, GateEvidenceRequirement> = {
+  technical: {
+    gate: 'technical',
+    acceptedKinds: ['STATIC_ANALYSIS', 'UNIT_TEST', 'INTEGRATION_TEST', 'RUNTIME_CHECK'],
+    requiredKinds: [],
+    supportingKinds: ['RUNTIME_CHECK'],
+    minimumEvidenceCount: 1,
+    humanRequired: false,
+    runtimeRequired: false,
+    browserRequired: false,
+    allowSyntheticExemption: false
+  },
+  visualAI: {
+    gate: 'visualAI',
+    acceptedKinds: ['HEURISTIC_REVIEW', 'BROWSER_TEST'],
+    requiredKinds: ['HEURISTIC_REVIEW'],
+    supportingKinds: ['BROWSER_TEST'],
+    minimumEvidenceCount: 1,
+    humanRequired: false,
+    runtimeRequired: false,
+    browserRequired: false,
+    allowSyntheticExemption: false
+  },
+  ux: {
+    gate: 'ux',
+    acceptedKinds: ['HEURISTIC_REVIEW', 'BROWSER_TEST', 'HUMAN_REVIEW', 'STATIC_ANALYSIS'],
+    requiredKinds: [],
+    supportingKinds: ['BROWSER_TEST', 'HUMAN_REVIEW'],
+    minimumEvidenceCount: 1,
+    humanRequired: false,
+    runtimeRequired: false,
+    browserRequired: false,
+    allowSyntheticExemption: false
+  },
+  accessibility: {
+    gate: 'accessibility',
+    acceptedKinds: ['STATIC_ANALYSIS', 'BROWSER_TEST'],
+    requiredKinds: [],
+    supportingKinds: ['BROWSER_TEST'],
+    minimumEvidenceCount: 1,
+    humanRequired: false,
+    runtimeRequired: false,
+    browserRequired: false,
+    allowSyntheticExemption: false
+  },
+  security: {
+    gate: 'security',
+    acceptedKinds: ['STATIC_ANALYSIS', 'UNIT_TEST', 'INTEGRATION_TEST', 'RUNTIME_CHECK'],
+    requiredKinds: [],
+    supportingKinds: ['RUNTIME_CHECK'],
+    minimumEvidenceCount: 1,
+    humanRequired: false,
+    runtimeRequired: false,
+    browserRequired: false,
+    allowSyntheticExemption: false
+  },
+  regression: {
+    gate: 'regression',
+    acceptedKinds: ['INTEGRATION_TEST', 'RUNTIME_CHECK', 'BROWSER_TEST'],
+    requiredKinds: [],
+    supportingKinds: ['BROWSER_TEST'],
+    minimumEvidenceCount: 1,
+    humanRequired: false,
+    runtimeRequired: false,
+    browserRequired: false,
+    allowSyntheticExemption: false
+  },
+  contentTruth: {
+    gate: 'contentTruth',
+    acceptedKinds: ['STATIC_ANALYSIS', 'RUNTIME_CHECK', 'BROWSER_TEST'],
+    requiredKinds: [],
+    supportingKinds: ['RUNTIME_CHECK', 'BROWSER_TEST'],
+    minimumEvidenceCount: 1,
+    humanRequired: false,
+    runtimeRequired: false,
+    browserRequired: false,
+    allowSyntheticExemption: false
+  },
+  humanVisualApproval: {
+    gate: 'humanVisualApproval',
+    acceptedKinds: ['HUMAN_REVIEW'],
+    requiredKinds: ['HUMAN_REVIEW'],
+    supportingKinds: [],
+    minimumEvidenceCount: 1,
+    humanRequired: true,
+    runtimeRequired: false,
+    browserRequired: false,
+    allowSyntheticExemption: true
+  }
+};
+
+export function evaluateGateEvidencePolicy(
+  policy: GateEvidenceRequirement,
+  evidenceItems: EvidenceItem[],
+  gateStatus: string,
+  options?: { isSyntheticDrill?: boolean }
+): GateVerificationResult {
+  const missingEvidence: string[] = [];
+  const validEvidence: EvidenceItem[] = [];
+
+  // 1. Check synthetic exemption
+  if (options?.isSyntheticDrill && policy.allowSyntheticExemption && policy.gate === 'humanVisualApproval') {
+    return GateVerificationResultSchema.parse({
+      gate: policy.gate,
+      status: 'NOT_APPLICABLE',
+      evidence: [],
+      policySatisfied: true,
+      missingEvidence: [],
+      assurance: 'HIGH'
+    });
+  }
+
+  const isFailedStatus = gateStatus === 'FAIL' || gateStatus === 'REJECTED' || gateStatus === 'BLOCKED';
+
+  // 2. Validate accepted kinds (No global substitution!)
+  for (const item of evidenceItems) {
+    if (!policy.acceptedKinds.includes(item.kind)) {
+      missingEvidence.push(
+        `Evidence kind '${item.kind}' is NOT accepted by gate '${policy.gate}'. Accepted kinds are: [${policy.acceptedKinds.join(', ')}].`
+      );
+    } else {
+      validEvidence.push(item);
+    }
+  }
+
+  // 3. Validate required kinds
+  for (const reqKind of policy.requiredKinds) {
+    const hasKind = validEvidence.some(e => e.kind === reqKind && e.status === 'VERIFIED');
+    if (!hasKind) {
+      missingEvidence.push(
+        `Gate '${policy.gate}' requires evidence of kind '${reqKind}', but none was provided with VERIFIED status.`
+      );
+    }
+  }
+
+  // 4. Validate human requirement
+  if (policy.humanRequired && !options?.isSyntheticDrill) {
+    const hasHuman = validEvidence.some(e => e.kind === 'HUMAN_REVIEW' && e.status === 'VERIFIED');
+    if (!hasHuman) {
+      missingEvidence.push(`Gate '${policy.gate}' strictly requires human review ('HUMAN_REVIEW').`);
+    }
+  }
+
+  // 5. Validate runtime requirement
+  if (policy.runtimeRequired) {
+    const hasRuntime = validEvidence.some(e => (e.kind === 'RUNTIME_CHECK' || e.kind === 'BROWSER_TEST') && e.status === 'VERIFIED');
+    if (!hasRuntime) {
+      missingEvidence.push(`Gate '${policy.gate}' requires live runtime or browser verification.`);
+    }
+  }
+
+  // 6. Validate browser requirement
+  if (policy.browserRequired) {
+    const hasBrowser = validEvidence.some(e => e.kind === 'BROWSER_TEST' && e.status === 'VERIFIED');
+    if (!hasBrowser) {
+      missingEvidence.push(`Gate '${policy.gate}' requires browser test execution ('BROWSER_TEST').`);
+    }
+  }
+
+  // 7. Check minimum verified count
+  const verifiedCount = validEvidence.filter(e => e.status === 'VERIFIED').length;
+  if (verifiedCount < policy.minimumEvidenceCount) {
+    missingEvidence.push(
+      `Gate '${policy.gate}' requires at least ${policy.minimumEvidenceCount} verified evidence item(s), but found ${verifiedCount}.`
+    );
+  }
+
+  // 8. Determine status
+  let status: VerificationStatus = 'VERIFIED';
+  let policySatisfied = false;
+
+  if (isFailedStatus) {
+    status = 'FAILED';
+    policySatisfied = false;
+  } else if (validEvidence.length === 0) {
+    status = 'NOT_VERIFIED';
+    policySatisfied = false;
+  } else if (missingEvidence.length > 0) {
+    status = 'PARTIALLY_VERIFIED';
+    policySatisfied = false;
+  } else {
+    status = 'VERIFIED';
+    policySatisfied = true;
+  }
+
+  // 9. Determine assurance level
+  let assurance: AssuranceLevel = 'MEDIUM';
+  if (status === 'FAILED' || status === 'NOT_VERIFIED' || status === 'PARTIALLY_VERIFIED') {
+    assurance = 'LOW';
+  } else if (policySatisfied) {
+    const distinctKinds = new Set(validEvidence.map(e => e.kind));
+    const hasSupporting = policy.supportingKinds.some(sk => distinctKinds.has(sk));
+    if (distinctKinds.size >= 2 || hasSupporting || distinctKinds.has('HUMAN_REVIEW')) {
+      assurance = 'HIGH';
+    } else {
+      assurance = 'MEDIUM';
+    }
+  }
+
+  return GateVerificationResultSchema.parse({
+    gate: policy.gate,
+    status,
+    evidence: validEvidence,
+    policySatisfied,
+    missingEvidence,
+    assurance
+  });
+}
+
+// -------------------------------------------------------------------------
+// Anti-Inflation Verification Guard (Section 3)
+// -------------------------------------------------------------------------
+
 export function validateEvidenceLevelIntegrity(
   gate: string,
-  declaredLevel: VerificationEvidenceLevel,
+  declaredLevel: VerificationEvidenceLevel | EvidenceKind,
   audit?: EvidenceArtifactAudit
 ): {
   valid: boolean;
@@ -1955,7 +2216,7 @@ export function validateEvidenceLevelIntegrity(
 
   // 1. STATIC analysis cannot masquerade as RUNTIME or BROWSER
   if (audit.isStaticAnalysis && !audit.hasRealRuntimeOutput && !audit.hasBrowserExecution) {
-    if (declaredLevel === 'RUNTIME' || declaredLevel === 'BROWSER') {
+    if (declaredLevel === 'RUNTIME' || declaredLevel === 'RUNTIME_CHECK' || declaredLevel === 'BROWSER' || declaredLevel === 'BROWSER_TEST') {
       return {
         valid: false,
         inflationDetected: true,
@@ -1966,28 +2227,32 @@ export function validateEvidenceLevelIntegrity(
 
   // 2. HEURISTIC AI evaluation cannot masquerade as HUMAN approval
   if (audit.isHeuristicAI && !audit.hasHumanApprovalSignature) {
-    if (declaredLevel === 'HUMAN') {
+    if (declaredLevel === 'HUMAN' || declaredLevel === 'HUMAN_REVIEW') {
       return {
         valid: false,
         inflationDetected: true,
-        reason: `Evidence Inflation: Gate '${gate}' is an AI heuristic evaluation but declared inflated evidenceLevel 'HUMAN'. AI heuristics cannot masquerade as human approval.`
+        reason: `Evidence Inflation: Gate '${gate}' is an AI heuristic evaluation but declared inflated evidenceLevel '${declaredLevel}'. AI heuristics cannot masquerade as human approval.`
       };
     }
   }
 
   // 3. Unit test cannot masquerade as BROWSER
   if (audit.hasUnitTestExecution && !audit.hasBrowserExecution) {
-    if (declaredLevel === 'BROWSER') {
+    if (declaredLevel === 'BROWSER' || declaredLevel === 'BROWSER_TEST') {
       return {
         valid: false,
         inflationDetected: true,
-        reason: `Evidence Inflation: Gate '${gate}' executed unit tests but declared inflated evidenceLevel 'BROWSER'. Unit tests cannot stand in for real browser execution.`
+        reason: `Evidence Inflation: Gate '${gate}' executed unit tests but declared inflated evidenceLevel '${declaredLevel}'. Unit tests cannot stand in for real browser execution.`
       };
     }
   }
 
   return { valid: true, inflationDetected: false };
 }
+
+// -------------------------------------------------------------------------
+// Completion Evaluation Engine (Section 10)
+// -------------------------------------------------------------------------
 
 export function evaluateModernizationCompletion(
   input: ModernizationCompletionInput
@@ -2021,7 +2286,7 @@ export function evaluateModernizationCompletion(
     blockReasons.push(`HUMAN_VISUAL_APPROVAL is mandatory before finalization. Current status: ${input.humanVisualApproval}.`);
   }
 
-  // Default truthful evidence levels
+  // Default truthful evidence levels (backward compatibility)
   const defaultEvidenceLevels: Record<string, VerificationEvidenceLevel> = {
     technical: 'STATIC',
     visualAI: 'HEURISTIC',
@@ -2046,6 +2311,84 @@ export function evaluateModernizationCompletion(
     }
   }
 
+  // Gate-specific evidence policies and results (FAZ 1F.0.2.1)
+  const policies = { ...DEFAULT_GATE_EVIDENCE_POLICIES, ...(input.gatePolicies || {}) };
+  const gateResults: Record<string, GateVerificationResult> = {};
+  const gates = ['technical', 'visualAI', 'ux', 'accessibility', 'security', 'regression', 'contentTruth', 'humanVisualApproval'];
+
+  for (const gate of gates) {
+    const policy = policies[gate] || {
+      gate,
+      acceptedKinds: ['STATIC_ANALYSIS', 'HEURISTIC_REVIEW', 'UNIT_TEST', 'INTEGRATION_TEST', 'RUNTIME_CHECK', 'BROWSER_TEST', 'HUMAN_REVIEW'],
+      requiredKinds: [],
+      supportingKinds: [],
+      minimumEvidenceCount: 1,
+      humanRequired: false,
+      runtimeRequired: false,
+      browserRequired: false,
+      allowSyntheticExemption: false
+    };
+
+    let items: EvidenceItem[] = [];
+
+    if (input.gateEvidence && input.gateEvidence[gate]) {
+      const raw = input.gateEvidence[gate];
+      const arr = Array.isArray(raw) ? raw : [raw];
+      items = arr.map(item => {
+        if (typeof item === 'string') {
+          const mapped = mapLegacyEvidenceLevel(item);
+          return { kind: mapped.kind || 'STATIC_ANALYSIS', status: mapped.status };
+        }
+        return item;
+      });
+    } else {
+      // Build truthful default evidence items from evidenceLevels
+      const legacyLevel = evidenceLevels[gate] || 'STATIC';
+      const mapped = mapLegacyEvidenceLevel(legacyLevel);
+      if (mapped.kind) {
+        items.push({
+          kind: mapped.kind,
+          status: mapped.status,
+          source: `gate-${gate}-verifier`
+        });
+      }
+    }
+
+    let statusStr = 'PASS';
+    if (gate === 'technical') statusStr = input.technical;
+    else if (gate === 'visualAI') statusStr = input.visualAI === 'FAIL' ? 'FAIL' : 'PASS';
+    else if (gate === 'ux') statusStr = input.ux;
+    else if (gate === 'accessibility') statusStr = input.accessibility;
+    else if (gate === 'security') statusStr = input.security;
+    else if (gate === 'regression') statusStr = input.regression;
+    else if (gate === 'contentTruth') statusStr = input.contentTruth;
+    else if (gate === 'humanVisualApproval') statusStr = input.humanVisualApproval;
+
+    const gateRes = evaluateGateEvidencePolicy(policy, items, statusStr, { isSyntheticDrill: input.isSyntheticDrill });
+    gateResults[gate] = gateRes;
+
+    if (!gateRes.policySatisfied) {
+      for (const missing of gateRes.missingEvidence) {
+        if (!blockReasons.includes(missing)) {
+          blockReasons.push(missing);
+        }
+      }
+    }
+  }
+
+  // Calculate overall assurance
+  const activeResults = Object.values(gateResults).filter(g => g.status !== 'NOT_APPLICABLE');
+  let overallAssurance: AssuranceLevel = 'MEDIUM';
+  if (activeResults.length === 0 || Object.values(gateResults).some(g => g.status === 'FAILED' || g.status === 'PARTIALLY_VERIFIED')) {
+    overallAssurance = 'LOW';
+  } else if (activeResults.every(g => g.assurance === 'HIGH')) {
+    overallAssurance = 'HIGH';
+  } else if (activeResults.some(g => g.assurance === 'LOW')) {
+    overallAssurance = 'LOW';
+  } else {
+    overallAssurance = 'MEDIUM';
+  }
+
   const isComplete = blockReasons.length === 0;
   let verdict: ModernizationCompletionContract['verdict'] = 'COMPLETE';
 
@@ -2063,6 +2406,8 @@ export function evaluateModernizationCompletion(
     contentTruth: input.contentTruth,
     humanVisualApproval: input.humanVisualApproval,
     evidenceLevels,
+    gateResults,
+    overallAssurance,
     isComplete,
     verdict,
     blockReasons

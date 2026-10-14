@@ -1326,7 +1326,7 @@ export const BaselineQualityProfileSchema = z.object({
 });
 export type BaselineQualityProfile = z.infer<typeof BaselineQualityProfileSchema>;
 
-// 26.8b Verification Evidence Level (Section 2 & 3)
+// 26.8b Verification Evidence Level (Legacy - FAZ 1F.0.2 - Deprecated for linear ordering)
 export const VerificationEvidenceLevelSchema = z.enum([
   'STATIC',
   'HEURISTIC',
@@ -1338,6 +1338,69 @@ export const VerificationEvidenceLevelSchema = z.enum([
   'NOT_VERIFIED'
 ]);
 export type VerificationEvidenceLevel = z.infer<typeof VerificationEvidenceLevelSchema>;
+
+// 26.8c Evidence Taxonomy & Gate-Specific Assurance (FAZ 1F.0.2.1)
+export const EvidenceKindSchema = z.enum([
+  'STATIC_ANALYSIS',
+  'HEURISTIC_REVIEW',
+  'UNIT_TEST',
+  'INTEGRATION_TEST',
+  'RUNTIME_CHECK',
+  'BROWSER_TEST',
+  'HUMAN_REVIEW'
+]);
+export type EvidenceKind = z.infer<typeof EvidenceKindSchema>;
+
+export const VerificationStatusSchema = z.enum([
+  'VERIFIED',
+  'PARTIALLY_VERIFIED',
+  'NOT_VERIFIED',
+  'FAILED',
+  'NOT_APPLICABLE'
+]);
+export type VerificationStatus = z.infer<typeof VerificationStatusSchema>;
+
+export const AssuranceLevelSchema = z.enum([
+  'LOW',
+  'MEDIUM',
+  'HIGH'
+]);
+export type AssuranceLevel = z.infer<typeof AssuranceLevelSchema>;
+
+export const EvidenceItemSchema = z.object({
+  kind: EvidenceKindSchema,
+  status: VerificationStatusSchema.default('VERIFIED'),
+  source: z.string().optional(),
+  description: z.string().optional(),
+  artifactUri: z.string().optional(),
+  timestamp: z.string().optional(),
+  confidence: z.number().min(0).max(1).optional(),
+  metadata: z.record(z.any()).optional()
+});
+export type EvidenceItem = z.infer<typeof EvidenceItemSchema>;
+
+export const GateEvidenceRequirementSchema = z.object({
+  gate: z.string(),
+  requiredKinds: z.array(EvidenceKindSchema).default([]),
+  acceptedKinds: z.array(EvidenceKindSchema),
+  supportingKinds: z.array(EvidenceKindSchema).default([]),
+  minimumEvidenceCount: z.number().int().min(1).default(1),
+  humanRequired: z.boolean().default(false),
+  runtimeRequired: z.boolean().default(false),
+  browserRequired: z.boolean().default(false),
+  allowSyntheticExemption: z.boolean().default(false)
+});
+export type GateEvidenceRequirement = z.infer<typeof GateEvidenceRequirementSchema>;
+
+export const GateVerificationResultSchema = z.object({
+  gate: z.string(),
+  status: VerificationStatusSchema,
+  evidence: z.array(EvidenceItemSchema),
+  policySatisfied: z.boolean(),
+  missingEvidence: z.array(z.string()),
+  assurance: AssuranceLevelSchema.default('MEDIUM')
+});
+export type GateVerificationResult = z.infer<typeof GateVerificationResultSchema>;
 
 // 26.9 Modernization Stage
 export const ModernizationStageSchema = z.object({
@@ -1358,6 +1421,8 @@ export const ModernizationStageSchema = z.object({
     reviewerCriteria: z.array(z.string())
   }),
   evidenceLevel: VerificationEvidenceLevelSchema.default('STATIC'),
+  evidenceKind: EvidenceKindSchema.default('STATIC_ANALYSIS'),
+  evidenceItems: z.array(EvidenceItemSchema).optional(),
   rollbackSteps: z.array(z.string())
 });
 export type ModernizationStage = z.infer<typeof ModernizationStageSchema>;
@@ -1488,6 +1553,8 @@ export const ModernizationCompletionContractSchema = z.object({
   contentTruth: z.enum(['PASS', 'FAIL']),
   humanVisualApproval: z.enum(['APPROVED', 'PENDING', 'REJECTED', 'NOT_APPLICABLE_SYNTHETIC_FIXTURE']),
   evidenceLevels: z.record(VerificationEvidenceLevelSchema).optional(),
+  gateResults: z.record(GateVerificationResultSchema).optional(),
+  overallAssurance: AssuranceLevelSchema.default('MEDIUM'),
   isComplete: z.boolean(),
   verdict: z.enum(['COMPLETE', 'INCOMPLETE', 'REJECTED']),
   blockReasons: z.array(z.string())

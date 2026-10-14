@@ -35,7 +35,7 @@ pnpm install
 ## 3. Çalıştırılacak Doğrulama Adımları
 
 ### Adım 3.1: Tüm Test Paketini Çalıştırın
-Tüm 17 test dosyasının (337 test, 46 modernization engine testi) geçtiğini doğrulayın:
+Tüm 17 test dosyasının (349 test, 58 modernization engine testi) geçtiğini doğrulayın:
 ```bash
 npm test
 ```
@@ -128,6 +128,7 @@ const approval = recordVisualReview(currentRecord, {
 | Faz 1F.0 Modernization Engine Foundation | **PASS (20 Tests)** | PASS (Entegre) |
 | Faz 1F.0.1 Synthetic End-to-End Drill & Hotfix | **PASS (12 Tests)** | PASS (Entegre) |
 | Faz 1F.0.2 Evidence Provenance & Anti-Inflation | **PASS (14 Tests)** | PASS (Entegre) |
+| Faz 1F.0.2.1 Evidence Taxonomy & Gate Assurance | **PASS (12 Tests)** | PASS (Entegre) |
 | Multi-Stack Drill (React, Blade, Razor, Plain-Web) | **PASS (4 Workspaces)** | PASS (Entegre) |
 | Native Stack Preservation (Zero Colonization) | **PASS** | PASS (Entegre) |
 | Security Invariant Preservation (@csrf / AntiForgery) | **PASS** | PASS (Entegre) |
