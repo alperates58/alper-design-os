@@ -1,14 +1,28 @@
 ---
 name: alper-ai-coding-safety
-description: Guardrails against AI hallucinations, insecure dependencies, credential leaks, and supply chain attacks in AI-generated code.
+description: DEPRECATED - Superseded by alper-secure-coding. Do not use for new tasks.
+status: DEPRECATED
+deprecated: true
+replacement: alper-secure-coding
+capabilityFamily: SECURITY
+userFacing: false
+mcpTools: []
+relatedSkills:
+  - alper-secure-coding
 ---
 
-# Alper AI Coding Safety Skill
+# alper-ai-coding-safety (DEPRECATED)
 
-Specialized guardrails designed for AI-assisted software engineering.
+> [!WARNING]
+> **This skill is permanently deprecated and has been superseded.**
+> Do not use `alper-ai-coding-safety` in new agent prompts, workflows, or context routing.
 
-## Guardrail Rules
-1. **Never Hallucinate Dependencies**: Check npm / packagist / nuget registries before recommending new packages.
-2. **Never Commit Secrets**: Intercept hardcoded API tokens, private keys, or passwords.
-3. **Validate Assumptions**: Never mark an untested flow or capability as "PASS".
-4. **Architectural Consistency**: Ensure AI-generated code conforms to existing repository boundaries and patterns.
+## Superseded By
+Use **`alper-secure-coding`** instead.
+
+## Rationalization & Remediation Context
+Merged into alper-secure-coding and AGENTS.md durable rules to eliminate fragmented AI safety advice.
+
+## Migration Instruction
+- Redirect all routing decisions, prompt triggers, and execution flows to **`alper-secure-coding`**.
+- This skill exists purely for historical tracking and is excluded from active context routing in `packages/agent-governance/src/context-router.ts`.

@@ -1,20 +1,28 @@
 ---
 name: alper-design-source-ranking
-description: Ranks candidate design systems, component libraries, and specialized tools using multi-criteria weighted scoring and generates structured WHY explanations.
+description: DEPRECATED - Superseded by alper-source-intelligence. Do not use for new tasks.
+status: DEPRECATED
+deprecated: true
+replacement: alper-source-intelligence
+capabilityFamily: SOURCE_INTELLIGENCE
+userFacing: false
+mcpTools: []
+relatedSkills:
+  - alper-source-intelligence
 ---
 
-# Alper Design Source Ranking
+# alper-design-source-ranking (DEPRECATED)
 
-This skill performs transparent multi-criteria evaluation to recommend optimal design systems, icon sets, chart libraries, and data grids.
+> [!WARNING]
+> **This skill is permanently deprecated and has been superseded.**
+> Do not use `alper-design-source-ranking` in new agent prompts, workflows, or context routing.
 
-## Workflow
+## Superseded By
+Use **`alper-source-intelligence`** instead.
 
-1. **Context Extraction**:
-   - Extract domain classification, information density, target framework, and license requirements from `ProductUXProfile`.
-2. **Multi-Dimensional Scoring**:
-   - Compute weighted scores across 7 dimensions: Trust (20%), Accessibility (20%), Stack Compatibility (15%), Maintenance (15%), Documentation (15%), Domain Alignment (10%), License (5%).
-   - Adjust weights dynamically for high-density or industrial applications.
-3. **Conflict Resolution**:
-   - Resolve known design debates (static top labels vs floating labels; server pagination vs infinite scroll; color+shape status indicators).
-4. **Structured Explanation Generation**:
-   - Synthesize `RecommendationExplanation` containing primary reason, dimension breakdown, highlights, and caveats.
+## Rationalization & Remediation Context
+Merged into alper-source-intelligence which houses the weighted multi-criteria ranking engine.
+
+## Migration Instruction
+- Redirect all routing decisions, prompt triggers, and execution flows to **`alper-source-intelligence`**.
+- This skill exists purely for historical tracking and is excluded from active context routing in `packages/agent-governance/src/context-router.ts`.

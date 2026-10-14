@@ -1,35 +1,120 @@
 ---
 name: alper-project-intelligence
-description: Initializes, loads, and manages durable version-controlled project memory, repository-grounded architecture graphs, snapshots, and knowledge health in .alper-design-os/project-intelligence.
+description: Version-controlled project memory in .alper-design-os/project, architecture graph, and knowledge health. Use when executing project intelligence tasks for project intelligence. Do not use for unrelated capability domains or deprecated Phase 0 workflows.
+status: ACTIVE
+capabilityFamily: PROJECT_INTELLIGENCE
+userFacing: true
+mcpTools:
+  - initialize_project_intelligence
+  - load_project_intelligence
+  - record_business_rule
+  - build_project_architecture_graph
+  - create_project_snapshot
+  - detect_knowledge_conflicts
+  - evaluate_project_knowledge_health
+  - record_project_invariant
+relatedSkills:
+  - alper-decision-management
+  - alper-change-impact-analysis
+  - alper-project-continuation
+  - alper-continuous-improvement
 ---
 
 # Alper Project Intelligence Skill
 
-Provides durable, version-controlled project knowledge grounded in real repository artifacts. Enforces **NO CLAIM WITHOUT EVIDENCE** across architecture graphs, snapshots, business rules, decisions, conflict detection, and knowledge health.
+## PURPOSE
+Provides canonical, deterministic agent capability for **Project Intelligence** within the **PROJECT_INTELLIGENCE** capability family.
+Primary focus: Version-controlled project memory in .alper-design-os/project, architecture graph, and knowledge health.
 
-## Core Responsibilities
+## USE WHEN
+- Initiating or progressing tasks requiring project intelligence capabilities.
+- Operating within mode-specific pipelines requiring PROJECT_INTELLIGENCE workflows.
+- Verifying requirements, technical blueprints, or evidence artifacts specifically owned by this capability.
 
-1. **Repository-Grounded Initialization & Snapshots**:
-   - Inspects real repository files (`package.json`, `composer.json`, `.csproj`, migrations, schemas, route definitions, controllers, pages, CSS tokens, and tests).
-   - Never invents fake default routes (`['/dashboard', '/items', '/health']`), fake API inventories, or fake fingerprints (`'fp-tables-users-items'`, `'fp-pkg-prod'`, `'fp-tokens-v1'`). Missing artifacts resolve to `[]` and `'NOT_VERIFIED'`.
-2. **Real Architecture Graph & Change Impact**:
-   - Builds `ProjectArchitectureGraph` from discovered repository files and explicit code artifacts, reporting `completeness` (`COMPLETE | PARTIAL | EMPTY`), `unknownAreas`, `evidenceSources`, and `verificationStatus`.
-   - Never injects hardcoded `AppCore`, `DataModule`, `inventory_items`, or `/api/v1/items` into empty or unrelated repositories.
-   - Computes change impact by traversing real graph edges, ADRs, business rules, and invariants.
-3. **Structured Business Rule & Decision Provenance**:
-   - Requires structured `BusinessRuleSourceType` (`EXPLICIT_USER_SPECIFICATION`, `VERIFIED_CODE_FACT`, `APPROVED_REQUIREMENT`, `REGULATORY_SOURCE`, `AUTHORITATIVE_DOCUMENT`, `DOMAIN_RESEARCH`, `SYSTEM_INFERENCE`, `MODEL_INFERENCE`, `UNKNOWN`) and explicit confirmation/evidence references before marking a rule `VERIFIED`.
-   - Never uses substring heuristics (e.g., `source.includes("Alper")`) to grant `VERIFIED` authority.
-4. **Honest Knowledge Health & Multi-Class Conflict Detection**:
-   - Computes knowledge health from actual populated artifacts, returning `NOT_INITIALIZED` (`0%`) when uninitialized or `INSUFFICIENT_DATA` (`0%`) when empty (never a hardcoded `90%` baseline).
-   - Detects conflicts across 5 classes: ADR vs DB/Auth/Code, Invariant vs Verification/Config, Requirement vs Implementation, Business Rule vs Missing Tests, and Living Docs vs Structured JSON.
+## DO NOT USE WHEN
+- The task strictly belongs to another capability family (e.g. use `alper-greenfield-generator` for new full-stack builds, `alper-modernization-planner` for migrations, or `alper-design-repair` for surgical bug fixes).
+- Attempting to bypass verification gates or generate ungrounded code without prerequisite discovery.
+- Operating on deprecated Phase 0 workflows.
 
-## Associated MCP Tools
-- `initialize_project_intelligence`: Bootstraps project intelligence from real repository artifacts.
-- `load_project_intelligence`: Reads durable project intelligence state.
-- `build_project_architecture_graph`: Constructs repository-grounded dependency graph with completeness metadata.
-- `create_project_snapshot`: Captures truthful structural fingerprints (`NOT_VERIFIED` when absent).
-- `detect_project_drift`: Compares snapshots to identify breaking or review-required drift.
-- `record_project_decision`: Records ADRs with explicit authority source and superseding links.
-- `record_business_rule`: Records business rules with structured provenance and evidence verification.
-- `detect_knowledge_conflicts`: Audits 5 classes of knowledge vs implementation/doc conflicts.
-- `evaluate_project_knowledge_health`: Computes truthful knowledge health without fake baselines.
+## MODE APPLICABILITY
+- Supported Modes: **GREENFIELD**, **MODERNIZATION**, **REPAIR**, and **CONTINUOUS_GOVERNANCE**.
+- Mode Relevance: Enforces capability boundaries whether operating on clean-sheet greenfield or legacy brownfield codebases.
+
+## REQUIRED CONTEXT
+- Validated workspace root and project configuration.
+- Task brief and structured user intent.
+- Up-to-date `.alper-design-os/project` intelligence snapshot (when initialized).
+- Relevant stack profiles and dependency manifests.
+
+## PROJECT INTELLIGENCE LOADING
+- Consults durable project memory in `.alper-design-os/project` prior to action execution.
+- Reads verified architecture graphs, registered entities, and recorded project decisions (ADRs).
+- Strictly rejects hallucinated project memory; missing intelligence triggers truthful intake or initialization.
+
+## DISCOVERY / AMBIGUITY BEHAVIOR
+- If task requirements are incomplete, ambiguous, or lack technical grounding:
+  1. Halt execution immediately before emitting ungrounded changes.
+  2. Emit prioritized clarifying questions to the operator.
+  3. Maintain derived acceptance criteria in `DEFINED` / `NOT_VERIFIED` state until ambiguity is formally resolved.
+
+## WORKFLOW
+1. **Intake & Verification**: Ingest task parameters and verify workspace preconditions.
+2. **Context Assembly**: Load relevant project invariants, schema contracts, and active policies.
+3. **Execution & Tool Invocation**: Dispatch canonical MCP tools (`initialize_project_intelligence`, `load_project_intelligence`, `record_business_rule`, `build_project_architecture_graph`, `create_project_snapshot`, `detect_knowledge_conflicts`, `evaluate_project_knowledge_health`, `record_project_invariant`).
+4. **Evidence Collection**: Gather qualifying verification artifacts (logs, diffs, test evidence).
+5. **Quality Gate Evaluation**: Validate deliverables against release and safety gates.
+6. **Output Synthesis**: Produce structured deliverables and handoff packages for downstream skills.
+
+## DECISION RULES
+- **Invariant Enforcement**: Universal invariant **NO CLAIM WITHOUT EVIDENCE** applies unconditionally.
+- **Fail-Safe Principle**: If a tool returns `NEEDS_CLARIFICATION` or validation fails, stop execution and report truth state.
+- **Scope Guard**: Confine modifications strictly to designated module boundaries. Uninvited modifications to foreign files are blocked.
+
+## MCP TOOL STRATEGY
+- `initialize_project_intelligence`: Canonical handler for initialize project intelligence. Always supply required schema parameters and handle structured return states.
+- `load_project_intelligence`: Canonical handler for load project intelligence. Always supply required schema parameters and handle structured return states.
+- `record_business_rule`: Canonical handler for record business rule. Always supply required schema parameters and handle structured return states.
+- `build_project_architecture_graph`: Canonical handler for build project architecture graph. Always supply required schema parameters and handle structured return states.
+- `create_project_snapshot`: Canonical handler for create project snapshot. Always supply required schema parameters and handle structured return states.
+- `detect_knowledge_conflicts`: Canonical handler for detect knowledge conflicts. Always supply required schema parameters and handle structured return states.
+- `evaluate_project_knowledge_health`: Canonical handler for evaluate project knowledge health. Always supply required schema parameters and handle structured return states.
+- `record_project_invariant`: Canonical handler for record project invariant. Always supply required schema parameters and handle structured return states.
+
+## SOURCE / RESEARCH STRATEGY
+- When referencing design systems, frameworks, or security standards, cite authoritative sources verified by `alper-source-intelligence`.
+- Prohibit ad-hoc, unverified external advice.
+
+## POLICY & GOVERNANCE
+- Complies strictly with `rules/AGENTS.md`.
+- Secret leakage prevention: Never log, store, or emit unredacted credentials or API keys.
+- Destructive command guard: High-risk operations (e.g., hard reset, clean, force push) require explicit operator confirmation.
+
+## HUMAN CHECKPOINTS
+- Ambiguous architectural directions requiring trade-off resolution.
+- Destructive state changes or breaking schema migrations.
+- Visual approval on high-impact user interface changes.
+
+## STOP CONDITIONS
+- Discovery readiness check returns `NEEDS_CLARIFICATION`.
+- Tool execution reports critical validation or gate failure.
+- Scope boundary violation detected by `alper-scope-guard`.
+
+## FAILURE HANDLING
+- On schema failure: Log exact validation error, preserve rollback checkpoint, and return non-zero exit state.
+- On test failure: Mark gate as `FAILED`, capture diagnostic trace, and prevent downstream progression.
+- Never report simulated success or fake PASS results.
+
+## EVIDENCE REQUIREMENTS
+- Every asserted completion must supply qualifying evidence (e.g. `LINT_CLEAN`, `UNIT_TESTS_PASS`, `BUILD_CLEAN`, `HUMAN_REVIEW`).
+- Missing evidence strictly resolves to `NOT_VERIFIED`.
+
+## OUTPUT CONTRACT
+- Structured execution report detailing actions executed, tools invoked, and evidence captured.
+- Verified artifacts and updated project intelligence entries.
+- Explicit handoff envelope for next-phase skills.
+
+## HANDOFF / RELATED SKILLS
+- `alper-decision-management`: Handoff target for sibling PROJECT_INTELLIGENCE operations.
+- `alper-change-impact-analysis`: Handoff target for sibling PROJECT_INTELLIGENCE operations.
+- `alper-project-continuation`: Handoff target for sibling PROJECT_INTELLIGENCE operations.
+- `alper-continuous-improvement`: Handoff target for sibling PROJECT_INTELLIGENCE operations.

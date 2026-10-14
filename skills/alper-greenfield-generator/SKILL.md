@@ -1,34 +1,108 @@
 ---
 name: alper-greenfield-generator
-description: Orchestrates master greenfield project generation, implementation plans, code scaffolding across 4 production stacks, and evidence-backed completion evaluation.
+description: Master Greenfield Orchestrator enforcing Discovery Gate, scaffold correctness, and completion contract. Use when executing greenfield engineering tasks for greenfield generator. Do not use for unrelated capability domains or deprecated Phase 0 workflows.
+status: ACTIVE
+capabilityFamily: GREENFIELD_ENGINEERING
+userFacing: true
+mcpTools:
+  - create_project_blueprint
+  - create_project_implementation_plan
+  - scaffold_new_project
+  - evaluate_new_project_completion
+  - recommend_stack
+relatedSkills:
+  - alper-requirements-engineering
 ---
 
 # Alper Greenfield Generator Skill
 
-Orchestrates the greenfield development lifecycle from validated discovery to runnable codebase across React + TypeScript, Laravel Blade, ASP.NET Razor, and Plain HTML/CSS/JS while enforcing the universal invariant: **NO CLAIM WITHOUT EVIDENCE**.
+## PURPOSE
+Provides canonical, deterministic agent capability for **Greenfield Generator** within the **GREENFIELD_ENGINEERING** capability family.
+Primary focus: Master Greenfield Orchestrator enforcing Discovery Gate, scaffold correctness, and completion contract.
 
-## Pipeline Position
-`DISCOVERY READY -> PROJECT BLUEPRINT -> IMPLEMENTATION PLAN -> SCAFFOLD -> BUILD/RUN -> EVIDENCE VERIFY`
+## USE WHEN
+- Initiating or progressing tasks requiring greenfield generator capabilities.
+- Operating within mode-specific pipelines requiring GREENFIELD_ENGINEERING workflows.
+- Verifying requirements, technical blueprints, or evidence artifacts specifically owned by this capability.
 
-## Core Responsibilities
-1. **Downstream Discovery Guard**:
-   - Never bypass clarification: if `profile.discoveryReadiness.state !== 'READY'` or `create_database_blueprint` / `create_page_inventory` returns `status: 'NEEDS_CLARIFICATION'`, halt blueprint/scaffolding and return the prioritized `clarifyingQuestions` to the user.
-   - Ensure derived `acceptanceCriteria` start in `DEFINED` / `NOT_VERIFIED` (`verified: false`) until real verification evidence is recorded.
-2. **Master Blueprint & Stack-Aware Assembly**:
-   - Synthesize requirements, architecture (supporting `MONOLITH`, `MODULAR_MONOLITH`, `CLIENT_SERVER`, `SERVICE_ORIENTED`, `MICROSERVICES`, `STATIC_FIRST`), stack (marking unrequested stack choices as `REVERSIBLE_ASSUMPTION`), grounded database entities, API, auth, and page inventory into `NewProjectBlueprint`.
-3. **Multi-Stack Buildable Scaffolding**:
-   - Generate genuine, buildable project structures:
-     - `REACT_TYPESCRIPT`: Complete Vite structure (`package.json` with `@vitejs/plugin-react`, `vite.config.ts`, `tsconfig.json`, `index.html`, `src/main.tsx`, `src/vite-env.d.ts`, `src/styles/tokens.css`, `src/App.tsx`).
-     - `LARAVEL_BLADE`: `composer.json`, `routes/web.php`, controllers, Blade views with `@csrf`, CSS bridge, and PHP/Composer Dockerfile when Docker is requested.
-     - `ASPNET_RAZOR`: `App.csproj`, `Program.cs`, controllers, Razor views with `@Html.AntiForgeryToken()`, CSS tokens, and dotnet SDK/ASP.NET runtime Dockerfile when Docker is requested.
-     - `PLAIN_HTML_CSS_JS`: `index.html`, semantic responsive layout, `styles.css`, vanilla `app.js` with zero npm dependencies, and `nginx:alpine` Dockerfile only when Docker is requested.
-   - Omit `Dockerfile` and `docker-compose.yml` when `deploymentEnvironment` does not require Docker (e.g., `LOCAL_ONLY`, `STANDALONE_HOST`, `SERVERLESS`).
-   - Report `filesGenerated` truthfully while keeping `buildStatus: 'NOT_VERIFIED'`, `buildable: false`, and `syntaxValid: false` until actual build/validation evidence is supplied.
-4. **Evidence Taxonomy Verification**:
-   - Evaluate completion via `evaluate_new_project_completion` strictly enforcing the Gate-Specific Evidence Taxonomy: missing evidence resolves to `NOT_VERIFIED`, failed evidence to `FAILED`, and `HUMAN_REVIEW` only satisfies gates whose policy explicitly allows it.
+## DO NOT USE WHEN
+- The task strictly belongs to another capability family (e.g. use `alper-greenfield-generator` for new full-stack builds, `alper-modernization-planner` for migrations, or `alper-design-repair` for surgical bug fixes).
+- Attempting to bypass verification gates or generate ungrounded code without prerequisite discovery.
+- Operating on deprecated Phase 0 workflows.
 
-## Associated MCP Tools
-- `create_project_blueprint`: Assembles master `NewProjectBlueprint` (blocks when discovery is incomplete).
-- `create_project_implementation_plan`: Generates staged execution plan.
-- `scaffold_new_project`: Emits concrete file tree to disk with truthful `buildStatus`.
-- `evaluate_new_project_completion`: Validates quality gates strictly against qualifying evidence.
+## MODE APPLICABILITY
+- Supported Modes: **GREENFIELD**, **MODERNIZATION**, **REPAIR**, and **CONTINUOUS_GOVERNANCE**.
+- Mode Relevance: Enforces capability boundaries whether operating on clean-sheet greenfield or legacy brownfield codebases.
+
+## REQUIRED CONTEXT
+- Validated workspace root and project configuration.
+- Task brief and structured user intent.
+- Up-to-date `.alper-design-os/project` intelligence snapshot (when initialized).
+- Relevant stack profiles and dependency manifests.
+
+## PROJECT INTELLIGENCE LOADING
+- Consults durable project memory in `.alper-design-os/project` prior to action execution.
+- Reads verified architecture graphs, registered entities, and recorded project decisions (ADRs).
+- Strictly rejects hallucinated project memory; missing intelligence triggers truthful intake or initialization.
+
+## DISCOVERY / AMBIGUITY BEHAVIOR
+- If task requirements are incomplete, ambiguous, or lack technical grounding:
+  1. Halt execution immediately before emitting ungrounded changes.
+  2. Emit prioritized clarifying questions to the operator.
+  3. Maintain derived acceptance criteria in `DEFINED` / `NOT_VERIFIED` state until ambiguity is formally resolved.
+
+## WORKFLOW
+1. **Intake & Verification**: Ingest task parameters and verify workspace preconditions.
+2. **Context Assembly**: Load relevant project invariants, schema contracts, and active policies.
+3. **Execution & Tool Invocation**: Dispatch canonical MCP tools (`create_project_blueprint`, `create_project_implementation_plan`, `scaffold_new_project`, `evaluate_new_project_completion`, `recommend_stack`).
+4. **Evidence Collection**: Gather qualifying verification artifacts (logs, diffs, test evidence).
+5. **Quality Gate Evaluation**: Validate deliverables against release and safety gates.
+6. **Output Synthesis**: Produce structured deliverables and handoff packages for downstream skills.
+
+## DECISION RULES
+- **Invariant Enforcement**: Universal invariant **NO CLAIM WITHOUT EVIDENCE** applies unconditionally.
+- **Fail-Safe Principle**: If a tool returns `NEEDS_CLARIFICATION` or validation fails, stop execution and report truth state.
+- **Scope Guard**: Confine modifications strictly to designated module boundaries. Uninvited modifications to foreign files are blocked.
+
+## MCP TOOL STRATEGY
+- `create_project_blueprint`: Canonical handler for create project blueprint. Always supply required schema parameters and handle structured return states.
+- `create_project_implementation_plan`: Canonical handler for create project implementation plan. Always supply required schema parameters and handle structured return states.
+- `scaffold_new_project`: Canonical handler for scaffold new project. Always supply required schema parameters and handle structured return states.
+- `evaluate_new_project_completion`: Canonical handler for evaluate new project completion. Always supply required schema parameters and handle structured return states.
+- `recommend_stack`: Canonical handler for recommend stack. Always supply required schema parameters and handle structured return states.
+
+## SOURCE / RESEARCH STRATEGY
+- When referencing design systems, frameworks, or security standards, cite authoritative sources verified by `alper-source-intelligence`.
+- Prohibit ad-hoc, unverified external advice.
+
+## POLICY & GOVERNANCE
+- Complies strictly with `rules/AGENTS.md`.
+- Secret leakage prevention: Never log, store, or emit unredacted credentials or API keys.
+- Destructive command guard: High-risk operations (e.g., hard reset, clean, force push) require explicit operator confirmation.
+
+## HUMAN CHECKPOINTS
+- Ambiguous architectural directions requiring trade-off resolution.
+- Destructive state changes or breaking schema migrations.
+- Visual approval on high-impact user interface changes.
+
+## STOP CONDITIONS
+- Discovery readiness check returns `NEEDS_CLARIFICATION`.
+- Tool execution reports critical validation or gate failure.
+- Scope boundary violation detected by `alper-scope-guard`.
+
+## FAILURE HANDLING
+- On schema failure: Log exact validation error, preserve rollback checkpoint, and return non-zero exit state.
+- On test failure: Mark gate as `FAILED`, capture diagnostic trace, and prevent downstream progression.
+- Never report simulated success or fake PASS results.
+
+## EVIDENCE REQUIREMENTS
+- Every asserted completion must supply qualifying evidence (e.g. `LINT_CLEAN`, `UNIT_TESTS_PASS`, `BUILD_CLEAN`, `HUMAN_REVIEW`).
+- Missing evidence strictly resolves to `NOT_VERIFIED`.
+
+## OUTPUT CONTRACT
+- Structured execution report detailing actions executed, tools invoked, and evidence captured.
+- Verified artifacts and updated project intelligence entries.
+- Explicit handoff envelope for next-phase skills.
+
+## HANDOFF / RELATED SKILLS
+- `alper-requirements-engineering`: Handoff target for sibling GREENFIELD_ENGINEERING operations.

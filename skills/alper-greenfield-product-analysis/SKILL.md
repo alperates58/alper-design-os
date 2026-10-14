@@ -1,32 +1,104 @@
 ---
 name: alper-greenfield-product-analysis
-description: Analyzes raw product briefs, classifies request complexity, evaluates DiscoveryReadiness, and identifies grounded domain entities, jobs-to-be-done, and operational constraints.
+description: Consolidates DiscoveryReadiness and RequestComplexityClassification for truthful requirements intake. Use when executing product discovery tasks for greenfield product analysis. Do not use for unrelated capability domains or deprecated Phase 0 workflows.
+status: ACTIVE
+capabilityFamily: PRODUCT_DISCOVERY
+userFacing: true
+mcpTools:
+  - create_greenfield_project_profile
+  - understand_product
+  - research_domain
+relatedSkills:
+  - alper-domain-intelligence
 ---
 
 # Alper Greenfield Product Analysis Skill
 
-Transforms user briefs into structured, grounded `GreenfieldProjectProfile` models with explicit `DiscoveryReadiness` and `RequestComplexityClassification`, strictly prohibiting silent invention of business entities or requirements.
+## PURPOSE
+Provides canonical, deterministic agent capability for **Greenfield Product Analysis** within the **PRODUCT_DISCOVERY** capability family.
+Primary focus: Consolidates DiscoveryReadiness and RequestComplexityClassification for truthful requirements intake.
 
-## Pipeline Position
-`USER BRIEF -> COMPLEXITY CLASSIFICATION -> DISCOVERY READINESS GATE -> GREENFIELD PROFILE`
+## USE WHEN
+- Initiating or progressing tasks requiring greenfield product analysis capabilities.
+- Operating within mode-specific pipelines requiring PRODUCT_DISCOVERY workflows.
+- Verifying requirements, technical blueprints, or evidence artifacts specifically owned by this capability.
 
-## Core Responsibilities
-1. **Request Complexity & DiscoveryReadiness Gate**:
-   - Classify request complexity (`CLEAR_BOUNDED_TASK`, `STANDARD_PRODUCT`, `AMBIGUOUS_PRODUCT`, `HIGH_COMPLEXITY_PRODUCT`, `INSUFFICIENT_CONTEXT`).
-   - Evaluate `DiscoveryReadiness` (`READY`, `NEEDS_CLARIFICATION`, `BLOCKED_BY_AMBIGUITY`).
-   - When `DiscoveryReadiness !== READY` (e.g., ambiguous one-liners such as `"Build me an APS"`), stop downstream blueprint/database/scaffold generation and surface at most 3–5 prioritized `clarifyingQuestions` ordered by architectural blast radius.
-2. **Product Purpose & Grounded Entity Extraction**:
-   - Dissect raw user briefs into product name, core purpose, and operational boundaries.
-   - Extract grounded domain nouns (`explicitEntities`, `primaryJobs`) and never pluralize verbs (`"Manage orders" != "manages"`) or fall back to generic placeholders (`PrimaryEntity`, `items`, `records`) in production mode.
-3. **Domain & Environmental Context**:
-   - Assess domain criticality (`LOW`, `MEDIUM`, `HIGH`, `MISSION_CRITICAL`).
-   - Classify data sensitivity (`PUBLIC`, `INTERNAL`, `CONFIDENTIAL`, `HIGHLY_SENSITIVE`, `REGULATED_PII_PHI`).
-   - Project realistic concurrency, scale, and deployment environment requirements.
-4. **Operational & Constraint Profiling**:
-   - Map device target priorities (`DESKTOP`, `TABLET`, `MOBILE`, `KIOSK_TERMINAL`, `EMBEDDED`).
-   - Document `criticalUnknowns`, `assumptions`, `clarifyingQuestions`, and initial risk registers.
+## DO NOT USE WHEN
+- The task strictly belongs to another capability family (e.g. use `alper-greenfield-generator` for new full-stack builds, `alper-modernization-planner` for migrations, or `alper-design-repair` for surgical bug fixes).
+- Attempting to bypass verification gates or generate ungrounded code without prerequisite discovery.
+- Operating on deprecated Phase 0 workflows.
 
-## Associated MCP Tools
-- `create_greenfield_project_profile`: Generates validated `GreenfieldProjectProfile` with `discoveryReadiness` and `complexityClassification`.
-- `understand_product`: Extracts product intent, target users, and key features.
-- `research_domain`: Surfaces domain-specific ergonomics, standards, and `DomainIntelligenceV2` evidence.
+## MODE APPLICABILITY
+- Supported Modes: **GREENFIELD**, **MODERNIZATION**, **REPAIR**, and **CONTINUOUS_GOVERNANCE**.
+- Mode Relevance: Enforces capability boundaries whether operating on clean-sheet greenfield or legacy brownfield codebases.
+
+## REQUIRED CONTEXT
+- Validated workspace root and project configuration.
+- Task brief and structured user intent.
+- Up-to-date `.alper-design-os/project` intelligence snapshot (when initialized).
+- Relevant stack profiles and dependency manifests.
+
+## PROJECT INTELLIGENCE LOADING
+- Consults durable project memory in `.alper-design-os/project` prior to action execution.
+- Reads verified architecture graphs, registered entities, and recorded project decisions (ADRs).
+- Strictly rejects hallucinated project memory; missing intelligence triggers truthful intake or initialization.
+
+## DISCOVERY / AMBIGUITY BEHAVIOR
+- If task requirements are incomplete, ambiguous, or lack technical grounding:
+  1. Halt execution immediately before emitting ungrounded changes.
+  2. Emit prioritized clarifying questions to the operator.
+  3. Maintain derived acceptance criteria in `DEFINED` / `NOT_VERIFIED` state until ambiguity is formally resolved.
+
+## WORKFLOW
+1. **Intake & Verification**: Ingest task parameters and verify workspace preconditions.
+2. **Context Assembly**: Load relevant project invariants, schema contracts, and active policies.
+3. **Execution & Tool Invocation**: Dispatch canonical MCP tools (`create_greenfield_project_profile`, `understand_product`, `research_domain`).
+4. **Evidence Collection**: Gather qualifying verification artifacts (logs, diffs, test evidence).
+5. **Quality Gate Evaluation**: Validate deliverables against release and safety gates.
+6. **Output Synthesis**: Produce structured deliverables and handoff packages for downstream skills.
+
+## DECISION RULES
+- **Invariant Enforcement**: Universal invariant **NO CLAIM WITHOUT EVIDENCE** applies unconditionally.
+- **Fail-Safe Principle**: If a tool returns `NEEDS_CLARIFICATION` or validation fails, stop execution and report truth state.
+- **Scope Guard**: Confine modifications strictly to designated module boundaries. Uninvited modifications to foreign files are blocked.
+
+## MCP TOOL STRATEGY
+- `create_greenfield_project_profile`: Canonical handler for create greenfield project profile. Always supply required schema parameters and handle structured return states.
+- `understand_product`: Canonical handler for understand product. Always supply required schema parameters and handle structured return states.
+- `research_domain`: Canonical handler for research domain. Always supply required schema parameters and handle structured return states.
+
+## SOURCE / RESEARCH STRATEGY
+- When referencing design systems, frameworks, or security standards, cite authoritative sources verified by `alper-source-intelligence`.
+- Prohibit ad-hoc, unverified external advice.
+
+## POLICY & GOVERNANCE
+- Complies strictly with `rules/AGENTS.md`.
+- Secret leakage prevention: Never log, store, or emit unredacted credentials or API keys.
+- Destructive command guard: High-risk operations (e.g., hard reset, clean, force push) require explicit operator confirmation.
+
+## HUMAN CHECKPOINTS
+- Ambiguous architectural directions requiring trade-off resolution.
+- Destructive state changes or breaking schema migrations.
+- Visual approval on high-impact user interface changes.
+
+## STOP CONDITIONS
+- Discovery readiness check returns `NEEDS_CLARIFICATION`.
+- Tool execution reports critical validation or gate failure.
+- Scope boundary violation detected by `alper-scope-guard`.
+
+## FAILURE HANDLING
+- On schema failure: Log exact validation error, preserve rollback checkpoint, and return non-zero exit state.
+- On test failure: Mark gate as `FAILED`, capture diagnostic trace, and prevent downstream progression.
+- Never report simulated success or fake PASS results.
+
+## EVIDENCE REQUIREMENTS
+- Every asserted completion must supply qualifying evidence (e.g. `LINT_CLEAN`, `UNIT_TESTS_PASS`, `BUILD_CLEAN`, `HUMAN_REVIEW`).
+- Missing evidence strictly resolves to `NOT_VERIFIED`.
+
+## OUTPUT CONTRACT
+- Structured execution report detailing actions executed, tools invoked, and evidence captured.
+- Verified artifacts and updated project intelligence entries.
+- Explicit handoff envelope for next-phase skills.
+
+## HANDOFF / RELATED SKILLS
+- `alper-domain-intelligence`: Handoff target for sibling PRODUCT_DISCOVERY operations.

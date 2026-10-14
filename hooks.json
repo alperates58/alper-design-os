@@ -1,3 +1,16 @@
 {
-  "hooks": []
+  "destructive-command-guard": {
+    "PreToolUse": [
+      {
+        "matcher": "run_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ./scripts/guard-destructive-command.js",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
 }

@@ -1,33 +1,110 @@
 ---
 name: alper-design-language
-description: Technology-neutral canonical design language establishing design intent, multi-level tokens, typography, and rhythmic layout.
+description: Technology-agnostic DTCG tokens, multi-pane workbench layouts, and information density. Use when executing design ux tasks for design language. Do not use for unrelated capability domains or deprecated Phase 0 workflows.
+status: ACTIVE
+capabilityFamily: DESIGN_UX
+userFacing: true
+mcpTools:
+  - get_design_tokens
+  - create_design_plan
+  - create_design_intent
+relatedSkills:
+  - alper-design-personality
+  - alper-pattern-graph
+  - alper-design-critic
+  - alper-ui-blueprint
 ---
 
-# Alper Canonical Design Language
+# Alper Design Language Skill
 
-## Purpose
-The Alper Canonical Design Language provides a technology-agnostic foundation for user interfaces. Instead of binding UI decisions directly to a specific framework (e.g. React or Tailwind), it models design intent, design personality, tokens, and layout principles at a canonical level.
+## PURPOSE
+Provides canonical, deterministic agent capability for **Design Language** within the **DESIGN_UX** capability family.
+Primary focus: Technology-agnostic DTCG tokens, multi-pane workbench layouts, and information density.
 
-## Core Flow
-```mermaid
-flowchart LR
-    Intent["Product Context & UX Intent"] --> Personality["Design Personality (6 Axes)"]
-    Personality --> Tokens["Token Architecture V2\n(Primitive -> Semantic -> Component)"]
-    Tokens --> Layout["Layout & Rhythmic Spacing"]
-    Layout --> TargetRenderer["Target Stack Renderers\n(HTML, React, Blade, Razor)"]
-```
+## USE WHEN
+- Initiating or progressing tasks requiring design language capabilities.
+- Operating within mode-specific pipelines requiring DESIGN_UX workflows.
+- Verifying requirements, technical blueprints, or evidence artifacts specifically owned by this capability.
 
-## Token Architecture V2
-- **Level 1 (Primitives):** Base color palettes, 4px rhythmic spacing scale (`space.1` to `space.16`), radius scale, font families, and duration/easing.
-- **Level 2 (Semantics):** Contextual meaning with multi-theme support (`surface.default`, `text.primary`, `action.primary`, `status.critical`, `focus.ring`). Supports `LIGHT`, `DARK`, and `HIGH_CONTRAST`.
-- **Level 3 (Components):** Component-specific bindings mapped to semantic tokens (`button.primary.background`, `table.header.background`, `input.focus.ring`).
+## DO NOT USE WHEN
+- The task strictly belongs to another capability family (e.g. use `alper-greenfield-generator` for new full-stack builds, `alper-modernization-planner` for migrations, or `alper-design-repair` for surgical bug fixes).
+- Attempting to bypass verification gates or generate ungrounded code without prerequisite discovery.
+- Operating on deprecated Phase 0 workflows.
 
-## Density Modes
-- `COMPACT`: 4px rhythmic spacing, 32px inputs/buttons, 36px table rows (high-density data tools).
-- `COMFORTABLE`: 8px base spacing, 40px inputs/buttons, 48px table rows (standard SaaS).
-- `SPACIOUS`: 12px base spacing, 48px inputs/buttons, 60px table rows (consumer/media).
+## MODE APPLICABILITY
+- Supported Modes: **GREENFIELD**, **MODERNIZATION**, **REPAIR**, and **CONTINUOUS_GOVERNANCE**.
+- Mode Relevance: Enforces capability boundaries whether operating on clean-sheet greenfield or legacy brownfield codebases.
 
-## Guidelines
-1. Never hardcode raw hex colors in CSS or component code; use semantic token variables (`var(--alper-action-primary)`).
-2. Avoid magic numbers in margin or padding; adhere strictly to the 4px rhythmic scale.
-3. Support local system font fallbacks first-class to guarantee fast rendering and zero layout shift.
+## REQUIRED CONTEXT
+- Validated workspace root and project configuration.
+- Task brief and structured user intent.
+- Up-to-date `.alper-design-os/project` intelligence snapshot (when initialized).
+- Relevant stack profiles and dependency manifests.
+
+## PROJECT INTELLIGENCE LOADING
+- Consults durable project memory in `.alper-design-os/project` prior to action execution.
+- Reads verified architecture graphs, registered entities, and recorded project decisions (ADRs).
+- Strictly rejects hallucinated project memory; missing intelligence triggers truthful intake or initialization.
+
+## DISCOVERY / AMBIGUITY BEHAVIOR
+- If task requirements are incomplete, ambiguous, or lack technical grounding:
+  1. Halt execution immediately before emitting ungrounded changes.
+  2. Emit prioritized clarifying questions to the operator.
+  3. Maintain derived acceptance criteria in `DEFINED` / `NOT_VERIFIED` state until ambiguity is formally resolved.
+
+## WORKFLOW
+1. **Intake & Verification**: Ingest task parameters and verify workspace preconditions.
+2. **Context Assembly**: Load relevant project invariants, schema contracts, and active policies.
+3. **Execution & Tool Invocation**: Dispatch canonical MCP tools (`get_design_tokens`, `create_design_plan`, `create_design_intent`).
+4. **Evidence Collection**: Gather qualifying verification artifacts (logs, diffs, test evidence).
+5. **Quality Gate Evaluation**: Validate deliverables against release and safety gates.
+6. **Output Synthesis**: Produce structured deliverables and handoff packages for downstream skills.
+
+## DECISION RULES
+- **Invariant Enforcement**: Universal invariant **NO CLAIM WITHOUT EVIDENCE** applies unconditionally.
+- **Fail-Safe Principle**: If a tool returns `NEEDS_CLARIFICATION` or validation fails, stop execution and report truth state.
+- **Scope Guard**: Confine modifications strictly to designated module boundaries. Uninvited modifications to foreign files are blocked.
+
+## MCP TOOL STRATEGY
+- `get_design_tokens`: Canonical handler for get design tokens. Always supply required schema parameters and handle structured return states.
+- `create_design_plan`: Canonical handler for create design plan. Always supply required schema parameters and handle structured return states.
+- `create_design_intent`: Canonical handler for create design intent. Always supply required schema parameters and handle structured return states.
+
+## SOURCE / RESEARCH STRATEGY
+- When referencing design systems, frameworks, or security standards, cite authoritative sources verified by `alper-source-intelligence`.
+- Prohibit ad-hoc, unverified external advice.
+
+## POLICY & GOVERNANCE
+- Complies strictly with `rules/AGENTS.md`.
+- Secret leakage prevention: Never log, store, or emit unredacted credentials or API keys.
+- Destructive command guard: High-risk operations (e.g., hard reset, clean, force push) require explicit operator confirmation.
+
+## HUMAN CHECKPOINTS
+- Ambiguous architectural directions requiring trade-off resolution.
+- Destructive state changes or breaking schema migrations.
+- Visual approval on high-impact user interface changes.
+
+## STOP CONDITIONS
+- Discovery readiness check returns `NEEDS_CLARIFICATION`.
+- Tool execution reports critical validation or gate failure.
+- Scope boundary violation detected by `alper-scope-guard`.
+
+## FAILURE HANDLING
+- On schema failure: Log exact validation error, preserve rollback checkpoint, and return non-zero exit state.
+- On test failure: Mark gate as `FAILED`, capture diagnostic trace, and prevent downstream progression.
+- Never report simulated success or fake PASS results.
+
+## EVIDENCE REQUIREMENTS
+- Every asserted completion must supply qualifying evidence (e.g. `LINT_CLEAN`, `UNIT_TESTS_PASS`, `BUILD_CLEAN`, `HUMAN_REVIEW`).
+- Missing evidence strictly resolves to `NOT_VERIFIED`.
+
+## OUTPUT CONTRACT
+- Structured execution report detailing actions executed, tools invoked, and evidence captured.
+- Verified artifacts and updated project intelligence entries.
+- Explicit handoff envelope for next-phase skills.
+
+## HANDOFF / RELATED SKILLS
+- `alper-design-personality`: Handoff target for sibling DESIGN_UX operations.
+- `alper-pattern-graph`: Handoff target for sibling DESIGN_UX operations.
+- `alper-design-critic`: Handoff target for sibling DESIGN_UX operations.
+- `alper-ui-blueprint`: Handoff target for sibling DESIGN_UX operations.

@@ -1,30 +1,28 @@
 ---
 name: alper-architecture-planner
-description: Recommends pragmatic architecture patterns with strict anti-overengineering guardrails, complexity budgets, and technology selection.
+description: DEPRECATED - Superseded by alper-architecture. Do not use for new tasks.
+status: DEPRECATED
+deprecated: true
+replacement: alper-architecture
+capabilityFamily: ARCHITECTURE
+userFacing: false
+mcpTools: []
+relatedSkills:
+  - alper-architecture
 ---
 
-# Alper Architecture Planner Skill
+# alper-architecture-planner (DEPRECATED)
 
-Selects appropriate software architecture styles based on evidence, complexity budgets, and operational fitness, strictly preventing unwarranted distributed systems overhead.
+> [!WARNING]
+> **This skill is permanently deprecated and has been superseded.**
+> Do not use `alper-architecture-planner` in new agent prompts, workflows, or context routing.
 
-## Pipeline Position
-`REQUIREMENTS -> ARCHITECTURE RECOMMENDATION -> STACK SELECTION -> FITNESS ASSESSMENT`
+## Superseded By
+Use **`alper-architecture`** instead.
 
-## Core Responsibilities
-1. **Anti-Overengineering Guardrails**:
-   - Small-scale, internal, or departmental apps default to `MONOLITH` or `MODULAR_MONOLITH`.
-   - Microservices architecture is strictly NOT the default and requires explicit enterprise scale justification.
-   - Prohibit unwarranted technologies (Kafka, Kubernetes, event sourcing, distributed caching) for low-scale projects.
-2. **Complexity Budget Enforcement**:
-   - Calculate maximum acceptable complexity score (scale 1 to 10).
-   - Reject proposals whose architectural complexity exceeds the budget.
-3. **Fitness Assessment**:
-   - Evaluate trade-offs across operational simplicity, time to deliver, maintainability, and cognitive load.
-4. **Stack Recommendation**:
-   - Map architecture to supported production stacks: `REACT_TYPESCRIPT`, `LARAVEL_BLADE`, `ASPNET_RAZOR`, `PLAIN_HTML_CSS_JS`.
-   - Honor user constraints and operational preferences.
+## Rationalization & Remediation Context
+Merged into alper-architecture to eliminate duplicate architecture planning workflows.
 
-## Associated MCP Tools
-- `recommend_architecture`: Emits complexity-budgeted `ArchitectureRecommendation`.
-- `recommend_stack`: Selects optimal language, runtime, and framework.
-- `generate_adr`: Generates Architecture Decision Records documenting rationale and rejected alternatives.
+## Migration Instruction
+- Redirect all routing decisions, prompt triggers, and execution flows to **`alper-architecture`**.
+- This skill exists purely for historical tracking and is excluded from active context routing in `packages/agent-governance/src/context-router.ts`.

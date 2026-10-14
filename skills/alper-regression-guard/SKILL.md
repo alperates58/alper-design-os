@@ -1,13 +1,28 @@
 ---
 name: alper-regression-guard
-description: Establishes behavioral baselines before code changes and detects subtle functional or visual regressions.
+description: DEPRECATED - Superseded by alper-behavior-preservation. Do not use for new tasks.
+status: DEPRECATED
+deprecated: true
+replacement: alper-behavior-preservation
+capabilityFamily: MODERNIZATION
+userFacing: false
+mcpTools: []
+relatedSkills:
+  - alper-behavior-preservation
 ---
 
-# Alper Regression Guard Skill
+# alper-regression-guard (DEPRECATED)
 
-Guards existing system behavior against unintended regressions during REPAIR and MODERNIZE workflows.
+> [!WARNING]
+> **This skill is permanently deprecated and has been superseded.**
+> Do not use `alper-regression-guard` in new agent prompts, workflows, or context routing.
 
-## Core Directives
-1. **Pre-Change Baselines**: Record existing route contracts, API response formats, component selectors, and DB invariants before altering code.
-2. **Post-Change Comparison**: Compare post-modification outputs against baselines.
-3. **Regression Alerting**: When unexpected drift is detected, flag `REGRESSION_SUSPECTED` and halt final acceptance until reconciled.
+## Superseded By
+Use **`alper-behavior-preservation`** instead.
+
+## Rationalization & Remediation Context
+Merged into alper-behavior-preservation which provides the canonical behavioral baseline contract.
+
+## Migration Instruction
+- Redirect all routing decisions, prompt triggers, and execution flows to **`alper-behavior-preservation`**.
+- This skill exists purely for historical tracking and is excluded from active context routing in `packages/agent-governance/src/context-router.ts`.

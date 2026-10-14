@@ -1,13 +1,28 @@
 ---
 name: alper-safe-refactor
-description: Orchestrates surgical, behavior-preserving refactorings with behavioral contract preservation and minimal blast radius.
+description: DEPRECATED - Superseded by alper-refactoring-strategy. Do not use for new tasks.
+status: DEPRECATED
+deprecated: true
+replacement: alper-refactoring-strategy
+capabilityFamily: MODERNIZATION
+userFacing: false
+mcpTools: []
+relatedSkills:
+  - alper-refactoring-strategy
 ---
 
-# Alper Safe Refactor Skill
+# alper-safe-refactor (DEPRECATED)
 
-Governs component and architecture refactoring in legacy and modernized applications.
+> [!WARNING]
+> **This skill is permanently deprecated and has been superseded.**
+> Do not use `alper-safe-refactor` in new agent prompts, workflows, or context routing.
 
-## Core Directives
-1. **Preserve Behavioral Contracts**: Never break business logic, routing, or database models just to improve aesthetic appearances.
-2. **Incremental Phasing**: Modernize in 4 discrete stages (Tokens -> Shell/Grid -> Core Components -> Full System).
-3. **Continuous Static & Unit Verification**: Verify build integrity and zero type regressions after every chunk.
+## Superseded By
+Use **`alper-refactoring-strategy`** instead.
+
+## Rationalization & Remediation Context
+Merged into alper-refactoring-strategy to eliminate split-brain refactoring guidance.
+
+## Migration Instruction
+- Redirect all routing decisions, prompt triggers, and execution flows to **`alper-refactoring-strategy`**.
+- This skill exists purely for historical tracking and is excluded from active context routing in `packages/agent-governance/src/context-router.ts`.

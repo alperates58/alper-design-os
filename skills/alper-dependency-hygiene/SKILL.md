@@ -1,13 +1,28 @@
 ---
 name: alper-dependency-hygiene
-description: Audits packages for known CVEs, outdated versions, malicious packages, and unmaintained transitive dependencies.
+description: DEPRECATED - Superseded by alper-supply-chain-security. Do not use for new tasks.
+status: DEPRECATED
+deprecated: true
+replacement: alper-supply-chain-security
+capabilityFamily: SECURITY
+userFacing: false
+mcpTools: []
+relatedSkills:
+  - alper-supply-chain-security
 ---
 
-# Alper Dependency Hygiene Skill
+# alper-dependency-hygiene (DEPRECATED)
 
-Keeps dependencies updated, minimal, and free of known vulnerabilities.
+> [!WARNING]
+> **This skill is permanently deprecated and has been superseded.**
+> Do not use `alper-dependency-hygiene` in new agent prompts, workflows, or context routing.
 
-## Procedures
-1. Run `npm audit`, `composer audit`, or `dotnet list package --vulnerable`.
-2. Block dependencies with unpatched CRITICAL or HIGH CVEs.
-3. Propose lockfile maintenance and minor upgrades via automated pull requests.
+## Superseded By
+Use **`alper-supply-chain-security`** instead.
+
+## Rationalization & Remediation Context
+Merged into alper-supply-chain-security to unify dependency vulnerability and lockfile management.
+
+## Migration Instruction
+- Redirect all routing decisions, prompt triggers, and execution flows to **`alper-supply-chain-security`**.
+- This skill exists purely for historical tracking and is excluded from active context routing in `packages/agent-governance/src/context-router.ts`.

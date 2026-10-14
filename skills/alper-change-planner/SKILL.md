@@ -1,14 +1,116 @@
 ---
 name: alper-change-planner
-description: Creates rigorous AgentActionPlan contracts with blast radius, forbidden files, rollback strategies, and mandatory verification before any code changes.
+description: 17-step change lifecycle, AgentActionPlan generation, and blast radius assessment. Use when executing governance tasks for change planner. Do not use for unrelated capability domains or deprecated Phase 0 workflows.
+status: ACTIVE
+capabilityFamily: GOVERNANCE
+userFacing: true
+mcpTools:
+  - create_action_plan
+  - evaluate_change_risk
+  - classify_code_paths
+  - create_execution_journal
+  - route_context
+  - route_tool
+relatedSkills:
+  - alper-scope-guard
+  - alper-git-safety
+  - alper-independent-review
+  - alper-evidence-review
 ---
 
 # Alper Change Planner Skill
 
-Enforces structured planning before modifying any project files.
+## PURPOSE
+Provides canonical, deterministic agent capability for **Change Planner** within the **GOVERNANCE** capability family.
+Primary focus: 17-step change lifecycle, AgentActionPlan generation, and blast radius assessment.
 
-## Core Directives
-1. **Never mutate code without an action plan**: Every modification must have an explicit objective, requested scope boundaries, and estimated blast radius.
-2. **Blast Radius Assessment**: Compute risk level (LOW, MEDIUM, HIGH, CRITICAL) evaluating file volume, DB changes, authentication, public APIs, and data loss risks.
-3. **Mandatory Checkpoint for High Risk**: HIGH and CRITICAL blast radius plans strictly mandate a pre-change git checkpoint.
-4. **Automated Rollback Strategy**: Every plan must supply deterministic rollback steps (e.g. `git checkout -- <files>` or checkpoint checkout).
+## USE WHEN
+- Initiating or progressing tasks requiring change planner capabilities.
+- Operating within mode-specific pipelines requiring GOVERNANCE workflows.
+- Verifying requirements, technical blueprints, or evidence artifacts specifically owned by this capability.
+
+## DO NOT USE WHEN
+- The task strictly belongs to another capability family (e.g. use `alper-greenfield-generator` for new full-stack builds, `alper-modernization-planner` for migrations, or `alper-design-repair` for surgical bug fixes).
+- Attempting to bypass verification gates or generate ungrounded code without prerequisite discovery.
+- Operating on deprecated Phase 0 workflows.
+
+## MODE APPLICABILITY
+- Supported Modes: **GREENFIELD**, **MODERNIZATION**, **REPAIR**, and **CONTINUOUS_GOVERNANCE**.
+- Mode Relevance: Enforces capability boundaries whether operating on clean-sheet greenfield or legacy brownfield codebases.
+
+## REQUIRED CONTEXT
+- Validated workspace root and project configuration.
+- Task brief and structured user intent.
+- Up-to-date `.alper-design-os/project` intelligence snapshot (when initialized).
+- Relevant stack profiles and dependency manifests.
+
+## PROJECT INTELLIGENCE LOADING
+- Consults durable project memory in `.alper-design-os/project` prior to action execution.
+- Reads verified architecture graphs, registered entities, and recorded project decisions (ADRs).
+- Strictly rejects hallucinated project memory; missing intelligence triggers truthful intake or initialization.
+
+## DISCOVERY / AMBIGUITY BEHAVIOR
+- If task requirements are incomplete, ambiguous, or lack technical grounding:
+  1. Halt execution immediately before emitting ungrounded changes.
+  2. Emit prioritized clarifying questions to the operator.
+  3. Maintain derived acceptance criteria in `DEFINED` / `NOT_VERIFIED` state until ambiguity is formally resolved.
+
+## WORKFLOW
+1. **Intake & Verification**: Ingest task parameters and verify workspace preconditions.
+2. **Context Assembly**: Load relevant project invariants, schema contracts, and active policies.
+3. **Execution & Tool Invocation**: Dispatch canonical MCP tools (`create_action_plan`, `evaluate_change_risk`, `classify_code_paths`, `create_execution_journal`, `route_context`, `route_tool`).
+4. **Evidence Collection**: Gather qualifying verification artifacts (logs, diffs, test evidence).
+5. **Quality Gate Evaluation**: Validate deliverables against release and safety gates.
+6. **Output Synthesis**: Produce structured deliverables and handoff packages for downstream skills.
+
+## DECISION RULES
+- **Invariant Enforcement**: Universal invariant **NO CLAIM WITHOUT EVIDENCE** applies unconditionally.
+- **Fail-Safe Principle**: If a tool returns `NEEDS_CLARIFICATION` or validation fails, stop execution and report truth state.
+- **Scope Guard**: Confine modifications strictly to designated module boundaries. Uninvited modifications to foreign files are blocked.
+
+## MCP TOOL STRATEGY
+- `create_action_plan`: Canonical handler for create action plan. Always supply required schema parameters and handle structured return states.
+- `evaluate_change_risk`: Canonical handler for evaluate change risk. Always supply required schema parameters and handle structured return states.
+- `classify_code_paths`: Canonical handler for classify code paths. Always supply required schema parameters and handle structured return states.
+- `create_execution_journal`: Canonical handler for create execution journal. Always supply required schema parameters and handle structured return states.
+- `route_context`: Canonical handler for route context. Always supply required schema parameters and handle structured return states.
+- `route_tool`: Canonical handler for route tool. Always supply required schema parameters and handle structured return states.
+
+## SOURCE / RESEARCH STRATEGY
+- When referencing design systems, frameworks, or security standards, cite authoritative sources verified by `alper-source-intelligence`.
+- Prohibit ad-hoc, unverified external advice.
+
+## POLICY & GOVERNANCE
+- Complies strictly with `rules/AGENTS.md`.
+- Secret leakage prevention: Never log, store, or emit unredacted credentials or API keys.
+- Destructive command guard: High-risk operations (e.g., hard reset, clean, force push) require explicit operator confirmation.
+
+## HUMAN CHECKPOINTS
+- Ambiguous architectural directions requiring trade-off resolution.
+- Destructive state changes or breaking schema migrations.
+- Visual approval on high-impact user interface changes.
+
+## STOP CONDITIONS
+- Discovery readiness check returns `NEEDS_CLARIFICATION`.
+- Tool execution reports critical validation or gate failure.
+- Scope boundary violation detected by `alper-scope-guard`.
+
+## FAILURE HANDLING
+- On schema failure: Log exact validation error, preserve rollback checkpoint, and return non-zero exit state.
+- On test failure: Mark gate as `FAILED`, capture diagnostic trace, and prevent downstream progression.
+- Never report simulated success or fake PASS results.
+
+## EVIDENCE REQUIREMENTS
+- Every asserted completion must supply qualifying evidence (e.g. `LINT_CLEAN`, `UNIT_TESTS_PASS`, `BUILD_CLEAN`, `HUMAN_REVIEW`).
+- Missing evidence strictly resolves to `NOT_VERIFIED`.
+
+## OUTPUT CONTRACT
+- Structured execution report detailing actions executed, tools invoked, and evidence captured.
+- Verified artifacts and updated project intelligence entries.
+- Explicit handoff envelope for next-phase skills.
+
+## HANDOFF / RELATED SKILLS
+- `alper-scope-guard`: Handoff target for sibling GOVERNANCE operations.
+- `alper-git-safety`: Handoff target for sibling GOVERNANCE operations.
+- `alper-independent-review`: Handoff target for sibling GOVERNANCE operations.
+- `alper-evidence-review`: Handoff target for sibling GOVERNANCE operations.

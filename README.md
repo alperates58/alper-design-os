@@ -85,6 +85,15 @@ Bünyesinde **72 adet Antigravity Yeteneği (Skill)**, **124 adet tip güvenli M
     * **MCP Tek Doğruluk Kaynağı (Single Source of Truth):** 124 MCP aracı tekil `canonicalToolRegistry` (`packages/mcp-server/src/tools/definitions.ts`) üzerinden dinamik sunulur; elle tutulan switch yapısı silinmiştir ve `dist/` sürekli güncel tutulur.
     * **Sektörel Tarafsızlık (Non-APS Domain Neutrality):** Çekirdek tasarım ve layout motorlarından sabit fabrika/APS terimleri kaldırılmış, her sektöre (Saas, Finans, Sağlık, Eğitim vb.) tarafsız istihbarat sağlanmıştır.
 
+13. **Yetenek Mimarisi İyileştirmesi & Ajan Orkestrasyon Standardizasyonu (Phase 1H.2 Skill Architecture Remediation):**
+    A1 Bağımsız Denetimi (F-08, F-09) bulgularını kapatan, 72 mikro-taslağı 55 aktif kanonik yetenek ve 19 kalıcı olarak kullanımdan kaldırılmış (deprecated) yetenek şeklinde konsolide eden, `ALPER_SKILL_STANDARD_V1` ve `SKILL_QUALITY_GATE_V1` mimarisi:
+    * **17 Sınırlandırılmış Yetenek Ailesi:** Ad-hoc keşif kirliliği sonlandırıldı; tüm yetenekler 17 aile altında toplandı (`PRODUCT_DISCOVERY`, `GREENFIELD_ENGINEERING`, `EXISTING_PROJECT_ANALYSIS`, `REPAIR`, `MODERNIZATION`, `PROJECT_INTELLIGENCE`, `GOVERNANCE`, `TRUTHFUL_UI`, `OPERATOR_EXECUTION`, `ARCHITECTURE`, `DATA_ENGINEERING`, `API_ENGINEERING`, `DESIGN_UX`, `SOURCE_INTELLIGENCE`, `SECURITY`, `QA_TESTING`, `PERFORMANCE_RELIABILITY`).
+    * **%100 MCP Araç Erişilebilirliği (0 Yetim Araç):** 124 kanonik MCP aracının tamamı deterministik mülkiyetle aktif yeteneklere bağlandı.
+    * **Sıfır Çift Başlı (Split-Brain) Yönlendirme:** `alper-design-new`, `alper-design-modernize`, `alper-safe-refactor` gibi eski Phase 0 yetenekleri kullanımdan kaldırıldı ve `context-router.ts` içerisinden tamamen çıkarıldı.
+    * **Kademeli İfşa (Progressive Disclosure):** Karmaşık yetenekler (`stack-templates.md`, `preservation-checklist.md`, vb.) `references/` dizinleri altında derinleştirildi.
+    * **6 Ajan Personası Standardizasyonu:** `agents/*.md` dosyaları rol, girdiler, çıktılar, araç sınırları ve el sıkışma (handoff) protokolü ile tipikleştirildi.
+    * **Yıkıcı Komut Koruması:** `hooks.json` ve `scripts/guard-destructive-command.js` ile `git reset --hard` / `git push --force` gibi operasyonlar engellendi.
+
 ---
 
 ## 🧠 72 Uzmanlaşmış Yetenek (Antigravity Skills)
@@ -228,9 +237,9 @@ graph TD
 
 ```text
 alper-design-os/
-├── plugin.json                 # Antigravity Plugin Tanımı (72 Yetenek Kayıtlı)
+├── plugin.json                 # Antigravity Plugin Tanımı
 ├── mcp_config.json             # MCP Sunucu Konfigürasyonu
-├── hooks.json                  # Yaşam Döngüsü Hook'ları
+├── hooks.json                  # Yaşam Döngüsü Hook'ları (Yıkıcı Komut Koruması)
 ├── pnpm-workspace.yaml         # Monorepo Workspace Konfigürasyonu
 │
 ├── .alper-design-os/project/   # Versiyon Kontrollü Kalıcı Proje İstihbaratı (Phase 1H)
@@ -241,7 +250,9 @@ alper-design-os/
 │   ├── knowledge/              # Doğrulanmış İş Kuralları ve Terimler Sözlüğü
 │   └── snapshots/              # Mimari ve Sözleşme Fingerprint Snapshot'ları
 │
-├── skills/                     # 72 Uzmanlaşmış Antigravity Yeteneği
+├── skills/                     # 74 Antigravity Yeteneği (55 Aktif Kanonik + 19 Deprecated)
+│   ├── alper-truthful-ui/               # Gerçekçi UI & Kaynak Otoritesi (Phase 1H.2)
+│   ├── alper-operator-execution/        # Kurumsal Çalıştırma & RUN.ps1 (Phase 1H.2)
 │   ├── alper-project-intelligence/      # Kalıcı Proje Belleği (Phase 1H)
 │   ├── alper-decision-management/       # ADR ve Superseding (Phase 1H)
 │   ├── alper-change-impact-analysis/    # Değişiklik Etki Analizi (Phase 1H)
@@ -286,7 +297,8 @@ alper-design-os/
 │   ├── software-intelligence/  # Mimari Stil Tespiti, DB Migrasyon Riski, ADR Üretimi
 │   └── mcp-server/             # 124 Tipli Araç İçeren Resmi MCP Sunucusu
 │
-├── tests/                      # 20 Test Süiti, 447 Otomatik Vitest Testi
+├── tests/                      # 21 Test Süiti, 468 Otomatik Vitest Testi (%100 Başarı)
+│   ├── skill-architecture-1h2.test.ts # Faz 1H.2 Yetenek Mimarisi Standart Doğrulama
 │   ├── semantic-integrity-1h1.test.ts # Faz 1H.1 Mimari Doğruluk & Adversarial Doğrulama
 │   ├── project-intelligence.test.ts   # Faz 1H Proje İstihbaratı & Kalıcı Bellek Süiti
 │   ├── greenfield-engine.test.ts      # Faz 1G Sıfırdan Proje Üretim Motoru Süiti
@@ -299,6 +311,7 @@ alper-design-os/
 │   └── ...
 │
 └── docs/                       # Mimari & Kullanım Dokümantasyonu
+    ├── skill-engineering-standard.md         # Faz 1H.2 Yetenek Mimarisi Standardı (V1)
     ├── architecture-integrity-remediation.md # Faz 1H.1 Kanıt İlkeleri & Audit Kapanışları
     ├── project-intelligence.md
     ├── decision-lifecycle.md

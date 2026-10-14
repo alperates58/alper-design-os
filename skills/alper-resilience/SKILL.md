@@ -1,13 +1,28 @@
 ---
 name: alper-resilience
-description: Designs fault-tolerant architectures with bulkheads, rate limiters, fallback caches, and health checks.
+description: DEPRECATED - Superseded by alper-reliability. Do not use for new tasks.
+status: DEPRECATED
+deprecated: true
+replacement: alper-reliability
+capabilityFamily: PERFORMANCE_RELIABILITY
+userFacing: false
+mcpTools: []
+relatedSkills:
+  - alper-reliability
 ---
 
-# Alper Resilience Skill
+# alper-resilience (DEPRECATED)
 
-Ensures services withstand infrastructure failures and traffic spikes.
+> [!WARNING]
+> **This skill is permanently deprecated and has been superseded.**
+> Do not use `alper-resilience` in new agent prompts, workflows, or context routing.
 
-## Mechanisms
-- Deep and shallow health check endpoints (`/health/liveness`, `/health/readiness`).
-- Bulkhead isolation for resource-intensive subsystems.
-- Graceful degradation when dependent microservices are unresponsive.
+## Superseded By
+Use **`alper-reliability`** instead.
+
+## Rationalization & Remediation Context
+Merged into alper-reliability to unify system resilience, fault tolerance, and SLO governance.
+
+## Migration Instruction
+- Redirect all routing decisions, prompt triggers, and execution flows to **`alper-reliability`**.
+- This skill exists purely for historical tracking and is excluded from active context routing in `packages/agent-governance/src/context-router.ts`.

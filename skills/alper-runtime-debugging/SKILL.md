@@ -1,13 +1,28 @@
 ---
 name: alper-runtime-debugging
-description: Inspects runtime console errors, uncaught exceptions, network failures (4xx/5xx/CORS), and performance traces.
+description: DEPRECATED - Superseded by alper-browser-qa. Do not use for new tasks.
+status: DEPRECATED
+deprecated: true
+replacement: alper-browser-qa
+capabilityFamily: QA_TESTING
+userFacing: false
+mcpTools: []
+relatedSkills:
+  - alper-browser-qa
 ---
 
-# Alper Runtime Debugging Skill
+# alper-runtime-debugging (DEPRECATED)
 
-Diagnoses runtime errors and network issues using Chrome DevTools MCP.
+> [!WARNING]
+> **This skill is permanently deprecated and has been superseded.**
+> Do not use `alper-runtime-debugging` in new agent prompts, workflows, or context routing.
 
-## Inspection Checklist
-- Capture all console `error` and `exception` events.
-- Audit failed HTTP requests (status 400+, 500+, or aborted CORS requests).
-- Inspect source-mapped stack traces to pinpoint root cause.
+## Superseded By
+Use **`alper-browser-qa`** instead.
+
+## Rationalization & Remediation Context
+Merged into alper-browser-qa which inspects live runtime console errors, exceptions, and network waterfalls.
+
+## Migration Instruction
+- Redirect all routing decisions, prompt triggers, and execution flows to **`alper-browser-qa`**.
+- This skill exists purely for historical tracking and is excluded from active context routing in `packages/agent-governance/src/context-router.ts`.

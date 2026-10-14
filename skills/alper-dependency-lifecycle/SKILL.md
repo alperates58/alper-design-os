@@ -1,13 +1,28 @@
 ---
 name: alper-dependency-lifecycle
-description: Manages dependency lifecycles with Renovate policies, semantic pinning, and vendoring strategies.
+description: DEPRECATED - Superseded by alper-supply-chain-security. Do not use for new tasks.
+status: DEPRECATED
+deprecated: true
+replacement: alper-supply-chain-security
+capabilityFamily: SECURITY
+userFacing: false
+mcpTools: []
+relatedSkills:
+  - alper-supply-chain-security
 ---
 
-# Alper Dependency Lifecycle Skill
+# alper-dependency-lifecycle (DEPRECATED)
 
-Governs how third-party code enters, updates, and exits the codebase.
+> [!WARNING]
+> **This skill is permanently deprecated and has been superseded.**
+> Do not use `alper-dependency-lifecycle` in new agent prompts, workflows, or context routing.
 
-## Policy
-- Automated dependency update PRs with Renovate or Dependabot.
-- Mandatory license compatibility check (MIT, Apache-2.0, BSD).
-- Strict package hash verification via package lockfiles.
+## Superseded By
+Use **`alper-supply-chain-security`** instead.
+
+## Rationalization & Remediation Context
+Merged into alper-supply-chain-security to unify SemVer upgrade policies and SBOM tracking.
+
+## Migration Instruction
+- Redirect all routing decisions, prompt triggers, and execution flows to **`alper-supply-chain-security`**.
+- This skill exists purely for historical tracking and is excluded from active context routing in `packages/agent-governance/src/context-router.ts`.

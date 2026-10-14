@@ -1,13 +1,28 @@
 ---
 name: alper-architecture-audit
-description: Detects circular dependencies, inappropriate coupling, god classes, and cross-layer leakage.
+description: DEPRECATED - Superseded by alper-architecture. Do not use for new tasks.
+status: DEPRECATED
+deprecated: true
+replacement: alper-architecture
+capabilityFamily: ARCHITECTURE
+userFacing: false
+mcpTools: []
+relatedSkills:
+  - alper-architecture
 ---
 
-# Alper Architecture Audit Skill
+# alper-architecture-audit (DEPRECATED)
 
-Inspects architecture for structural technical debt and coupling violations.
+> [!WARNING]
+> **This skill is permanently deprecated and has been superseded.**
+> Do not use `alper-architecture-audit` in new agent prompts, workflows, or context routing.
 
-## Anti-Pattern Checks
-- Circular dependencies between modules.
-- Presentation logic leaking into database repositories.
-- God modules exceeding responsibility boundaries.
+## Superseded By
+Use **`alper-architecture`** instead.
+
+## Rationalization & Remediation Context
+Merged into alper-architecture which provides comprehensive architectural analysis and boundary audits.
+
+## Migration Instruction
+- Redirect all routing decisions, prompt triggers, and execution flows to **`alper-architecture`**.
+- This skill exists purely for historical tracking and is excluded from active context routing in `packages/agent-governance/src/context-router.ts`.
