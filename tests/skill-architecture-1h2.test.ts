@@ -141,7 +141,7 @@ describe('Phase 1H.2: Skill Architecture Remediation & Agent Orchestration Stand
     });
 
     it('enforces semantic quality: alper-greenfield-generator mode applicability is strictly GREENFIELD', () => {
-      const content = fs.readFileSync(path.join(skillsDir, 'alper-greenfield-generator', 'SKILL.md'), 'utf-8');
+      const content = fs.readFileSync(path.join(skillsDir, 'alper-greenfield-generator', 'SKILL.md'), 'utf-8').replace(/\r\n/g, '\n');
       expect(content).toContain('modeApplicability:\n  - GREENFIELD');
       expect(content).not.toContain('  - MODERNIZATION');
       expect(content).not.toContain('  - REPAIR');
