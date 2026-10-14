@@ -1,85 +1,66 @@
-# Greenfield Project Generation Engine V1 (FAZ 1G)
+# Greenfield Project Generation Engine V1 (FAZ 1G / Remediated in FAZ 1H.1)
 
 ## Overview
 
-The Greenfield Project Generation Engine transforms user briefs and product ideas into fully specified, architecturally sound, buildable, and verifiable software projects. Unlike shallow template generators or boilerplate copiers, this engine follows an end-to-end disciplined engineering lifecycle:
+The Greenfield Project Generation Engine transforms user briefs and product ideas into architecturally sound, buildable, and verifiable software projects while enforcing the universal invariant: **NO CLAIM WITHOUT EVIDENCE**.
 
 ```mermaid
 flowchart TD
-    A["User Brief"] --> B["Product Understanding & Domain Research"]
-    B --> C["Requirements Engineering & Traceability"]
-    C --> D["Architecture Fitness Assessment"]
-    D --> E["Data & API Modeling"]
-    E --> F["UX Model & 8-State Page Inventory"]
-    F --> G["Multi-Stage Implementation Planning"]
-    G --> H["Scaffolding & Truthful Implementation"]
-    H --> I["Multi-Gate Verification & Evidence Provenance"]
+    A["User Brief"] --> B["Request Complexity & DiscoveryReadiness Gate"]
+    B -- "NEEDS_CLARIFICATION / BLOCKED_BY_AMBIGUITY" --> Q["3-5 Prioritized Clarifying Questions"]
+    B -- "READY" --> C["Requirements Engineering (DEFINED / NOT_VERIFIED)"]
+    C --> D["Architecture & Stack Fitness Assessment"]
+    D --> E["Grounded Entity & Database Blueprint"]
+    E --> F["API Blueprint & 8-State Page Inventory"]
+    F --> G["Multi-Stage Implementation Plan"]
+    G --> H["Stack-Native Scaffolding (buildStatus: NOT_VERIFIED)"]
+    H --> I["Evidence Taxonomy Completion Gate"]
 ```
 
 ---
 
-## Core Guarantees & Principles
+## Core Guarantees & Principles (FAZ 1H.1 Remediation)
 
-1. **Anti-Overengineering & Simplicity Guardrail:**
-   - Microservices, Kafka, and Kubernetes are strictly **NOT** the default.
-   - Small CRUD applications and internal tools are assigned `MONOLITH` or `MODULAR_MONOLITH` architecture with a complexity budget $\le 3$.
-   - Operational simplicity is scored and prioritized.
+1. **DiscoveryReadiness & Downstream Discovery Guard:**
+   - Every profile includes `complexityClassification` (`CLEAR_BOUNDED_TASK`, `STANDARD_PRODUCT`, `AMBIGUOUS_PRODUCT`, `HIGH_COMPLEXITY_PRODUCT`, `INSUFFICIENT_CONTEXT`) and `discoveryReadiness` (`READY`, `NEEDS_CLARIFICATION`, `BLOCKED_BY_AMBIGUITY`).
+   - Ambiguous one-liners such as `"Build me an APS"` are classified as `AMBIGUOUS_PRODUCT` and blocked with at most 3–5 high-impact `clarifyingQuestions`.
+   - When `discoveryReadiness.state !== 'READY'`, `createNewProjectBlueprint`, `createDatabaseBlueprint`, and `createPageInventory` refuse to fabricate production schemas.
 
-2. **Truthful UI Policy Enforcement:**
-   - Zero fabricated telemetry, fake uptime counters, or simulated streaming metrics.
-   - Placeholder and sample data are unambiguously labeled with `[DEMO_DATA]` markers.
-   - Data provenance and state management reflect actual system state.
+2. **Grounded Entity Derivation (No Verb Pluralization or Generic Fallbacks):**
+   - Verbs and generic placeholders (`manages`, `items`, `records`, `PrimaryEntity`) are strictly prohibited in production mode.
+   - Database tables and CRUD pages are derived from grounded domain nouns (`explicitEntities`, `primaryJobs`, or domain concepts).
 
-3. **8-State Page Completeness:**
-   Every page blueprint accounts for all 8 mandatory states:
-   - `LOADING`
-   - `EMPTY`
-   - `SUCCESS`
-   - `ERROR`
-   - `PARTIAL`
-   - `UNAUTHORIZED`
-   - `FORBIDDEN`
-   - `OFFLINE`
+3. **Truthful Acceptance Criteria & Build Status:**
+   - `deriveRequirements` initializes all `acceptanceCriteria` with `verified: false`, `status: 'DEFINED'`, and `verificationStatus: 'NOT_VERIFIED'`.
+   - `scaffoldNewProject` emits `filesGenerated` truthfully while reporting `buildStatus: 'NOT_VERIFIED'`, `buildable: false`, and `syntaxValid: false` unless `verifiedBuildEvidence` is supplied.
 
-4. **Multi-Stack Production Support:**
-   - **React + TypeScript (Vite/Tailwind)**
-   - **Laravel + Blade**
-   - **ASP.NET Core + Razor**
-   - **Plain HTML5 + CSS + JavaScript**
+4. **Multi-Stack Buildable Scaffolds & Conditional Native Docker:**
+   - **React + TypeScript (`REACT_TYPESCRIPT`)**: Complete Vite entry structure (`package.json` with `@vitejs/plugin-react`, `vite.config.ts`, `tsconfig.json`, `index.html`, `src/main.tsx`, `src/vite-env.d.ts`, `src/styles/tokens.css`, `src/App.tsx`).
+   - **Laravel + Blade (`LARAVEL_BLADE`)**: `composer.json`, `routes/web.php`, controllers, Blade views with `@csrf`, CSS tokens, and PHP/Composer `Dockerfile`.
+   - **ASP.NET Core + Razor (`ASPNET_RAZOR`)**: `App.csproj`, `Program.cs`, controllers, Razor views with `@Html.AntiForgeryToken()`, CSS tokens, and dotnet SDK/ASP.NET runtime `Dockerfile`.
+   - **Plain HTML5 + CSS + JavaScript (`PLAIN_HTML_CSS_JS`)**: `index.html`, `styles.css`, `app.js` with zero npm dependencies, and `nginx:alpine` `Dockerfile` when Docker is requested.
+   - `Dockerfile` and `docker-compose.yml` are omitted when `deploymentEnvironment` does not require Docker (`LOCAL_ONLY`, `STANDALONE_HOST`, `SERVERLESS`).
 
-5. **Requirement Traceability & Boundary Enforcement:**
-   - 100% of functional requirements must trace to architectural decisions, database models, API endpoints, UI pages, and verification tests.
-   - Prohibited technologies (e.g. premature distributed caching, unnecessary microservices) are rejected at the requirement boundary contract.
+5. **Gate-Specific Evidence Taxonomy Enforcement:**
+   - `evaluateNewProjectCompletion` requires qualifying `evidenceRecords` per gate.
+   - Missing evidence resolves to `NOT_VERIFIED` (`isComplete: false`), failed evidence to `FAILED`, and `HUMAN_REVIEW` only satisfies gates whose policy explicitly allows it.
 
 ---
 
-## MCP Tools Introduced in FAZ 1G
-
-The Greenfield Engine exposes 13 canonical MCP tools (Tools 98–110):
+## MCP Tools (Tools 98–110)
 
 | Tool Name | Purpose |
 | :--- | :--- |
-| `create_greenfield_profile` | Analyzes raw user briefs and generates a `GreenfieldProjectProfile`. |
-| `derive_requirements` | Extracts functional, non-functional requirements, constraints, and Gherkin acceptance criteria. |
-| `create_requirement_traceability` | Generates RTM mapping requirements to architecture, data, API, pages, and tests. |
-| `recommend_greenfield_architecture` | Evaluates complexity budget, operational simplicity, and selects architectural style. |
-| `recommend_greenfield_stack` | Selects optimal frontend, backend, template engine, and build tooling. |
-| `create_database_blueprint` | Designs normalized relational/document entities, indexes, migrations, and masking. |
-| `create_api_blueprint` | Generates OpenAPI 3.1.0 specifications with standard error and pagination envelopes. |
-| `create_auth_model` | Configures secure cookie-based auth, RBAC roles, permissions, and security headers. |
-| `create_page_inventory` | Builds page inventory with 8-state coverage, navigation hierarchy, and workflows. |
-| `create_project_blueprint` | Synthesizes master blueprint unifying all domain, architectural, and design artifacts. |
-| `create_project_plan` | Produces stage-by-stage implementation plan with dependencies and validation gates. |
-| `scaffold_new_project` | Emits physical directory structure, buildable code files, Dockerfiles, and tests. |
-| `evaluate_new_project_completion` | Evaluates completion gates with strict Evidence Taxonomy provenance. |
-
----
-
-## Evidence Provenance Integration
-
-All verification outcomes within Greenfield generation utilize the non-inflated Evidence Taxonomy:
-- `EvidenceKind`: `STATIC_ANALYSIS`, `HEURISTIC_REVIEW`, `UNIT_TEST`, `INTEGRATION_TEST`, `RUNTIME_CHECK`, `BROWSER_TEST`, `HUMAN_REVIEW`.
-- `VerificationStatus`: `VERIFIED`, `PARTIALLY_VERIFIED`, `NOT_VERIFIED`, `FAILED`, `NOT_APPLICABLE`.
-- `AssuranceLevel`: `FORMAL`, `HIGH`, `MEDIUM`, `LOW`, `EXPLORATORY`.
-
-No synthetic test or heuristic check is inflated to runtime or browser evidence.
+| `create_greenfield_project_profile` | Analyzes user brief, classifies complexity, and computes `DiscoveryReadiness`. |
+| `derive_requirements` | Extracts requirements and unverified (`DEFINED` / `NOT_VERIFIED`) acceptance criteria. |
+| `create_requirement_traceability` | Generates bidirectional RTM mapping requirements to architecture, data, API, pages, and tests. |
+| `recommend_architecture` | Evaluates complexity budget and selects `MONOLITH`, `MODULAR_MONOLITH`, `CLIENT_SERVER`, `SERVICE_ORIENTED`, `MICROSERVICES`, or `STATIC_FIRST`. |
+| `recommend_stack` | Selects stack and marks unrequested choices as `REVERSIBLE_ASSUMPTION`. |
+| `create_database_blueprint` | Designs grounded relational entities and migrations or returns `NEEDS_CLARIFICATION`. |
+| `create_api_blueprint` | Generates REST endpoints and OpenAPI 3.1.0 specification from grounded tables. |
+| `create_auth_model` | Configures authentication and RBAC authorization rules. |
+| `create_page_inventory` | Builds 8-state page inventory from grounded entities or returns `NEEDS_CLARIFICATION`. |
+| `create_project_blueprint` | Synthesizes master `NewProjectBlueprint` (enforces Downstream Discovery Guard). |
+| `create_project_implementation_plan` | Produces 7-stage implementation plan with checkpoints. |
+| `scaffold_new_project` | Emits stack-native buildable files with truthful `buildStatus: 'NOT_VERIFIED'`. |
+| `evaluate_new_project_completion` | Evaluates completion gates strictly against qualifying `evidenceRecords`. |

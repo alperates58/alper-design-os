@@ -1348,6 +1348,7 @@ export const EvidenceKindSchema = z.enum([
   'INTEGRATION_TEST',
   'RUNTIME_CHECK',
   'BROWSER_TEST',
+  'VISUAL_DIFF',
   'HUMAN_REVIEW'
 ]);
 export type EvidenceKind = z.infer<typeof EvidenceKindSchema>;
@@ -1362,6 +1363,7 @@ export const VerificationStatusSchema = z.enum([
 export type VerificationStatus = z.infer<typeof VerificationStatusSchema>;
 
 export const AssuranceLevelSchema = z.enum([
+  'NONE',
   'LOW',
   'MEDIUM',
   'HIGH'
@@ -1564,7 +1566,7 @@ export const ModernizationCompletionContractSchema = z.object({
 export type ModernizationCompletionContract = z.infer<typeof ModernizationCompletionContractSchema>;
 
 // 26.15 Project Modes & Mode Transition Guard
-export const ProjectModeSchema = z.enum(['NEW', 'REPAIR', 'MODERNIZE']);
+export const ProjectModeSchema = z.enum(['NEW', 'EXISTING', 'REPAIR', 'MODERNIZE']);
 export type ProjectMode = z.infer<typeof ProjectModeSchema>;
 
 export const ProjectModeTransitionSchema = z.object({

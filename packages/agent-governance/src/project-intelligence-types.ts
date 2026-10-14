@@ -1,14 +1,20 @@
 import { z } from 'zod';
-import { EvidenceKindSchema, VerificationStatusSchema, AssuranceLevelSchema } from './types';
+import {
+  EvidenceKindSchema,
+  VerificationStatusSchema,
+  AssuranceLevelSchema,
+  ProjectModeSchema,
+  ProjectMode
+} from './types.js';
+
+export { ProjectModeSchema };
+export type { ProjectMode };
 
 // =========================================================================
 // 1. Project Directory & Manifest (Section 1)
 // =========================================================================
 
 export const PROJECT_INTELLIGENCE_ROOT = '.alper-design-os/project';
-
-export const ProjectModeSchema = z.enum(['NEW', 'EXISTING', 'REPAIR', 'MODERNIZE']);
-export type ProjectMode = z.infer<typeof ProjectModeSchema>;
 
 export const ProjectIdentitySchema = z.object({
   projectId: z.string(),
@@ -145,7 +151,9 @@ export const DecisionRecordSchema = z.object({
   supersedes: z.string().nullable().default(null),
   supersededBy: z.string().nullable().default(null),
   createdAt: z.string(),
-  approvedBy: z.string()
+  approvedBy: z.string(),
+  confirmedByUser: z.boolean().default(false),
+  authoritySource: MemoryRecordSourceSchema.optional()
 }).passthrough();
 export type DecisionRecord = z.infer<typeof DecisionRecordSchema>;
 
@@ -190,10 +198,28 @@ export const BusinessRuleRecordStatusSchema = z.enum([
 ]);
 export type BusinessRuleRecordStatus = z.infer<typeof BusinessRuleRecordStatusSchema>;
 
+export const BusinessRuleSourceTypeSchema = z.enum([
+  'EXPLICIT_USER_SPECIFICATION',
+  'VERIFIED_CODE_FACT',
+  'APPROVED_REQUIREMENT',
+  'REGULATORY_SOURCE',
+  'AUTHORITATIVE_DOCUMENT',
+  'DOMAIN_RESEARCH',
+  'SYSTEM_INFERENCE',
+  'MODEL_INFERENCE',
+  'LLM_INFERRED_HEURISTIC',
+  'UNKNOWN'
+]);
+export type BusinessRuleSourceType = z.infer<typeof BusinessRuleSourceTypeSchema>;
+
 export const BusinessRuleRecordSchema = z.object({
   ruleId: z.string(),
   statement: z.string(),
   source: z.string(),
+  sourceType: BusinessRuleSourceTypeSchema.default('UNKNOWN'),
+  sourceRef: z.string().optional(),
+  evidenceRefs: z.array(z.string()).default([]),
+  confirmedByUser: z.boolean().default(false),
   priority: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']).default('HIGH'),
   scope: z.string().default('PROJECT'),
   inputs: z.array(z.string()).default([]),
@@ -272,10 +298,17 @@ export const ArchitectureEdgeSchema = z.object({
 }).passthrough();
 export type ArchitectureEdge = z.infer<typeof ArchitectureEdgeSchema>;
 
+export const GraphCompletenessSchema = z.enum(['COMPLETE', 'PARTIAL', 'EMPTY']);
+export type GraphCompleteness = z.infer<typeof GraphCompletenessSchema>;
+
 export const ProjectArchitectureGraphSchema = z.object({
   nodes: z.array(ArchitectureNodeSchema),
   edges: z.array(ArchitectureEdgeSchema),
-  graphHash: z.string().optional()
+  graphHash: z.string().optional(),
+  completeness: GraphCompletenessSchema.default('EMPTY'),
+  unknownAreas: z.array(z.string()).default([]),
+  evidenceSources: z.array(z.string()).default([]),
+  verificationStatus: z.enum(['VERIFIED', 'PARTIALLY_VERIFIED', 'NOT_VERIFIED']).default('NOT_VERIFIED')
 }).passthrough();
 export type ProjectArchitectureGraph = z.infer<typeof ProjectArchitectureGraphSchema>;
 
@@ -298,6 +331,8 @@ export const KnowledgeConflictTypeSchema = z.enum([
   'CODE_VS_DOC',
   'DECISION_VS_IMPLEMENTATION',
   'REQUIREMENT_VS_IMPLEMENTATION',
+  'BUSINESS_RULE_VS_IMPLEMENTATION',
+  'INVARIANT_VS_VERIFICATION',
   'DOC_VS_DOC',
   'STALE_REFERENCE'
 ]);
@@ -336,7 +371,9 @@ export const ProjectSnapshotSchema = z.object({
   apiInventory: z.array(z.string()).default([]),
   databaseFingerprint: z.string().default(''),
   dependencyFingerprint: z.string().default(''),
-  designSystemFingerprint: z.string().default('')
+  designSystemFingerprint: z.string().default(''),
+  uiTokenFingerprint: z.string().default('NOT_VERIFIED'),
+  verificationStatus: z.enum(['VERIFIED', 'PARTIALLY_VERIFIED', 'NOT_VERIFIED']).default('NOT_VERIFIED')
 }).passthrough();
 export type ProjectSnapshot = z.infer<typeof ProjectSnapshotSchema>;
 
@@ -380,6 +417,8 @@ export const ChangeImpactAssessmentSchema = z.object({
   affectedTests: z.array(z.string()).default([]),
   affectedDecisions: z.array(z.string()).default([]),
   risk: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
+  confidence: z.number().min(0).max(1).default(0.5),
+  evidenceSources: z.array(z.string()).default([]),
   recommendedVerification: z.array(z.string()).default([]),
   rationale: z.string()
 }).passthrough();
@@ -488,6 +527,13 @@ export const ProjectKnowledgeHealthSchema = z.object({
   orphanDecisions: z.array(z.string()).default([]),
   staleDocs: z.array(z.string()).default([]),
   unknownInvariants: z.array(z.string()).default([]),
-  healthStatus: z.enum(['EXCELLENT', 'GOOD', 'NEEDS_ATTENTION', 'CRITICAL'])
+  healthStatus: z.enum([
+    'EXCELLENT',
+    'GOOD',
+    'NEEDS_ATTENTION',
+    'CRITICAL',
+    'INSUFFICIENT_DATA',
+    'NOT_INITIALIZED'
+  ])
 }).passthrough();
 export type ProjectKnowledgeHealth = z.infer<typeof ProjectKnowledgeHealthSchema>;

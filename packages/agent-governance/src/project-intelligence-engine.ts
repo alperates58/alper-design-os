@@ -23,10 +23,12 @@ import {
   DomainGlossarySchema,
   BusinessRuleRecord,
   BusinessRuleRecordSchema,
+  BusinessRuleSourceType,
   ProjectInvariant,
   ProjectInvariantSchema,
   ProjectArchitectureGraph,
   ProjectArchitectureGraphSchema,
+  GraphCompleteness,
   ArchitectureNode,
   ArchitectureEdge,
   KnowledgeAuthorityRank,
@@ -56,7 +58,7 @@ import {
   ProjectStatusSnapshotSchema,
   ProjectKnowledgeHealth,
   ProjectKnowledgeHealthSchema
-} from './project-intelligence-types';
+} from './project-intelligence-types.js';
 
 // =========================================================================
 // 1. Secret Detection & Redaction (Section 4)
@@ -140,6 +142,252 @@ function hashData(data: any): string {
   return crypto.createHash('sha256').update(normalized).digest('hex').slice(0, 16);
 }
 
+export interface DiscoveredRepositoryArtifacts {
+  modules: string[];
+  components: string[];
+  services: string[];
+  tables: string[];
+  apis: string[];
+  pages: string[];
+  testFiles: string[];
+  evidenceSources: string[];
+  databaseFingerprint: string;
+  dependencyFingerprint: string;
+  designSystemFingerprint: string;
+}
+
+const IGNORED_SCAN_DIRS = new Set([
+  'node_modules',
+  '.git',
+  '.alper-design-os',
+  'dist',
+  'build',
+  'vendor',
+  'bin',
+  'obj',
+  'coverage',
+  '.next',
+  '.turbo'
+]);
+
+function walkRepositoryFiles(baseDir: string, maxFiles: number = 400): string[] {
+  if (!baseDir || !fs.existsSync(baseDir)) return [];
+  const results: string[] = [];
+
+  function walk(currentDir: string, depth: number) {
+    if (depth > 5 || results.length >= maxFiles) return;
+    let entries: fs.Dirent[] = [];
+    try {
+      entries = fs.readdirSync(currentDir, { withFileTypes: true });
+    } catch (_) {
+      return;
+    }
+    for (const entry of entries) {
+      if (results.length >= maxFiles) break;
+      if (IGNORED_SCAN_DIRS.has(entry.name)) continue;
+      const fullPath = path.join(currentDir, entry.name);
+      if (entry.isDirectory()) {
+        walk(fullPath, depth + 1);
+      } else if (entry.isFile()) {
+        results.push(path.relative(baseDir, fullPath).replace(/\\/g, '/'));
+      }
+    }
+  }
+
+  walk(baseDir, 0);
+  return results;
+}
+
+export function discoverRepositoryArtifacts(baseDir: string): DiscoveredRepositoryArtifacts {
+  const modules = new Set<string>();
+  const components = new Set<string>();
+  const services = new Set<string>();
+  const tables = new Set<string>();
+  const apis = new Set<string>();
+  const pages = new Set<string>();
+  const testFiles = new Set<string>();
+  const evidenceSources = new Set<string>();
+
+  const dbHashInputs: string[] = [];
+  const depHashInputs: string[] = [];
+  const designHashInputs: string[] = [];
+
+  const relFiles = walkRepositoryFiles(baseDir);
+
+  for (const relPath of relFiles) {
+    const absPath = path.join(baseDir, relPath);
+    const lowerPath = relPath.toLowerCase();
+    const baseName = path.basename(relPath);
+    const nameWithoutExt = baseName.replace(/\.[^.]+$/, '');
+
+    // Test files
+    if (/\.(test|spec)\.(ts|tsx|js|jsx|php|cs)$/i.test(baseName) || lowerPath.startsWith('tests/')) {
+      testFiles.add(relPath);
+      continue;
+    }
+
+    // Dependency manifests
+    if (
+      baseName === 'package.json' ||
+      baseName === 'composer.json' ||
+      baseName.endsWith('.csproj') ||
+      baseName === 'requirements.txt'
+    ) {
+      try {
+        const content = fs.readFileSync(absPath, 'utf-8');
+        depHashInputs.push(`${relPath}:${content}`);
+        evidenceSources.add(relPath);
+        if (relPath.startsWith('packages/') && baseName === 'package.json') {
+          const pkgDir = relPath.split('/')[1];
+          if (pkgDir) modules.add(pkgDir);
+        }
+      } catch (_) {}
+    }
+
+    // Modules & Services from directory conventions
+    if (/^(src\/modules|app\/modules|modules)\/([^/]+)/i.test(relPath)) {
+      const m = relPath.match(/^(?:src\/modules|app\/modules|modules)\/([^/]+)/i);
+      if (m && m[1]) {
+        modules.add(m[1].replace(/\.[^.]+$/, ''));
+        evidenceSources.add(relPath);
+      }
+    }
+    if (/(service|controller|gateway|repository)\.(ts|js|php|cs)$/i.test(baseName)) {
+      services.add(nameWithoutExt);
+      modules.add(nameWithoutExt);
+      evidenceSources.add(relPath);
+    }
+
+    // Components
+    if (/^(src\/components|resources\/views\/components|components)\/([^/]+)/i.test(relPath)) {
+      components.add(nameWithoutExt);
+      evidenceSources.add(relPath);
+    }
+
+    // Database schemas, migrations, models, entities
+    if (
+      lowerPath.endsWith('.sql') ||
+      lowerPath.includes('migration') ||
+      lowerPath.includes('schema.prisma') ||
+      /^(src\/models|src\/entities|app\/models|models|entities)\//i.test(relPath)
+    ) {
+      try {
+        const content = fs.readFileSync(absPath, 'utf-8');
+        dbHashInputs.push(`${relPath}:${content}`);
+        evidenceSources.add(relPath);
+
+        // SQL CREATE TABLE
+        const sqlMatches = content.matchAll(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?["`']?([a-zA-Z0-9_]+)["`']?/gi);
+        for (const match of sqlMatches) {
+          if (match[1]) tables.add(match[1]);
+        }
+
+        // Laravel Schema::create
+        const laravelMatches = content.matchAll(/Schema::create\(\s*['"]([a-zA-Z0-9_]+)['"]/g);
+        for (const match of laravelMatches) {
+          if (match[1]) tables.add(match[1]);
+        }
+
+        // Prisma model
+        const prismaMatches = content.matchAll(/^\s*model\s+([A-Za-z0-9_]+)\s*\{/gm);
+        for (const match of prismaMatches) {
+          if (match[1]) tables.add(match[1]);
+        }
+
+        if (/^(src\/models|src\/entities|app\/models|models|entities)\//i.test(relPath)) {
+          tables.add(nameWithoutExt.toLowerCase());
+        }
+      } catch (_) {}
+    }
+
+    // APIs / Routes / Controllers / OpenAPI
+    if (
+      /(route|controller|api|server|app)\.(ts|tsx|js|php|cs)$/i.test(baseName) ||
+      /^routes\/(api|web)\.php$/i.test(relPath) ||
+      /openapi\.(json|ya?ml)$/i.test(baseName)
+    ) {
+      try {
+        const content = fs.readFileSync(absPath, 'utf-8');
+
+        // Express / Fastify / Hono style
+        const expressMatches = content.matchAll(/\b(?:app|router|server)\.(get|post|put|patch|delete)\s*\(\s*['"`]([^'"`]+)['"`]/gi);
+        for (const match of expressMatches) {
+          apis.add(`${match[1].toUpperCase()} ${match[2]}`);
+          evidenceSources.add(relPath);
+        }
+
+        // Explicit /api/... string literals in route/controller files
+        const apiPathMatches = content.matchAll(/['"`](\/api\/[a-zA-Z0-9_/\-:]+)['"`]/g);
+        for (const match of apiPathMatches) {
+          apis.add(`GET ${match[1]}`);
+          evidenceSources.add(relPath);
+        }
+
+        // Laravel Route::
+        const laravelRouteMatches = content.matchAll(/Route::(get|post|put|patch|delete|resource)\s*\(\s*['"]([^'"]+)['"]/gi);
+        for (const match of laravelRouteMatches) {
+          const verb = match[1].toUpperCase() === 'RESOURCE' ? 'RESOURCE' : match[1].toUpperCase();
+          const routePath = match[2].startsWith('/') ? match[2] : `/${match[2]}`;
+          if (lowerPath.includes('api')) {
+            apis.add(`${verb} /api${routePath}`);
+          } else {
+            pages.add(routePath);
+          }
+          evidenceSources.add(relPath);
+        }
+
+        // ASP.NET [HttpGet("...")]
+        const aspMatches = content.matchAll(/\[Http(Get|Post|Put|Delete|Patch)(?:\(\s*"([^"]*)"\s*\))?\]/gi);
+        for (const match of aspMatches) {
+          const verb = match[1].toUpperCase();
+          const sub = match[2] ? (match[2].startsWith('/') ? match[2] : `/${match[2]}`) : `/${nameWithoutExt.replace(/Controller$/i, '').toLowerCase()}`;
+          apis.add(`${verb} ${sub}`);
+          evidenceSources.add(relPath);
+        }
+      } catch (_) {}
+    }
+
+    // Pages / Views
+    if (
+      /^(src\/pages|src\/views|pages|views)\/([^/]+)\.(tsx|jsx|ts|js|cshtml|html)$/i.test(relPath) ||
+      /^resources\/views\/([^/]+)\.blade\.php$/i.test(relPath) ||
+      relPath === 'index.html'
+    ) {
+      const cleanPage = nameWithoutExt.replace(/\.blade$/i, '').toLowerCase();
+      const route = cleanPage === 'index' || cleanPage === 'home' ? '/' : `/${cleanPage}`;
+      pages.add(route);
+      evidenceSources.add(relPath);
+    }
+
+    // Design tokens & stylesheets
+    if (
+      /tokens?\.(json|ts|css)$/i.test(baseName) ||
+      baseName.endsWith('.css') ||
+      /^tailwind\.config\./i.test(baseName)
+    ) {
+      try {
+        const content = fs.readFileSync(absPath, 'utf-8');
+        designHashInputs.push(`${relPath}:${content}`);
+        evidenceSources.add(relPath);
+      } catch (_) {}
+    }
+  }
+
+  return {
+    modules: Array.from(modules),
+    components: Array.from(components),
+    services: Array.from(services),
+    tables: Array.from(tables),
+    apis: Array.from(apis),
+    pages: Array.from(pages),
+    testFiles: Array.from(testFiles),
+    evidenceSources: Array.from(evidenceSources),
+    databaseFingerprint: dbHashInputs.length > 0 ? `fp-db-${hashData(dbHashInputs.sort())}` : 'NOT_VERIFIED',
+    dependencyFingerprint: depHashInputs.length > 0 ? `fp-dep-${hashData(depHashInputs.sort())}` : 'NOT_VERIFIED',
+    designSystemFingerprint: designHashInputs.length > 0 ? `fp-ds-${hashData(designHashInputs.sort())}` : 'NOT_VERIFIED'
+  };
+}
+
 // =========================================================================
 // 2. Project Intelligence Initialization & Loading (Sections 1, 2, 27, 35)
 // =========================================================================
@@ -180,6 +428,8 @@ export function initializeProjectIntelligence(
     fs.mkdirSync(path.join(rootDir, sub), { recursive: true });
   }
 
+  const discovered = discoverRepositoryArtifacts(baseDir);
+
   const now = new Date().toISOString();
   const projectId = options.projectId || `proj-${options.projectName.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${Date.now().toString(36)}`;
   const repoIdentity = options.repositoryIdentity || `repo-${options.projectName.toLowerCase()}-${hashData(baseDir)}`;
@@ -193,7 +443,7 @@ export function initializeProjectIntelligence(
     schemaVersion: '1.0.0',
     designOsVersion: '0.1.0',
     primaryStack: options.primaryStack || options.blueprint?.stack?.primaryStack || 'REACT_TYPESCRIPT',
-    domains: options.domains || (options.profile?.domain ? [options.profile.domain] : ['Enterprise Management']),
+    domains: options.domains || (options.profile?.domain ? [options.profile.domain] : ['General Software']),
     environments: ['development', 'production']
   };
 
@@ -245,7 +495,10 @@ export function initializeProjectIntelligence(
   fs.writeFileSync(path.join(rootDir, 'constraints.json'), JSON.stringify(constraintsData, null, 2), 'utf-8');
   createdFiles.push('constraints.json');
 
-  // Write invariants.json
+  // Write invariants.json — only link relatedTests if those test files actually exist on disk
+  const authTestExists = discovered.testFiles.some(t => t.toLowerCase().includes('auth'));
+  const dbTestExists = discovered.testFiles.some(t => t.toLowerCase().includes('db'));
+
   const initialInvariants: ProjectInvariant[] = [
     {
       id: 'INV-SEC-01',
@@ -254,7 +507,7 @@ export function initializeProjectIntelligence(
       scope: 'API',
       severity: 'CRITICAL',
       verificationMethod: 'SECURITY_SCAN',
-      relatedTests: ['tests/auth.test.ts'],
+      relatedTests: authTestExists ? discovered.testFiles.filter(t => t.toLowerCase().includes('auth')) : [],
       source: 'Default Security Baseline'
     },
     {
@@ -264,26 +517,37 @@ export function initializeProjectIntelligence(
       scope: 'DATABASE',
       severity: 'HIGH',
       verificationMethod: 'INTEGRATION_TEST',
-      relatedTests: ['tests/db.test.ts'],
+      relatedTests: dbTestExists ? discovered.testFiles.filter(t => t.toLowerCase().includes('db')) : [],
       source: 'Domain Data Integrity Standard'
     }
   ];
   fs.writeFileSync(path.join(rootDir, 'invariants.json'), JSON.stringify(initialInvariants, null, 2), 'utf-8');
   createdFiles.push('invariants.json');
 
-  // Write initial T0 snapshot
+  // Write initial T0 snapshot — truthful inventories and fingerprints (never fake defaults)
+  const blueprintRoutes: string[] = Array.isArray(options.blueprint?.pages?.pages)
+    ? options.blueprint.pages.pages.map((p: any) => p.route).filter(Boolean)
+    : discovered.pages;
+  const blueprintApis: string[] = Array.isArray(options.blueprint?.api?.endpoints)
+    ? options.blueprint.api.endpoints.map((e: any) => `${e.method} ${e.path}`).filter(Boolean)
+    : discovered.apis;
+
   const initialSnapshot: ProjectSnapshot = {
     snapshotId: 'SNAP-T0-INIT',
-    commitSha: 'initial-commit-t0',
+    commitSha: 'UNVERIFIED_WORKING_TREE',
     timestamp: now,
     stack: identity.primaryStack,
-    architectureHash: hashData(archData),
-    requirementHash: hashData(options.blueprint?.requirements || {}),
-    routeInventory: ['/health', '/dashboard'],
-    apiInventory: ['GET /api/v1/health'],
-    databaseFingerprint: hashData(options.blueprint?.database || 'initial-db'),
-    dependencyFingerprint: hashData({ stack: identity.primaryStack }),
-    designSystemFingerprint: hashData('dtcg-tokens-v1')
+    architectureHash: options.blueprint?.architecture ? hashData(options.blueprint.architecture) : 'NOT_VERIFIED',
+    requirementHash: options.blueprint?.requirements ? hashData(options.blueprint.requirements) : 'NOT_VERIFIED',
+    routeInventory: blueprintRoutes,
+    apiInventory: blueprintApis,
+    databaseFingerprint: options.blueprint?.database?.entities?.length > 0
+      ? `fp-db-${hashData(options.blueprint.database.entities)}`
+      : discovered.databaseFingerprint,
+    dependencyFingerprint: discovered.dependencyFingerprint,
+    designSystemFingerprint: discovered.designSystemFingerprint,
+    uiTokenFingerprint: discovered.designSystemFingerprint,
+    verificationStatus: 'NOT_VERIFIED'
   };
   fs.writeFileSync(path.join(rootDir, 'snapshots', 'SNAP-T0-INIT.json'), JSON.stringify(initialSnapshot, null, 2), 'utf-8');
   createdFiles.push('snapshots/SNAP-T0-INIT.json');
@@ -367,7 +631,7 @@ export function loadProjectIntelligence(baseDir: string): {
 }
 
 // =========================================================================
-// 3. Decision Records (ADR) & Superseding (Section 5, 6, 25, 26)
+// 3. Decision Records (ADR) & Superseding (Section 5, 6, 25, 26, 30)
 // =========================================================================
 
 export function recordProjectDecision(
@@ -386,6 +650,8 @@ export function recordProjectDecision(
     status?: DecisionStatus;
     supersedes?: string | null;
     approvedBy: string;
+    confirmedByUser?: boolean;
+    authoritySource?: MemoryRecordSource;
   }
 ): { record: DecisionRecord; supersededRecord?: DecisionRecord } {
   const rootDir = getProjectIntelligencePath(baseDir);
@@ -415,6 +681,13 @@ export function recordProjectDecision(
     }
   }
 
+  // Section 30: Do not elevate authority based on free-text substring matching like approvedBy.includes('alper').
+  // Require explicit confirmedByUser === true or explicit authoritySource === 'USER_DECISION'.
+  const confirmedByUser = decisionInput.confirmedByUser === true;
+  const authoritySource: MemoryRecordSource =
+    decisionInput.authoritySource ||
+    (confirmedByUser ? 'USER_DECISION' : 'SYSTEM_RECOMMENDATION');
+
   const record: DecisionRecord = {
     id: decisionInput.id,
     title: cleanTitle,
@@ -426,11 +699,14 @@ export function recordProjectDecision(
     evidence: cleanEvidence,
     requirements: decisionInput.requirements || [],
     affectedComponents: decisionInput.affectedComponents || [],
-    status: decisionInput.status || 'ACCEPTED',
+    status: decisionInput.status || (decisionInput.approvedBy === 'SYSTEM_RECOMMENDATION' ? 'PROPOSED' : 'ACCEPTED'),
     supersedes: decisionInput.supersedes || null,
     supersededBy: null,
     createdAt: new Date().toISOString(),
-    approvedBy: decisionInput.approvedBy
+    approvedBy: decisionInput.approvedBy,
+    confirmedByUser,
+    authoritySource,
+    verificationStatus: confirmedByUser || authoritySource === 'USER_DECISION' ? 'VERIFIED' : 'NOT_VERIFIED'
   };
 
   const newPath = path.join(decisionsDir, `${record.id}.json`);
@@ -443,16 +719,14 @@ export function recordProjectDecision(
     title: record.title,
     summary: record.decision,
     details: record.context,
-    source: record.approvedBy.toLowerCase().includes('alper') || record.approvedBy.toLowerCase().includes('user')
-      ? 'USER_DECISION'
-      : 'SYSTEM_RECOMMENDATION',
+    source: authoritySource,
     sourceRefs: [`decisions/${record.id}.json`],
-    status: record.status === 'ACCEPTED' ? 'ACTIVE' : (record.status === 'SUPERSEDED' ? 'SUPERSEDED' : 'DEPRECATED'),
-    confidence: 1.0,
+    status: record.status === 'ACCEPTED' ? 'ACTIVE' : (record.status === 'SUPERSEDED' ? 'SUPERSEDED' : 'UNVERIFIED'),
+    confidence: confirmedByUser ? 1.0 : 0.75,
     freshness: 'CURRENT',
     scope: 'PROJECT',
     relatedEntities: record.affectedComponents,
-    tags: ['ADR', record.status]
+    tags: ['ADR', record.status, authoritySource]
   });
 
   return {
@@ -467,9 +741,22 @@ export function recordProjectDecision(
 
 export function recordProjectMemory(
   baseDir: string,
-  record: Omit<ProjectMemoryRecord, 'createdAt' | 'updatedAt'> & {
+  record: {
+    id: string;
+    type: ProjectMemoryRecordType;
+    title: string;
+    summary: string;
+    details: string;
+    source: MemoryRecordSource;
+    sourceRefs?: string[];
     createdAt?: string;
     updatedAt?: string;
+    status?: 'ACTIVE' | 'UNVERIFIED' | 'DEPRECATED' | 'SUPERSEDED';
+    confidence?: number;
+    freshness?: Freshness;
+    scope?: MemoryScope;
+    relatedEntities?: string[];
+    tags?: string[];
   }
 ): ProjectMemoryRecord {
   const rootDir = getProjectIntelligencePath(baseDir);
@@ -507,8 +794,23 @@ export function recordProjectMemory(
 }
 
 // =========================================================================
-// 5. Business Rules & Invariants Registries (Section 8, 9)
+// 5. Business Rules & Invariants Registries (Sections 8, 9, 27–30)
 // =========================================================================
+
+const AUTHORITATIVE_RULE_SOURCE_TYPES = new Set<BusinessRuleSourceType>([
+  'EXPLICIT_USER_SPECIFICATION',
+  'VERIFIED_CODE_FACT',
+  'APPROVED_REQUIREMENT',
+  'REGULATORY_SOURCE',
+  'AUTHORITATIVE_DOCUMENT'
+]);
+
+const NON_VERIFIABLE_RULE_SOURCE_TYPES = new Set<BusinessRuleSourceType>([
+  'MODEL_INFERENCE',
+  'SYSTEM_INFERENCE',
+  'DOMAIN_RESEARCH',
+  'UNKNOWN'
+]);
 
 export function recordBusinessRule(
   baseDir: string,
@@ -516,6 +818,10 @@ export function recordBusinessRule(
     ruleId: string;
     statement: string;
     source: string;
+    sourceType?: BusinessRuleSourceType;
+    sourceRef?: string;
+    evidenceRefs?: string[];
+    confirmedByUser?: boolean;
     priority?: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
     scope?: string;
     inputs?: string[];
@@ -526,7 +832,9 @@ export function recordBusinessRule(
   }
 ): BusinessRuleRecord {
   const rootDir = getProjectIntelligencePath(baseDir);
-  const rulesPath = path.join(rootDir, 'knowledge', 'business-rules.json');
+  const knowledgeDir = path.join(rootDir, 'knowledge');
+  fs.mkdirSync(knowledgeDir, { recursive: true });
+  const rulesPath = path.join(knowledgeDir, 'business-rules.json');
 
   let existingRules: BusinessRuleRecord[] = [];
   if (fs.existsSync(rulesPath)) {
@@ -535,15 +843,35 @@ export function recordBusinessRule(
     } catch (_) {}
   }
 
-  // Authority check: If inferred or generated by LLM without authoritative source -> UNVERIFIED
-  const isAuthoritative =
-    ruleInput.source.includes('USER_SPECIFICATION') ||
-    ruleInput.source.includes('REGULATORY') ||
-    ruleInput.source.includes('DOCUMENTED_IN_CODE') ||
-    ruleInput.source.includes('Alper') ||
-    ruleInput.source.includes('Domain Data Integrity Specification');
+  // Sections 27-29: Free-text strings (e.g. "Alper", "User Brief", "Contract") are NEVER proof of authority.
+  // Require explicit typed sourceType + supporting confirmation or evidence reference.
+  let resolvedSourceType: BusinessRuleSourceType = ruleInput.sourceType || 'UNKNOWN';
+  if (!ruleInput.sourceType) {
+    const lowerSource = (ruleInput.source || '').toLowerCase();
+    if (lowerSource.includes('infer') || lowerSource.includes('llm') || lowerSource.includes('heuristic') || lowerSource.includes('model')) {
+      resolvedSourceType = 'MODEL_INFERENCE';
+    } else if (lowerSource.includes('research')) {
+      resolvedSourceType = 'DOMAIN_RESEARCH';
+    } else {
+      resolvedSourceType = 'UNKNOWN';
+    }
+  }
 
-  const status = isAuthoritative ? 'VERIFIED' : 'UNVERIFIED';
+  const evidenceRefs = ruleInput.evidenceRefs || [];
+  const confirmedByUser = ruleInput.confirmedByUser === true;
+  const hasQualifyingEvidenceOrConfirmation =
+    confirmedByUser ||
+    Boolean(ruleInput.sourceRef && ruleInput.sourceRef.trim().length > 0) ||
+    evidenceRefs.length > 0 ||
+    (ruleInput.tests && ruleInput.tests.length > 0) ||
+    (ruleInput.requirements && ruleInput.requirements.length > 0);
+
+  const isVerified =
+    !NON_VERIFIABLE_RULE_SOURCE_TYPES.has(resolvedSourceType) &&
+    AUTHORITATIVE_RULE_SOURCE_TYPES.has(resolvedSourceType) &&
+    hasQualifyingEvidenceOrConfirmation;
+
+  const status = isVerified ? 'VERIFIED' : 'UNVERIFIED';
 
   const cleanStatement = redactSecrets(ruleInput.statement).redactedText;
 
@@ -551,6 +879,10 @@ export function recordBusinessRule(
     ruleId: ruleInput.ruleId,
     statement: cleanStatement,
     source: ruleInput.source,
+    sourceType: resolvedSourceType,
+    sourceRef: ruleInput.sourceRef,
+    evidenceRefs,
+    confirmedByUser,
     priority: ruleInput.priority || 'HIGH',
     scope: ruleInput.scope || 'PROJECT',
     inputs: ruleInput.inputs || [],
@@ -558,7 +890,8 @@ export function recordBusinessRule(
     exceptions: ruleInput.exceptions || [],
     requirements: ruleInput.requirements || [],
     tests: ruleInput.tests || [],
-    status
+    status,
+    verificationStatus: isVerified ? 'VERIFIED' : 'NOT_VERIFIED'
   };
 
   const parsed = BusinessRuleRecordSchema.parse(newRule);
@@ -582,6 +915,7 @@ export function recordProjectInvariant(
   }
 ): ProjectInvariant {
   const rootDir = getProjectIntelligencePath(baseDir);
+  fs.mkdirSync(rootDir, { recursive: true });
   const invariantsPath = path.join(rootDir, 'invariants.json');
 
   let existing: ProjectInvariant[] = [];
@@ -612,7 +946,7 @@ export function recordProjectInvariant(
 }
 
 // =========================================================================
-// 6. Architecture Graph Builder (Section 10)
+// 6. Architecture Graph Builder (Sections 20, 21)
 // =========================================================================
 
 export function buildProjectArchitectureGraph(
@@ -629,45 +963,167 @@ export function buildProjectArchitectureGraph(
   const nodes: ArchitectureNode[] = [];
   const edges: ArchitectureEdge[] = [];
 
-  // Core system modules
-  const moduleNames = codeArtifacts?.modules || ['AppCore', 'DataModule', 'ApiGateway', 'UiLayer'];
-  for (const mod of moduleNames) {
-    nodes.push({ id: `mod-${mod.toLowerCase()}`, type: 'MODULE', name: mod, metadata: { layer: 'CORE' } });
+  const discovered = discoverRepositoryArtifacts(baseDir);
+  const evidenceSources = [...discovered.evidenceSources];
+
+  const hasExplicitArtifacts = Boolean(
+    codeArtifacts &&
+    (
+      (codeArtifacts.modules && codeArtifacts.modules.length > 0) ||
+      (codeArtifacts.components && codeArtifacts.components.length > 0) ||
+      (codeArtifacts.services && codeArtifacts.services.length > 0) ||
+      (codeArtifacts.tables && codeArtifacts.tables.length > 0) ||
+      (codeArtifacts.apis && codeArtifacts.apis.length > 0) ||
+      (codeArtifacts.pages && codeArtifacts.pages.length > 0)
+    )
+  );
+  if (hasExplicitArtifacts) {
+    evidenceSources.push('explicit_code_artifacts');
   }
 
+  // Merge discovered repo artifacts with any explicitly provided codeArtifacts (NEVER fabricate defaults!)
+  const moduleNames = Array.from(new Set([...(codeArtifacts?.modules || []), ...discovered.modules]));
+  const componentNames = Array.from(new Set([...(codeArtifacts?.components || []), ...discovered.components]));
+  const serviceNames = Array.from(new Set([...(codeArtifacts?.services || []), ...discovered.services]));
+  const tables = Array.from(new Set([...(codeArtifacts?.tables || []), ...discovered.tables]));
+  const apis = Array.from(new Set([...(codeArtifacts?.apis || []), ...discovered.apis]));
+  const pages = Array.from(new Set([...(codeArtifacts?.pages || []), ...discovered.pages]));
+
+  // Modules
+  for (const mod of moduleNames) {
+    const id = `mod-${mod.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+    if (!nodes.some(n => n.id === id)) {
+      nodes.push({ id, type: 'MODULE', name: mod, metadata: { layer: 'CORE' } });
+    }
+  }
+
+  // Components
+  for (const comp of componentNames) {
+    const id = `comp-${comp.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+    if (!nodes.some(n => n.id === id)) {
+      nodes.push({ id, type: 'COMPONENT', name: comp, metadata: { layer: 'UI' } });
+    }
+  }
+
+  // Services
+  for (const svc of serviceNames) {
+    const id = `svc-${svc.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+    if (!nodes.some(n => n.id === id)) {
+      nodes.push({ id, type: 'SERVICE', name: svc, metadata: { layer: 'APPLICATION' } });
+    }
+  }
+
+  // Helper to locate best matching module/service node for wiring edges only between real nodes
+  const findModuleNodeId = (keywords: string[]): string | undefined => {
+    for (const kw of keywords) {
+      const found = nodes.find(
+        n => (n.type === 'MODULE' || n.type === 'SERVICE') && n.name.toLowerCase().includes(kw)
+      );
+      if (found) return found.id;
+    }
+    const firstMod = nodes.find(n => n.type === 'MODULE' || n.type === 'SERVICE');
+    return firstMod?.id;
+  };
+
+  const dataModId = findModuleNodeId(['data', 'db', 'repo', 'store', 'model', 'core']);
+  const apiModId = findModuleNodeId(['api', 'gateway', 'controller', 'route', 'server', 'core']);
+  const uiModId = findModuleNodeId(['ui', 'view', 'page', 'web', 'client', 'app']);
+
   // Database tables / entities
-  const tables = codeArtifacts?.tables || ['users', 'inventory_items', 'audit_logs'];
   for (const tbl of tables) {
-    const nodeId = `db-${tbl}`;
-    nodes.push({ id: nodeId, type: 'TABLE_OR_ENTITY', name: tbl, metadata: { storage: 'RELATIONAL' } });
-    edges.push({ source: 'mod-datamodule', target: nodeId, type: 'READS', metadata: {} });
-    edges.push({ source: 'mod-datamodule', target: nodeId, type: 'WRITES', metadata: {} });
+    const nodeId = `db-${tbl.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+    if (!nodes.some(n => n.id === nodeId)) {
+      nodes.push({ id: nodeId, type: 'TABLE_OR_ENTITY', name: tbl, metadata: { storage: 'RELATIONAL' } });
+    }
+    if (dataModId) {
+      edges.push({ source: dataModId, target: nodeId, type: 'READS', metadata: {} });
+      edges.push({ source: dataModId, target: nodeId, type: 'WRITES', metadata: {} });
+    }
   }
 
   // APIs
-  const apis = codeArtifacts?.apis || ['/api/v1/health', '/api/v1/items', '/api/v1/auth/login'];
   for (const api of apis) {
     const nodeId = `api-${api.replace(/[^a-zA-Z0-9]/g, '_')}`;
-    nodes.push({ id: nodeId, type: 'API', name: api, metadata: { protocol: 'HTTP_REST' } });
-    edges.push({ source: 'mod-apigateway', target: nodeId, type: 'ROUTES_TO', metadata: {} });
-    edges.push({ source: nodeId, target: 'mod-datamodule', type: 'CALLS', metadata: {} });
+    if (!nodes.some(n => n.id === nodeId)) {
+      nodes.push({ id: nodeId, type: 'API', name: api, metadata: { protocol: 'HTTP_REST' } });
+    }
+    if (apiModId) {
+      edges.push({ source: apiModId, target: nodeId, type: 'ROUTES_TO', metadata: {} });
+    }
+    if (dataModId && dataModId !== apiModId) {
+      edges.push({ source: nodeId, target: dataModId, type: 'CALLS', metadata: {} });
+    } else if (tables.length > 0) {
+      const firstTableId = `db-${tables[0].toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+      edges.push({ source: nodeId, target: firstTableId, type: 'READS', metadata: {} });
+    }
   }
 
   // Pages
-  const pages = codeArtifacts?.pages || ['/dashboard', '/items', '/items/:id'];
   for (const page of pages) {
     const nodeId = `page-${page.replace(/[^a-zA-Z0-9]/g, '_')}`;
-    nodes.push({ id: nodeId, type: 'PAGE', name: page, metadata: { route: page } });
-    edges.push({ source: 'mod-uilayer', target: nodeId, type: 'IMPLEMENTS', metadata: {} });
-    edges.push({ source: nodeId, target: 'mod-apigateway', type: 'CALLS', metadata: {} });
+    if (!nodes.some(n => n.id === nodeId)) {
+      nodes.push({ id: nodeId, type: 'PAGE', name: page, metadata: { route: page } });
+    }
+    if (uiModId) {
+      edges.push({ source: uiModId, target: nodeId, type: 'IMPLEMENTS', metadata: {} });
+    }
+    if (apiModId) {
+      edges.push({ source: nodeId, target: apiModId, type: 'CALLS', metadata: {} });
+    } else if (apis.length > 0) {
+      const firstApiId = `api-${apis[0].replace(/[^a-zA-Z0-9]/g, '_')}`;
+      edges.push({ source: nodeId, target: firstApiId, type: 'CALLS', metadata: {} });
+    }
+  }
+
+  const unknownAreas: string[] = [];
+  if (moduleNames.length === 0 && serviceNames.length === 0) unknownAreas.push('modules_and_services');
+  if (tables.length === 0) unknownAreas.push('database_entities');
+  if (apis.length === 0) unknownAreas.push('apis');
+  if (pages.length === 0 && componentNames.length === 0) unknownAreas.push('ui_pages_and_components');
+
+  let completeness: GraphCompleteness = 'EMPTY';
+  let verificationStatus: 'VERIFIED' | 'PARTIALLY_VERIFIED' | 'NOT_VERIFIED' = 'NOT_VERIFIED';
+
+  if (nodes.length === 0 && !hasExplicitArtifacts) {
+    const persistedArchPath = path.join(getProjectIntelligencePath(baseDir), 'architecture.json');
+    if (fs.existsSync(persistedArchPath)) {
+      try {
+        const persisted = JSON.parse(fs.readFileSync(persistedArchPath, 'utf-8'));
+        if (persisted && Array.isArray(persisted.nodes) && persisted.nodes.length > 0) {
+          return ProjectArchitectureGraphSchema.parse(persisted);
+        }
+      } catch (_) {}
+    }
+    completeness = 'EMPTY';
+    verificationStatus = 'NOT_VERIFIED';
+  } else if (nodes.length === 0) {
+    completeness = 'EMPTY';
+    verificationStatus = 'NOT_VERIFIED';
+  } else if (unknownAreas.length === 0) {
+    completeness = 'COMPLETE';
+    verificationStatus = evidenceSources.length > 0 ? 'VERIFIED' : 'PARTIALLY_VERIFIED';
+  } else {
+    completeness = 'PARTIAL';
+    verificationStatus = 'PARTIALLY_VERIFIED';
   }
 
   const graphHash = hashData({ nodes, edges });
-  return ProjectArchitectureGraphSchema.parse({
+  const parsedGraph = ProjectArchitectureGraphSchema.parse({
     nodes,
     edges,
-    graphHash
+    graphHash,
+    completeness,
+    unknownAreas,
+    evidenceSources: Array.from(new Set(evidenceSources)),
+    verificationStatus
   });
+
+  const rootDir = getProjectIntelligencePath(baseDir);
+  if (nodes.length > 0 && fs.existsSync(rootDir)) {
+    fs.writeFileSync(path.join(rootDir, 'architecture.json'), JSON.stringify(parsedGraph, null, 2), 'utf-8');
+  }
+
+  return parsedGraph;
 }
 
 // =========================================================================
@@ -684,32 +1140,57 @@ export function createProjectSnapshot(
   fs.mkdirSync(snapshotsDir, { recursive: true });
 
   const now = new Date().toISOString();
+  const discovered = discoverRepositoryArtifacts(baseDir);
 
-  // Load manifest & arch to calculate hashes
-  let archHash = 'arch-hash-default';
+  // Load manifest & arch to calculate hashes from real artifacts when available
+  let archHash = 'NOT_VERIFIED';
   const archPath = path.join(rootDir, 'architecture.json');
   if (fs.existsSync(archPath)) {
-    archHash = hashData(fs.readFileSync(archPath, 'utf-8'));
+    try {
+      const archObj = JSON.parse(fs.readFileSync(archPath, 'utf-8'));
+      if (archObj && Array.isArray(archObj.nodes) && archObj.nodes.length > 0 && archObj.verificationStatus !== 'NOT_VERIFIED') {
+        archHash = hashData(archObj);
+      }
+    } catch (_) {}
+  } else if (discovered.evidenceSources.length > 0) {
+    archHash = hashData(discovered.evidenceSources);
   }
 
-  let reqHash = 'req-hash-default';
+  let reqHash = 'NOT_VERIFIED';
   const reqPath = path.join(rootDir, 'knowledge', 'business-rules.json');
   if (fs.existsSync(reqPath)) {
-    reqHash = hashData(fs.readFileSync(reqPath, 'utf-8'));
+    try {
+      const rules = JSON.parse(fs.readFileSync(reqPath, 'utf-8'));
+      if (Array.isArray(rules) && rules.length > 0 && rules.some((r: any) => r.status === 'VERIFIED' || r.verificationStatus === 'VERIFIED')) {
+        reqHash = hashData(rules);
+      }
+    } catch (_) {}
   }
+
+  const rawDesignFp = details?.designSystemFingerprint || discovered.designSystemFingerprint;
+  const designFp = rawDesignFp && rawDesignFp.trim().length > 0 ? rawDesignFp : 'NOT_VERIFIED';
+  const rawUiTokenFp = details?.uiTokenFingerprint;
+  const uiTokenFp = rawUiTokenFp && rawUiTokenFp.trim().length > 0 ? rawUiTokenFp : designFp;
+  const computedVerificationStatus: 'VERIFIED' | 'PARTIALLY_VERIFIED' | 'NOT_VERIFIED' =
+    details?.verificationStatus ||
+    (archHash !== 'NOT_VERIFIED' || reqHash !== 'NOT_VERIFIED' || discovered.evidenceSources.length > 0
+      ? 'PARTIALLY_VERIFIED'
+      : 'NOT_VERIFIED');
 
   const snapshot: ProjectSnapshot = {
     snapshotId,
-    commitSha: details?.commitSha || `sha-${hashData(now)}`,
+    commitSha: details?.commitSha || 'UNVERIFIED_WORKING_TREE',
     timestamp: now,
     stack: details?.stack || 'REACT_TYPESCRIPT',
     architectureHash: details?.architectureHash || archHash,
     requirementHash: details?.requirementHash || reqHash,
-    routeInventory: details?.routeInventory || ['/dashboard', '/items', '/health'],
-    apiInventory: details?.apiInventory || ['GET /api/v1/health', 'POST /api/v1/auth/login'],
-    databaseFingerprint: details?.databaseFingerprint || 'fp-tables-users-items',
-    dependencyFingerprint: details?.dependencyFingerprint || 'fp-pkg-prod',
-    designSystemFingerprint: details?.designSystemFingerprint || 'fp-tokens-v1'
+    routeInventory: details?.routeInventory ?? discovered.pages,
+    apiInventory: details?.apiInventory ?? discovered.apis,
+    databaseFingerprint: details?.databaseFingerprint || discovered.databaseFingerprint,
+    dependencyFingerprint: details?.dependencyFingerprint || discovered.dependencyFingerprint,
+    designSystemFingerprint: designFp,
+    uiTokenFingerprint: uiTokenFp,
+    verificationStatus: computedVerificationStatus
   };
 
   const parsed = ProjectSnapshotSchema.parse(snapshot);
@@ -745,8 +1226,8 @@ export function detectProjectDrift(
   }
 
   // 3. API Contract Drift
-  const removedApis = baseSnapshot.apiInventory.filter(api => !targetSnapshot.apiInventory.includes(api));
-  const addedApis = targetSnapshot.apiInventory.filter(api => !baseSnapshot.apiInventory.includes(api));
+  const removedApis = baseSnapshot.apiInventory.filter((api: string) => !targetSnapshot.apiInventory.includes(api));
+  const addedApis = targetSnapshot.apiInventory.filter((api: string) => !baseSnapshot.apiInventory.includes(api));
 
   if (removedApis.length > 0) {
     drifts.push({
@@ -807,75 +1288,225 @@ export function detectProjectDrift(
 }
 
 // =========================================================================
-// 8. Change Impact Analysis (Section 16)
+// 8. Change Impact Analysis (Section 23 — Graph + Traceability Driven)
 // =========================================================================
 
 export function analyzeChangeImpact(
   baseDir: string,
   target: string,
-  proposedChange: string
+  proposedChange: string,
+  codeArtifacts?: {
+    modules?: string[];
+    components?: string[];
+    services?: string[];
+    tables?: string[];
+    apis?: string[];
+    pages?: string[];
+  }
 ): ChangeImpactAssessment {
   const rootDir = getProjectIntelligencePath(baseDir);
 
-  const affectedRequirements: string[] = [];
-  const affectedModules: string[] = [];
-  const affectedApis: string[] = [];
-  const affectedPages: string[] = [];
-  const affectedEntities: string[] = [];
-  const affectedTests: string[] = [];
-  const affectedDecisions: string[] = [];
+  const affectedRequirements = new Set<string>();
+  const affectedModules = new Set<string>();
+  const affectedApis = new Set<string>();
+  const affectedPages = new Set<string>();
+  const affectedEntities = new Set<string>();
+  const affectedTests = new Set<string>();
+  const affectedDecisions = new Set<string>();
+  const evidenceSources = new Set<string>();
 
+  // Extract search tokens from target and proposedChange
+  const rawTokens = `${target} ${proposedChange}`
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(t => t.length >= 3 && !['the', 'and', 'for', 'from', 'with', 'into', 'add', 'use'].includes(t));
   const targetLower = target.toLowerCase();
 
-  // If modifying auth or credentials
-  if (targetLower.includes('auth') || targetLower.includes('session') || targetLower.includes('user')) {
-    affectedRequirements.push('REQ-F-AUTH', 'REQ-NFR-SEC');
-    affectedModules.push('DataModule', 'ApiGateway');
-    affectedApis.push('POST /api/v1/auth/login', 'POST /api/v1/auth/logout');
-    affectedPages.push('/login', '/dashboard');
-    affectedEntities.push('users', 'sessions', 'audit_logs');
-    affectedTests.push('tests/auth.test.ts', 'tests/security-scan.test.ts');
-    affectedDecisions.push('ADR-001-AUTH-MODEL');
-  } else if (targetLower.includes('item') || targetLower.includes('inventory') || targetLower.includes('data')) {
-    affectedRequirements.push('REQ-F-CRUD-01', 'REQ-F-SEARCH');
-    affectedModules.push('DataModule', 'UiLayer');
-    affectedApis.push('GET /api/v1/items', 'POST /api/v1/items');
-    affectedPages.push('/items', '/items/:id');
-    affectedEntities.push('inventory_items');
-    affectedTests.push('tests/items.test.ts', 'tests/grid-render.test.ts');
-  } else {
-    affectedModules.push('UiLayer');
-    affectedPages.push('/dashboard');
-    affectedTests.push('tests/ui-smoke.test.ts');
+  // 1. Traverse real ProjectArchitectureGraph
+  const graph = buildProjectArchitectureGraph(baseDir, codeArtifacts);
+  for (const src of graph.evidenceSources || []) {
+    evidenceSources.add(src);
   }
 
-  // Assess risk
+  const matchedNodeIds = new Set<string>();
+  for (const node of graph.nodes) {
+    const nodeNameLower = node.name.toLowerCase();
+    const nodeIdLower = node.id.toLowerCase();
+    const isMatched =
+      nodeNameLower.includes(targetLower) ||
+      targetLower.includes(nodeNameLower) ||
+      rawTokens.some(tok => nodeNameLower.includes(tok) || nodeIdLower.includes(tok));
+    if (isMatched) {
+      matchedNodeIds.add(node.id);
+    }
+  }
+
+  // Expand 1-hop and 2-hop neighbors in the architecture graph
+  const impactedNodeIds = new Set<string>(matchedNodeIds);
+  for (let hop = 0; hop < 2; hop++) {
+    for (const edge of graph.edges) {
+      if (impactedNodeIds.has(edge.source)) impactedNodeIds.add(edge.target);
+      if (impactedNodeIds.has(edge.target)) impactedNodeIds.add(edge.source);
+    }
+  }
+
+  for (const node of graph.nodes) {
+    if (!impactedNodeIds.has(node.id)) continue;
+    if (node.type === 'MODULE' || node.type === 'SERVICE' || node.type === 'COMPONENT') {
+      affectedModules.add(node.name);
+    } else if (node.type === 'API') {
+      affectedApis.add(node.name);
+    } else if (node.type === 'PAGE') {
+      affectedPages.add(node.name);
+    } else if (node.type === 'TABLE_OR_ENTITY' || node.type === 'DATABASE') {
+      affectedEntities.add(node.name);
+    }
+  }
+
+  // 2. Inspect recorded Decisions (ADRs)
+  const decisionsDir = path.join(rootDir, 'decisions');
+  if (fs.existsSync(decisionsDir)) {
+    const files = fs.readdirSync(decisionsDir).filter(f => f.endsWith('.json'));
+    for (const file of files) {
+      try {
+        const dec: DecisionRecord = JSON.parse(fs.readFileSync(path.join(decisionsDir, file), 'utf-8'));
+        const decText = `${dec.id} ${dec.title} ${dec.context} ${dec.decision} ${(dec.affectedComponents || []).join(' ')}`.toLowerCase();
+        if (rawTokens.some(tok => decText.includes(tok))) {
+          affectedDecisions.add(dec.id);
+          evidenceSources.add(`decisions/${file}`);
+          for (const comp of dec.affectedComponents || []) {
+            affectedModules.add(comp);
+          }
+          for (const req of dec.requirements || []) {
+            affectedRequirements.add(req);
+          }
+        }
+      } catch (_) {}
+    }
+  }
+
+  // 3. Inspect recorded Business Rules
+  const rulesPath = path.join(rootDir, 'knowledge', 'business-rules.json');
+  if (fs.existsSync(rulesPath)) {
+    try {
+      const rules: BusinessRuleRecord[] = JSON.parse(fs.readFileSync(rulesPath, 'utf-8'));
+      for (const rule of rules) {
+        const ruleText = `${rule.ruleId} ${rule.statement} ${rule.scope} ${(rule.inputs || []).join(' ')} ${(rule.outputs || []).join(' ')}`.toLowerCase();
+        if (rawTokens.some(tok => ruleText.includes(tok))) {
+          evidenceSources.add('knowledge/business-rules.json');
+          for (const req of rule.requirements || []) {
+            affectedRequirements.add(req);
+          }
+          for (const test of rule.tests || []) {
+            affectedTests.add(test);
+          }
+          affectedRequirements.add(rule.ruleId);
+        }
+      }
+    } catch (_) {}
+  }
+
+  // 4. Inspect recorded Invariants
+  let criticalInvariantImpacted = false;
+  const invPath = path.join(rootDir, 'invariants.json');
+  if (fs.existsSync(invPath)) {
+    try {
+      const invs: ProjectInvariant[] = JSON.parse(fs.readFileSync(invPath, 'utf-8'));
+      for (const inv of invs) {
+        const invText = `${inv.id} ${inv.description} ${inv.category} ${inv.scope}`.toLowerCase();
+        const matchesSecurityOrData =
+          (inv.category === 'SECURITY' && rawTokens.some(t => ['auth', 'session', 'token', 'jwt', 'cookie', 'csrf', 'security', 'login'].includes(t))) ||
+          (inv.category === 'DATA_INTEGRITY' && rawTokens.some(t => ['db', 'database', 'table', 'schema', 'entity', 'migration', 'foreign'].includes(t))) ||
+          rawTokens.some(tok => invText.includes(tok));
+        if (matchesSecurityOrData) {
+          evidenceSources.add('invariants.json');
+          affectedRequirements.add(inv.id);
+          if (inv.severity === 'CRITICAL') criticalInvariantImpacted = true;
+          for (const test of inv.relatedTests || []) {
+            affectedTests.add(test);
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  // 5. Inspect discovered repository test files matching tokens
+  const discovered = discoverRepositoryArtifacts(baseDir);
+  for (const tf of discovered.testFiles) {
+    const tfLower = tf.toLowerCase();
+    if (rawTokens.some(tok => tfLower.includes(tok))) {
+      affectedTests.add(tf);
+      evidenceSources.add(tf);
+    }
+  }
+
+  // 6. Determine risk & confidence truthfully (NEVER fabricate fake modules/APIs/entities)
+  const totalGraphMatches =
+    affectedModules.size +
+    affectedApis.size +
+    affectedPages.size +
+    affectedEntities.size +
+    affectedDecisions.size;
+
+  const isSecurityOrAuthChange = rawTokens.some(t =>
+    ['auth', 'session', 'jwt', 'token', 'cookie', 'password', 'credential', 'security', 'permission', 'rbac'].includes(t)
+  );
+  const isSchemaOrMigrationChange = rawTokens.some(t =>
+    ['schema', 'migration', 'database', 'table', 'column', 'foreign'].includes(t)
+  );
+
   let risk: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
-  if (affectedEntities.length > 2 || affectedApis.some(a => a.includes('auth'))) {
+  if (criticalInvariantImpacted && affectedEntities.size > 2) {
+    risk = 'CRITICAL';
+  } else if (
+    criticalInvariantImpacted ||
+    isSecurityOrAuthChange ||
+    affectedEntities.size > 2 ||
+    affectedApis.size > 2
+  ) {
     risk = 'HIGH';
-  } else if (affectedModules.length > 1) {
+  } else if (isSchemaOrMigrationChange || affectedModules.size > 0 || affectedDecisions.size > 0) {
     risk = 'MEDIUM';
   }
 
-  const recommendedVerification = [
-    'Unit tests for affected domain modules',
-    'API contract backward-compatibility check',
-    'WCAG 2.1 AA accessibility regression scan'
-  ];
+  const confidence =
+    graph.completeness === 'COMPLETE' && totalGraphMatches > 0
+      ? 0.9
+      : totalGraphMatches > 0
+        ? 0.7
+        : evidenceSources.size > 0
+          ? 0.45
+          : 0.25;
 
-  const rationale = `Modifying '${target}' impacts ${affectedModules.length} module(s), ${affectedApis.length} endpoint(s), and ${affectedPages.length} UI page(s). Risk assessed as ${risk}.`;
+  const recommendedVerification = [
+    'Unit and integration tests for affected modules and business rules',
+    'API contract and schema backward-compatibility verification'
+  ];
+  if (isSecurityOrAuthChange || criticalInvariantImpacted) {
+    recommendedVerification.push('Security invariant verification and session/auth regression check');
+  }
+  if (affectedPages.size > 0) {
+    recommendedVerification.push('WCAG 2.1 AA accessibility and UI regression scan');
+  }
+
+  const rationale =
+    totalGraphMatches > 0
+      ? `Graph and traceability analysis for '${target}' matched ${affectedModules.size} module(s), ${affectedApis.size} API(s), ${affectedPages.size} page(s), ${affectedEntities.size} entity(ies), and ${affectedDecisions.size} decision(s). Risk assessed as ${risk} (confidence: ${confidence}).`
+      : `No matching architecture graph nodes found in repository for '${target}' (graph completeness: ${graph.completeness}). Risk assessed as ${risk} using invariant/keyword fallback with low confidence (${confidence}); no nonexistent modules, APIs, or tables were fabricated.`;
 
   return ChangeImpactAssessmentSchema.parse({
     target,
     proposedChange,
-    affectedRequirements,
-    affectedModules,
-    affectedApis,
-    affectedPages,
-    affectedEntities,
-    affectedTests,
-    affectedDecisions,
+    affectedRequirements: Array.from(affectedRequirements),
+    affectedModules: Array.from(affectedModules),
+    affectedApis: Array.from(affectedApis),
+    affectedPages: Array.from(affectedPages),
+    affectedEntities: Array.from(affectedEntities),
+    affectedTests: Array.from(affectedTests),
+    affectedDecisions: Array.from(affectedDecisions),
     risk,
+    confidence,
+    evidenceSources: Array.from(evidenceSources),
     recommendedVerification,
     rationale
   });
@@ -984,7 +1615,7 @@ export function buildTaskContext(
 }
 
 // =========================================================================
-// 10. Knowledge Synchronization & Conflicts (Section 12, 19, 20)
+// 10. Knowledge Synchronization & Conflicts (Sections 25, 26 — Generalized)
 // =========================================================================
 
 export function detectKnowledgeConflicts(
@@ -993,56 +1624,246 @@ export function detectKnowledgeConflicts(
     databaseEngine?: string;
     authStrategy?: string;
     installedPackages?: string[];
+    implementedRoutes?: string[];
+    implementedApis?: string[];
+    implementedEntities?: string[];
   }
 ): KnowledgeSyncResult {
   const rootDir = getProjectIntelligencePath(baseDir);
   const conflicts: KnowledgeConflict[] = [];
   const findings: string[] = [];
 
-  // Check 1: ADR vs Code database engine
+  const discovered = discoverRepositoryArtifacts(baseDir);
+
+  // Discover package.json dependencies if present in baseDir
+  let repoPackages: string[] = actualCodeFacts?.installedPackages ? [...actualCodeFacts.installedPackages] : [];
+  let inferredDbEngineFromPkg: string | undefined;
+  const pkgJsonPath = path.join(baseDir, 'package.json');
+  if (fs.existsSync(pkgJsonPath)) {
+    try {
+      const pkg = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf-8'));
+      const allDeps = Object.keys({ ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) });
+      repoPackages = Array.from(new Set([...repoPackages, ...allDeps]));
+      if (allDeps.some(d => d.includes('sqlite') || d === 'better-sqlite3')) inferredDbEngineFromPkg = 'SQLite';
+      else if (allDeps.some(d => d === 'pg' || d.includes('postgres'))) inferredDbEngineFromPkg = 'PostgreSQL';
+      else if (allDeps.some(d => d.includes('mysql'))) inferredDbEngineFromPkg = 'MySQL';
+      else if (allDeps.some(d => d.includes('mongoose') || d.includes('mongodb'))) inferredDbEngineFromPkg = 'MongoDB';
+    } catch (_) {}
+  }
+
+  const effectiveDbEngine = actualCodeFacts?.databaseEngine || inferredDbEngineFromPkg;
+
+  // 1. Generalized Accepted ADR vs Actual Implementation (DB engine, Auth strategy, Packages, Stale Supersedes)
   const decisionsDir = path.join(rootDir, 'decisions');
-  if (fs.existsSync(decisionsDir) && actualCodeFacts?.databaseEngine) {
+  const loadedDecisions: DecisionRecord[] = [];
+  if (fs.existsSync(decisionsDir)) {
     const files = fs.readdirSync(decisionsDir).filter(f => f.endsWith('.json'));
     for (const f of files) {
       try {
         const dec: DecisionRecord = JSON.parse(fs.readFileSync(path.join(decisionsDir, f), 'utf-8'));
-        if (dec.status === 'ACCEPTED') {
-          const decText = (dec.decision + ' ' + dec.context).toLowerCase();
-          if (decText.includes('postgresql') && actualCodeFacts.databaseEngine.toLowerCase().includes('sqlite')) {
+        loadedDecisions.push(dec);
+      } catch (_) {}
+    }
+  }
+
+  const knownDecisionIds = new Set(loadedDecisions.map(d => d.id));
+  const dbEngines = [
+    { key: 'postgresql', canonical: 'PostgreSQL', aliases: ['postgresql', 'postgres'] },
+    { key: 'sqlite', canonical: 'SQLite', aliases: ['sqlite', 'sqlite3', 'better-sqlite3'] },
+    { key: 'mysql', canonical: 'MySQL', aliases: ['mysql', 'mariadb'] },
+    { key: 'mongodb', canonical: 'MongoDB', aliases: ['mongodb', 'mongoose'] },
+    { key: 'mssql', canonical: 'SQL Server', aliases: ['mssql', 'sqlserver'] }
+  ];
+
+  for (const dec of loadedDecisions) {
+    if (dec.supersedes && !knownDecisionIds.has(dec.supersedes)) {
+      conflicts.push({
+        id: `CONF-STALE-ADR-${dec.id}`,
+        recordA: { type: 'ADR', id: dec.id, supersedes: dec.supersedes },
+        recordB: { type: 'MISSING_ADR', id: dec.supersedes },
+        conflictType: 'STALE_REFERENCE',
+        severity: 'MEDIUM',
+        recommendedResolution: `Update or remove broken supersedes reference '${dec.supersedes}' in ADR '${dec.id}'.`
+      });
+      findings.push(`Stale Reference: ADR ${dec.id} supersedes '${dec.supersedes}', which does not exist.`);
+    }
+
+    if (dec.status !== 'ACCEPTED') continue;
+
+    const decisionOnlyLower = dec.decision.toLowerCase();
+
+    // Check database engine contradiction against effectiveDbEngine
+    if (effectiveDbEngine) {
+      const codeDbLower = effectiveDbEngine.toLowerCase();
+      const codeDbEntry = dbEngines.find(e => e.aliases.some(a => codeDbLower.includes(a)));
+      // Determine which DB engine the ADR decision adopts (looking for target adoption in dec.decision)
+      // When migrating "from X to Y", Y is the adopted engine
+      const migrateMatch = decisionOnlyLower.match(/to\s+(postgresql|postgres|sqlite|mysql|mongodb|mssql)/i);
+      const adoptedEngine = migrateMatch
+        ? dbEngines.find(e => e.aliases.includes(migrateMatch[1].toLowerCase()))
+        : dbEngines.find(e => e.aliases.some(a => decisionOnlyLower.includes(a)));
+
+      if (adoptedEngine && codeDbEntry && adoptedEngine.key !== codeDbEntry.key) {
+        conflicts.push({
+          id: `CONF-DB-${dec.id}`,
+          recordA: { type: 'ADR', id: dec.id, value: adoptedEngine.canonical },
+          recordB: { type: 'CODE', file: 'database.config', value: codeDbEntry.canonical },
+          conflictType: 'DECISION_VS_IMPLEMENTATION',
+          severity: 'HIGH',
+          recommendedResolution: `Align code configuration (${codeDbEntry.canonical}) with accepted ADR ${dec.id} (${adoptedEngine.canonical}) or record an updated ADR superseding ${ adoptedEngine.canonical }.`
+        });
+        findings.push(`Conflict: ADR ${dec.id} accepted ${adoptedEngine.canonical}, but code implements ${codeDbEntry.canonical}.`);
+      }
+    }
+
+    // Check auth strategy contradiction against ADR
+    if (actualCodeFacts?.authStrategy) {
+      const codeAuthLower = actualCodeFacts.authStrategy.toLowerCase();
+      if (
+        (decisionOnlyLower.includes('httponly') || decisionOnlyLower.includes('session cookie')) &&
+        (codeAuthLower.includes('jwt') || codeAuthLower.includes('basic') || codeAuthLower.includes('none'))
+      ) {
+        conflicts.push({
+          id: `CONF-AUTH-ADR-${dec.id}`,
+          recordA: { type: 'ADR', id: dec.id, decision: dec.decision },
+          recordB: { type: 'CODE', authStrategy: actualCodeFacts.authStrategy },
+          conflictType: 'DECISION_VS_IMPLEMENTATION',
+          severity: 'HIGH',
+          recommendedResolution: `Align authentication implementation (${actualCodeFacts.authStrategy}) with accepted ADR ${dec.id}.`
+        });
+        findings.push(`Conflict: ADR ${dec.id} mandates cookie/session security, but code implements ${actualCodeFacts.authStrategy}.`);
+      }
+    }
+  }
+
+  // 2. Invariant vs Verification / Config State
+  const invariantsPath = path.join(rootDir, 'invariants.json');
+  let loadedInvariants: ProjectInvariant[] = [];
+  if (fs.existsSync(invariantsPath)) {
+    try {
+      loadedInvariants = JSON.parse(fs.readFileSync(invariantsPath, 'utf-8'));
+      for (const inv of loadedInvariants) {
+        if (
+          actualCodeFacts?.authStrategy &&
+          (actualCodeFacts.authStrategy === 'UNPROTECTED_BASIC' || actualCodeFacts.authStrategy === 'NONE') &&
+          inv.category === 'SECURITY'
+        ) {
+          conflicts.push({
+            id: 'CONF-AUTH-INVARIANT',
+            recordA: inv,
+            recordB: { type: 'CODE', authStrategy: actualCodeFacts.authStrategy },
+            conflictType: 'DECISION_VS_IMPLEMENTATION',
+            severity: 'CRITICAL',
+            recommendedResolution: 'Restore CSRF and secure cookie session protection to satisfy security invariant.'
+          });
+          findings.push(`Conflict: Implementation uses ${actualCodeFacts.authStrategy} violating security invariant ${inv.id}.`);
+        }
+
+        if (!inv.verificationMethod || inv.verificationMethod.trim().length === 0 || inv.verificationMethod === 'NONE') {
+          conflicts.push({
+            id: `CONF-INV-UNVERIFIED-${inv.id}`,
+            recordA: inv,
+            recordB: { type: 'VERIFICATION_CONFIG', verificationMethod: inv.verificationMethod || 'NONE' },
+            conflictType: 'INVARIANT_VS_VERIFICATION',
+            severity: 'HIGH',
+            recommendedResolution: `Assign a valid verificationMethod and test suite to invariant '${inv.id}'.`
+          });
+          findings.push(`Conflict: Invariant ${inv.id} has no verification method.`);
+        }
+      }
+    } catch (_) {}
+  }
+
+  // 3. Requirement vs Implementation
+  const reqDir = path.join(rootDir, 'requirements');
+  if (fs.existsSync(reqDir)) {
+    const reqFiles = fs.readdirSync(reqDir).filter(f => f.endsWith('.json'));
+    const effectiveApis = actualCodeFacts?.implementedApis || discovered.apis;
+    const effectiveRoutes = actualCodeFacts?.implementedRoutes || discovered.pages;
+    for (const rf of reqFiles) {
+      try {
+        const reqData = JSON.parse(fs.readFileSync(path.join(reqDir, rf), 'utf-8'));
+        const reqList = Array.isArray(reqData) ? reqData : (reqData.functionalRequirements || [reqData]);
+        for (const req of reqList) {
+          if (req.requiredApi && effectiveApis.length > 0 && !effectiveApis.includes(req.requiredApi)) {
             conflicts.push({
-              id: `CONF-DB-${dec.id}`,
-              recordA: { type: 'ADR', id: dec.id, value: 'PostgreSQL' },
-              recordB: { type: 'CODE', file: 'database.config', value: 'SQLite' },
-              conflictType: 'DECISION_VS_IMPLEMENTATION',
+              id: `CONF-REQ-API-${req.id}`,
+              recordA: { type: 'REQUIREMENT', id: req.id, requiredApi: req.requiredApi },
+              recordB: { type: 'CODE_APIS', implementedApis: effectiveApis },
+              conflictType: 'REQUIREMENT_VS_IMPLEMENTATION',
               severity: 'HIGH',
-              recommendedResolution: 'Align code configuration with accepted ADR or record an updated ADR superseding PostgreSQL.'
+              recommendedResolution: `Implement required API endpoint '${req.requiredApi}' for requirement '${req.id}'.`
             });
-            findings.push(`Conflict: ADR ${dec.id} accepted PostgreSQL, but code implements SQLite.`);
+            findings.push(`Conflict: Requirement ${req.id} requires API '${req.requiredApi}', which is missing from implementation.`);
+          }
+          if (req.requiredRoute && effectiveRoutes.length > 0 && !effectiveRoutes.includes(req.requiredRoute)) {
+            conflicts.push({
+              id: `CONF-REQ-ROUTE-${req.id}`,
+              recordA: { type: 'REQUIREMENT', id: req.id, requiredRoute: req.requiredRoute },
+              recordB: { type: 'CODE_ROUTES', implementedRoutes: effectiveRoutes },
+              conflictType: 'REQUIREMENT_VS_IMPLEMENTATION',
+              severity: 'MEDIUM',
+              recommendedResolution: `Implement required route '${req.requiredRoute}' for requirement '${req.id}'.`
+            });
+            findings.push(`Conflict: Requirement ${req.id} requires route '${req.requiredRoute}', which is missing from implementation.`);
           }
         }
       } catch (_) {}
     }
   }
 
-  // Check 2: Auth strategy conflict
-  if (actualCodeFacts?.authStrategy) {
-    const invariantsPath = path.join(rootDir, 'invariants.json');
-    if (fs.existsSync(invariantsPath)) {
-      try {
-        const invs: ProjectInvariant[] = JSON.parse(fs.readFileSync(invariantsPath, 'utf-8'));
-        const csrfInv = invs.find(i => i.id.includes('SEC') && i.description.includes('CSRF'));
-        if (csrfInv && actualCodeFacts.authStrategy === 'UNPROTECTED_BASIC') {
-          conflicts.push({
-            id: 'CONF-AUTH-INVARIANT',
-            recordA: csrfInv,
-            recordB: { type: 'CODE', authStrategy: actualCodeFacts.authStrategy },
-            conflictType: 'DECISION_VS_IMPLEMENTATION',
-            severity: 'CRITICAL',
-            recommendedResolution: 'Restore CSRF and secure cookie session protection to satisfy security invariant.'
-          });
-          findings.push('Conflict: Implementation uses unprotected basic auth violating security invariant.');
+  // 4. Business Rule vs Missing Test / Enforcement
+  const rulesPath = path.join(rootDir, 'knowledge', 'business-rules.json');
+  if (fs.existsSync(rulesPath)) {
+    try {
+      const rules: BusinessRuleRecord[] = JSON.parse(fs.readFileSync(rulesPath, 'utf-8'));
+      for (const rule of rules) {
+        if (rule.tests && rule.tests.length > 0) {
+          for (const testRef of rule.tests) {
+            const testAbs = path.join(baseDir, testRef);
+            if (!fs.existsSync(testAbs)) {
+              conflicts.push({
+                id: `CONF-BR-TEST-${rule.ruleId}`,
+                recordA: { type: 'BUSINESS_RULE', ruleId: rule.ruleId, test: testRef },
+                recordB: { type: 'FILESYSTEM', exists: false },
+                conflictType: 'BUSINESS_RULE_VS_IMPLEMENTATION',
+                severity: 'MEDIUM',
+                recommendedResolution: `Create missing test file '${testRef}' referenced by business rule '${rule.ruleId}'.`
+              });
+              findings.push(`Conflict: Business rule ${rule.ruleId} references nonexistent test '${testRef}'.`);
+            }
+          }
         }
-      } catch (_) {}
+      }
+    } catch (_) {}
+  }
+
+  // 5. Living Docs vs Structured JSON Records (DOC_VS_DOC / CODE_VS_DOC)
+  const decisionsMdPath = path.join(rootDir, 'DECISIONS.md');
+  if (fs.existsSync(decisionsMdPath) && loadedDecisions.length > 0) {
+    const mdContent = fs.readFileSync(decisionsMdPath, 'utf-8');
+    for (const dec of loadedDecisions) {
+      if (!mdContent.includes(dec.id)) {
+        conflicts.push({
+          id: `CONF-DOC-ADR-${dec.id}`,
+          recordA: { type: 'ADR_JSON', id: dec.id, status: dec.status },
+          recordB: { type: 'LIVING_DOC', file: 'DECISIONS.md', missingId: dec.id },
+          conflictType: 'DOC_VS_DOC',
+          severity: 'MEDIUM',
+          recommendedResolution: `Regenerate DECISIONS.md using generateLivingDocuments so ADR '${dec.id}' is synchronized.`
+        });
+        findings.push(`Conflict: DECISIONS.md is out of sync (missing ${dec.id}).`);
+      } else if (dec.status === 'SUPERSEDED' && mdContent.includes(`## ${dec.id}`) && !mdContent.includes('`SUPERSEDED`')) {
+        conflicts.push({
+          id: `CONF-DOC-STATUS-${dec.id}`,
+          recordA: { type: 'ADR_JSON', id: dec.id, status: 'SUPERSEDED' },
+          recordB: { type: 'LIVING_DOC', file: 'DECISIONS.md', status: 'STALE' },
+          conflictType: 'DOC_VS_DOC',
+          severity: 'MEDIUM',
+          recommendedResolution: `Regenerate DECISIONS.md to reflect SUPERSEDED status for '${dec.id}'.`
+        });
+        findings.push(`Conflict: DECISIONS.md shows stale status for superseded ADR ${dec.id}.`);
+      }
     }
   }
 
@@ -1189,13 +2010,13 @@ export function evaluateReusablePattern(candidate: {
 }
 
 // =========================================================================
-// 12. Knowledge Health & Living Documents (Sections 30, 31, 34)
+// 12. Knowledge Health & Living Documents (Section 24 — Real Calculation)
 // =========================================================================
 
 export function evaluateProjectKnowledgeHealth(baseDir: string): ProjectKnowledgeHealth {
   const rootDir = getProjectIntelligencePath(baseDir);
+  const manifestPath = path.join(rootDir, 'manifest.json');
 
-  let coverage = 90;
   const freshnessMap: Record<Freshness, number> = {
     CURRENT: 0,
     POSSIBLY_STALE: 0,
@@ -1204,62 +2025,187 @@ export function evaluateProjectKnowledgeHealth(baseDir: string): ProjectKnowledg
     UNKNOWN: 0
   };
 
-  let conflictCount = 0;
-  let verificationDebtCount = 0;
+  // If project intelligence is not initialized at all -> NOT_INITIALIZED, 0% coverage
+  if (!baseDir || !fs.existsSync(manifestPath)) {
+    return ProjectKnowledgeHealthSchema.parse({
+      coveragePercentage: 0,
+      freshnessDistribution: freshnessMap,
+      conflictCount: 0,
+      verificationDebtCount: 0,
+      orphanRequirements: [],
+      orphanDecisions: [],
+      staleDocs: [],
+      unknownInvariants: [],
+      healthStatus: 'NOT_INITIALIZED'
+    });
+  }
+
   const orphanRequirements: string[] = [];
   const orphanDecisions: string[] = [];
   const staleDocs: string[] = [];
   const unknownInvariants: string[] = [];
 
-  // Inspect memory records
+  let memoryRecordCount = 0;
+  let decisionCount = 0;
+  let acceptedDecisionCount = 0;
+  let verifiedBusinessRuleCount = 0;
+  let unverifiedBusinessRuleCount = 0;
+  let requirementCount = 0;
+
+  // 1. Inspect memory records
   const knowledgeDir = path.join(rootDir, 'knowledge');
   if (fs.existsSync(knowledgeDir)) {
-    const files = fs.readdirSync(knowledgeDir).filter(f => f.endsWith('.json') && !f.includes('business-rules') && !f.includes('improvement-candidates'));
+    const files = fs
+      .readdirSync(knowledgeDir)
+      .filter(f => f.endsWith('.json') && !f.includes('business-rules') && !f.includes('improvement-candidates'));
     for (const f of files) {
       try {
         const item: ProjectMemoryRecord = JSON.parse(fs.readFileSync(path.join(knowledgeDir, f), 'utf-8'));
+        memoryRecordCount++;
         const fKey = (item.freshness || 'CURRENT') as Freshness;
         freshnessMap[fKey] = (freshnessMap[fKey] || 0) + 1;
       } catch (_) {}
     }
   }
 
-  // Inspect decisions
+  // 2. Inspect business rules
+  const rulesPath = path.join(knowledgeDir, 'business-rules.json');
+  if (fs.existsSync(rulesPath)) {
+    try {
+      const rules: BusinessRuleRecord[] = JSON.parse(fs.readFileSync(rulesPath, 'utf-8'));
+      for (const r of rules) {
+        if (r.status === 'VERIFIED') verifiedBusinessRuleCount++;
+        else if (r.status === 'UNVERIFIED') unverifiedBusinessRuleCount++;
+      }
+    } catch (_) {}
+  }
+
+  // 3. Inspect decisions
   const decisionsDir = path.join(rootDir, 'decisions');
   if (fs.existsSync(decisionsDir)) {
     const files = fs.readdirSync(decisionsDir).filter(f => f.endsWith('.json'));
     for (const f of files) {
       try {
         const dec: DecisionRecord = JSON.parse(fs.readFileSync(path.join(decisionsDir, f), 'utf-8'));
+        decisionCount++;
         if (dec.status === 'SUPERSEDED') {
           freshnessMap.SUPERSEDED = (freshnessMap.SUPERSEDED || 0) + 1;
         } else {
+          if (dec.status === 'ACCEPTED') acceptedDecisionCount++;
           freshnessMap.CURRENT = (freshnessMap.CURRENT || 0) + 1;
+          const hasTrace =
+            (dec.requirements && dec.requirements.length > 0) ||
+            (dec.affectedComponents && dec.affectedComponents.length > 0) ||
+            (dec.evidence && dec.evidence.length > 0) ||
+            Boolean(dec.context && dec.decision);
+          if (!hasTrace) {
+            orphanDecisions.push(dec.id);
+          }
         }
       } catch (_) {}
     }
   }
 
-  // Check invariants
+  // 4. Inspect requirements directory
+  const reqDir = path.join(rootDir, 'requirements');
+  if (fs.existsSync(reqDir)) {
+    const reqFiles = fs.readdirSync(reqDir).filter(f => f.endsWith('.json'));
+    requirementCount = reqFiles.length;
+  }
+
+  // 5. Inspect architecture graph
+  const archGraph = buildProjectArchitectureGraph(baseDir);
+
+  // If initialized on an empty project with zero recorded decisions, rules, memory records, requirements, or discovered repo nodes -> INSUFFICIENT_DATA, 0%
+  const totalMeaningfulRecords =
+    memoryRecordCount +
+    decisionCount +
+    verifiedBusinessRuleCount +
+    unverifiedBusinessRuleCount +
+    requirementCount +
+    archGraph.nodes.length;
+
+  if (totalMeaningfulRecords === 0) {
+    return ProjectKnowledgeHealthSchema.parse({
+      coveragePercentage: 0,
+      freshnessDistribution: freshnessMap,
+      conflictCount: 0,
+      verificationDebtCount: 0,
+      orphanRequirements,
+      orphanDecisions,
+      staleDocs,
+      unknownInvariants,
+      healthStatus: 'INSUFFICIENT_DATA'
+    });
+  }
+
+  // 6. Check invariants and test file existence
+  let totalInvariants = 0;
+  let verifiedInvariants = 0;
   const invPath = path.join(rootDir, 'invariants.json');
   if (fs.existsSync(invPath)) {
     try {
       const invs: ProjectInvariant[] = JSON.parse(fs.readFileSync(invPath, 'utf-8'));
+      totalInvariants = invs.length;
       for (const inv of invs) {
-        if (!inv.relatedTests || inv.relatedTests.length === 0) {
+        const hasTests = Array.isArray(inv.relatedTests) && inv.relatedTests.length > 0;
+        const hasVerificationMethod = Boolean(
+          inv.verificationMethod &&
+          inv.verificationMethod !== 'NONE' &&
+          inv.verificationMethod.trim().length > 0
+        );
+        if (!hasTests && !hasVerificationMethod) {
           unknownInvariants.push(inv.id);
+        } else {
+          verifiedInvariants++;
         }
       }
     } catch (_) {}
   }
 
-  let healthStatus: 'EXCELLENT' | 'GOOD' | 'NEEDS_ATTENTION' | 'CRITICAL' = 'EXCELLENT';
-  if (conflictCount > 0 || unknownInvariants.length > 2) {
+  // 7. Check conflicts & stale docs
+  const conflictSync = detectKnowledgeConflicts(baseDir);
+  const conflictCount = conflictSync.conflicts.length;
+  for (const c of conflictSync.conflicts) {
+    if (c.conflictType === 'DOC_VS_DOC' || c.conflictType === 'CODE_VS_DOC') {
+      staleDocs.push(c.id);
+    }
+  }
+
+  const verificationDebtCount = unverifiedBusinessRuleCount + unknownInvariants.length;
+
+  // 8. Compute real coveragePercentage across project intelligence dimensions (0..100)
+  let coverageScore = 15; // Base for valid manifest + profile + constraints
+  if (acceptedDecisionCount > 0) coverageScore += 25;
+  if (verifiedBusinessRuleCount > 0 || requirementCount > 0) coverageScore += 25;
+  else if (unverifiedBusinessRuleCount > 0) coverageScore += 10;
+
+  if (archGraph.completeness === 'COMPLETE') coverageScore += 20;
+  else if (archGraph.completeness === 'PARTIAL') coverageScore += 12;
+
+  if (totalInvariants > 0 && verifiedInvariants === totalInvariants) coverageScore += 15;
+  else if (verifiedInvariants > 0) coverageScore += 8;
+
+  // Deductions for conflicts, stale docs, and orphans
+  coverageScore -= conflictCount * 15;
+  coverageScore -= staleDocs.length * 10;
+  coverageScore -= orphanDecisions.length * 5;
+
+  const coveragePercentage = Math.max(0, Math.min(100, Math.round(coverageScore)));
+
+  let healthStatus: ProjectKnowledgeHealth['healthStatus'] = 'NEEDS_ATTENTION';
+  if (conflictSync.conflicts.some((c: KnowledgeConflict) => c.severity === 'CRITICAL') || coveragePercentage < 30) {
+    healthStatus = 'CRITICAL';
+  } else if (conflictCount > 0 || staleDocs.length > 0 || coveragePercentage < 60) {
     healthStatus = 'NEEDS_ATTENTION';
+  } else if (coveragePercentage >= 80 && unknownInvariants.length === 0) {
+    healthStatus = 'EXCELLENT';
+  } else {
+    healthStatus = 'GOOD';
   }
 
   return ProjectKnowledgeHealthSchema.parse({
-    coveragePercentage: coverage,
+    coveragePercentage,
     freshnessDistribution: freshnessMap,
     conflictCount,
     verificationDebtCount,

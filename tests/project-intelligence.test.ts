@@ -186,24 +186,30 @@ describe('ALPER DESIGN OS - FAZ 1H: Project Intelligence, Durable Memory & Conti
   it('6. enforces provenance on business rules and persists unbreakable invariants', () => {
     initializeProjectIntelligence(testProjectDir, { mode: 'NEW', projectName: 'Domain Rules Test' });
 
-    // Verified rule from explicit spec
+    // Verified rule from explicit spec with structured provenance + confirmation
     const verifiedRule = recordBusinessRule(testProjectDir, {
       ruleId: 'BR-OP-01',
       statement: 'Completed maintenance work orders cannot be rescheduled without supervisor approval',
       source: 'USER_SPECIFICATION: Section 4.2',
+      sourceType: 'EXPLICIT_USER_SPECIFICATION',
+      confirmedByUser: true,
+      evidenceRefs: ['SPEC-4.2'],
       priority: 'CRITICAL',
       scope: 'WORKFLOW'
     });
     expect(verifiedRule.status).toBe('VERIFIED');
+    expect(verifiedRule.verificationStatus).toBe('VERIFIED');
 
     // Unverified rule from LLM inference
     const unverifiedRule = recordBusinessRule(testProjectDir, {
       ruleId: 'BR-AI-01',
       statement: 'Operators might prefer dark mode automatically at 8 PM',
       source: 'LLM_INFERRED_HEURISTIC',
+      sourceType: 'LLM_INFERRED_HEURISTIC',
       priority: 'LOW'
     });
     expect(unverifiedRule.status).toBe('UNVERIFIED');
+    expect(unverifiedRule.verificationStatus).toBe('NOT_VERIFIED');
 
     // Invariant
     const inv = recordProjectInvariant(testProjectDir, {
@@ -259,8 +265,15 @@ describe('ALPER DESIGN OS - FAZ 1H: Project Intelligence, Durable Memory & Conti
   });
 
   // 9. Change Impact Analysis
-  it('9. computes blast radius and risk assessment for proposed modifications', () => {
+  it('9. computes blast radius and risk assessment for proposed modifications from real architecture graph', () => {
     initializeProjectIntelligence(testProjectDir, { mode: 'NEW', projectName: 'Impact Test' });
+
+    buildProjectArchitectureGraph(testProjectDir, {
+      modules: ['auth_session_middleware', 'SessionStore'],
+      apis: ['POST /api/v1/auth/login'],
+      tables: ['user_sessions'],
+      pages: ['/login']
+    });
 
     const assessment = analyzeChangeImpact(
       testProjectDir,
@@ -269,7 +282,8 @@ describe('ALPER DESIGN OS - FAZ 1H: Project Intelligence, Durable Memory & Conti
     );
 
     expect(assessment.risk).toBe('HIGH');
-    expect(assessment.affectedModules).toContain('DataModule');
+    expect(assessment.affectedModules).toContain('auth_session_middleware');
+    expect(assessment.affectedModules).not.toContain('DataModule');
     expect(assessment.affectedApis).toContain('POST /api/v1/auth/login');
     expect(assessment.recommendedVerification.length).toBeGreaterThanOrEqual(2);
   });
@@ -283,13 +297,16 @@ describe('ALPER DESIGN OS - FAZ 1H: Project Intelligence, Durable Memory & Conti
       title: 'SQLite WAL Mode',
       context: 'Local storage',
       decision: 'Enable WAL mode for high concurrency reads',
-      approvedBy: 'Alper Ates'
+      approvedBy: 'Alper Ates',
+      confirmedByUser: true
     });
 
     recordBusinessRule(testProjectDir, {
       ruleId: 'BR-ORD-01',
       statement: 'Work orders in progress require locked inventory allocation',
       source: 'USER_SPECIFICATION',
+      sourceType: 'EXPLICIT_USER_SPECIFICATION',
+      confirmedByUser: true,
       priority: 'CRITICAL'
     });
 
@@ -314,7 +331,8 @@ describe('ALPER DESIGN OS - FAZ 1H: Project Intelligence, Durable Memory & Conti
       title: 'Database Engine PostgreSQL',
       context: 'Scale',
       decision: 'We adopt PostgreSQL for all relational storage',
-      approvedBy: 'Alper Ates'
+      approvedBy: 'Alper Ates',
+      confirmedByUser: true
     });
 
     const result = detectKnowledgeConflicts(testProjectDir, {
@@ -396,7 +414,8 @@ describe('ALPER DESIGN OS - FAZ 1H: Project Intelligence, Durable Memory & Conti
       title: 'Strict TypeScript Policy',
       context: 'Type safety',
       decision: 'Enable strictNullChecks and noImplicitAny',
-      approvedBy: 'Alper Ates'
+      approvedBy: 'Alper Ates',
+      confirmedByUser: true
     });
 
     const docs = generateLivingDocuments(testProjectDir);
@@ -409,12 +428,60 @@ describe('ALPER DESIGN OS - FAZ 1H: Project Intelligence, Durable Memory & Conti
   });
 
   // 15. Knowledge Health Audit
-  it('15. evaluates overall project knowledge health across coverage, freshness, and invariants', () => {
+  it('15. evaluates overall project knowledge health across coverage, freshness, and invariants without hardcoded inflation', () => {
+    // Uninitialized directory -> NOT_INITIALIZED (0%)
+    const uninitHealth = evaluateProjectKnowledgeHealth(testProjectDir);
+    expect(uninitHealth.healthStatus).toBe('NOT_INITIALIZED');
+    expect(uninitHealth.coveragePercentage).toBe(0);
+
+    // Initialized empty directory -> INSUFFICIENT_DATA (0%)
     initializeProjectIntelligence(testProjectDir, { mode: 'NEW', projectName: 'Health Test' });
+    const emptyHealth = evaluateProjectKnowledgeHealth(testProjectDir);
+    expect(emptyHealth.healthStatus).toBe('INSUFFICIENT_DATA');
+    expect(emptyHealth.coveragePercentage).toBe(0);
+
+    // Populate real repository artifacts and verified project intelligence records
+    fs.writeFileSync(path.join(testProjectDir, 'package.json'), JSON.stringify({ name: 'health-test-app', version: '1.0.0' }));
+    fs.mkdirSync(path.join(testProjectDir, 'src'), { recursive: true });
+    fs.writeFileSync(path.join(testProjectDir, 'src', 'index.ts'), 'export const health = "ok";');
+
+    recordProjectDecision(testProjectDir, {
+      id: 'ADR-HEALTH-01',
+      title: 'Core Runtime',
+      context: 'Standard runtime',
+      decision: 'Use TypeScript strict mode',
+      approvedBy: 'Alper Ates',
+      confirmedByUser: true
+    });
+
+    recordBusinessRule(testProjectDir, {
+      ruleId: 'BR-HEALTH-01',
+      statement: 'All state transitions must be audited',
+      source: 'USER_SPECIFICATION: Sec 1',
+      sourceType: 'EXPLICIT_USER_SPECIFICATION',
+      confirmedByUser: true,
+      evidenceRefs: ['SPEC-1.0']
+    });
+
+    recordProjectInvariant(testProjectDir, {
+      id: 'INV-HEALTH-01',
+      description: 'Strict CSRF and XSS protection',
+      category: 'SECURITY',
+      verificationMethod: 'VITEST',
+      source: 'Security Standard'
+    });
+
+    buildProjectArchitectureGraph(testProjectDir, {
+      modules: ['index'],
+      apis: ['GET /api/v1/status'],
+      tables: ['audit_events']
+    });
+
+    createProjectSnapshot(testProjectDir, 'SNAP-HEALTH-01');
 
     const health = evaluateProjectKnowledgeHealth(testProjectDir);
     expect(health.coveragePercentage).toBeGreaterThanOrEqual(80);
-    expect(health.healthStatus).toBe('EXCELLENT');
+    expect(['GOOD', 'EXCELLENT']).toContain(health.healthStatus);
     expect(health.conflictCount).toBe(0);
   });
 
@@ -434,6 +501,8 @@ describe('ALPER DESIGN OS - FAZ 1H: Project Intelligence, Durable Memory & Conti
       ruleId: 'BR-LONG-01',
       statement: 'Batch production must not start without raw materials validation',
       source: 'USER_SPECIFICATION: Section 3',
+      sourceType: 'EXPLICIT_USER_SPECIFICATION',
+      confirmedByUser: true,
       priority: 'CRITICAL'
     });
 
@@ -443,7 +512,8 @@ describe('ALPER DESIGN OS - FAZ 1H: Project Intelligence, Durable Memory & Conti
       title: 'Initial Database Selection',
       context: 'Initial plant deployment',
       decision: 'Deploy SQLite for edge plant nodes',
-      approvedBy: 'Alper Ates'
+      approvedBy: 'Alper Ates',
+      confirmedByUser: true
     });
 
     const snapT2 = createProjectSnapshot(testProjectDir, 'SNAP-T2', {
@@ -460,7 +530,8 @@ describe('ALPER DESIGN OS - FAZ 1H: Project Intelligence, Durable Memory & Conti
       context: 'Centralized plant telemetry required',
       decision: 'Migrate from SQLite to PostgreSQL cluster',
       supersedes: 'ADR-T2-DB',
-      approvedBy: 'Alper Ates'
+      approvedBy: 'Alper Ates',
+      confirmedByUser: true
     });
 
     // T5: Intentional API Contract Modification (Delete legacy endpoint, add v2)
@@ -517,7 +588,8 @@ describe('ALPER DESIGN OS - FAZ 1H: Project Intelligence, Durable Memory & Conti
       title: 'MCP Decision Record',
       context: 'Test Context',
       decision: 'We choose MCP Standard',
-      approvedBy: 'Alper Ates'
+      approvedBy: 'Alper Ates',
+      confirmedByUser: true
     });
     expect(decRes.record.id).toBe('ADR-MCP-01');
 
@@ -526,7 +598,10 @@ describe('ALPER DESIGN OS - FAZ 1H: Project Intelligence, Durable Memory & Conti
       baseDir: testProjectDir,
       ruleId: 'BR-MCP-01',
       statement: 'MCP tool calls must have typed schemas',
-      source: 'USER_SPECIFICATION'
+      source: 'USER_SPECIFICATION',
+      sourceType: 'EXPLICIT_USER_SPECIFICATION',
+      confirmedByUser: true,
+      evidenceRefs: ['MCP-SPEC-1']
     });
     expect(ruleRes.status).toBe('VERIFIED');
 
@@ -542,7 +617,14 @@ describe('ALPER DESIGN OS - FAZ 1H: Project Intelligence, Durable Memory & Conti
     expect(invRes.id).toBe('INV-MCP-01');
 
     // 116. build_project_architecture_graph
-    const graphRes = MCPTools.handleBuildProjectArchitectureGraph({ baseDir: testProjectDir });
+    const graphRes = MCPTools.handleBuildProjectArchitectureGraph({
+      baseDir: testProjectDir,
+      codeArtifacts: {
+        modules: ['InventoryModule'],
+        tables: ['inventory_entity'],
+        apis: ['GET /api/v1/inventory']
+      }
+    });
     expect(graphRes.nodes.length).toBeGreaterThan(0);
 
     // 117. create_project_snapshot

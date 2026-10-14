@@ -153,7 +153,16 @@ export function createCheckpointPlan(
     safeToProceed: true,
     requiresApproval,
     warnings,
-    rollbackScript
+    rollbackScript,
+    checkpoints: [
+      {
+        checkpointId,
+        stageId: 'PRE_EXECUTION',
+        gitBranch: branchName || status.branch,
+        commitTag: checkpointId,
+        rollbackCommand: rollbackScript.join(' && ')
+      }
+    ]
   };
 }
 

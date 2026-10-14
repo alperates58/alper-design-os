@@ -11,6 +11,8 @@ export interface PipelinePlanningContext {
   uxProfile?: { density?: string; domainClassification?: string };
   qualityProfile?: { securityLevel?: string; isMissionCritical?: boolean };
   riskLevel?: ChangeRiskLevel;
+  isUI?: boolean;
+  isSecuritySensitive?: boolean;
 }
 
 export function planPipeline(context: PipelinePlanningContext): PipelineExecutionPlan {
@@ -51,11 +53,14 @@ export function planPipeline(context: PipelinePlanningContext): PipelineExecutio
 
   // Content Truth verification (Phase 1E.7)
   const involvesDataOrUI =
-    context.uxProfile !== undefined ||
-    context.objective.toLowerCase().includes('ui') ||
-    context.objective.toLowerCase().includes('data') ||
-    context.objective.toLowerCase().includes('telemetry') ||
-    context.objective.toLowerCase().includes('screen');
+    context.isUI === true ||
+    (context.isUI !== false && (
+      context.uxProfile !== undefined ||
+      context.objective.toLowerCase().includes('ui') ||
+      context.objective.toLowerCase().includes('data') ||
+      context.objective.toLowerCase().includes('telemetry') ||
+      context.objective.toLowerCase().includes('screen')
+    ));
 
   if (involvesDataOrUI) {
     activeStages.push('CONTENT_TRUTH_VERIFY');
@@ -67,7 +72,10 @@ export function planPipeline(context: PipelinePlanningContext): PipelineExecutio
   }
 
   // Runtime and visual verification
-  const isUI = context.uxProfile !== undefined || context.objective.toLowerCase().includes('ui') || context.objective.toLowerCase().includes('screen');
+  const isUI =
+    context.isUI !== undefined
+      ? context.isUI
+      : (context.uxProfile !== undefined || context.objective.toLowerCase().includes('ui') || context.objective.toLowerCase().includes('screen'));
   if (isUI) {
     activeStages.push('RUNTIME_VERIFY', 'VISUAL_VERIFY');
 
@@ -95,11 +103,14 @@ export function planPipeline(context: PipelinePlanningContext): PipelineExecutio
 
   // Security verify
   const isSecuritySensitive =
-    risk === 'HIGH' ||
-    risk === 'CRITICAL' ||
-    context.qualityProfile?.securityLevel === 'CRITICAL' ||
-    context.objective.toLowerCase().includes('auth') ||
-    context.objective.toLowerCase().includes('security');
+    context.isSecuritySensitive === true ||
+    (context.isSecuritySensitive !== false && (
+      risk === 'HIGH' ||
+      risk === 'CRITICAL' ||
+      context.qualityProfile?.securityLevel === 'CRITICAL' ||
+      context.objective.toLowerCase().includes('auth') ||
+      context.objective.toLowerCase().includes('security')
+    ));
 
   if (isSecuritySensitive) {
     activeStages.push('SECURITY_VERIFY');

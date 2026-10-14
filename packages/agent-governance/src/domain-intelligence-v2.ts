@@ -24,14 +24,15 @@ export class DomainIntelligenceV2Engine {
     this.sourceEngine = sourceEngine || SourceIntelligenceEngine.getInstance();
   }
 
-  public async researchDomain(input: DomainResearchInput): Promise<DomainResearchResult> {
+  public researchDomainSync(input: DomainResearchInput): DomainResearchResult {
     const brief = input.userBrief.toLowerCase();
     const evidence: ResearchEvidence[] = [];
 
     // Stage 1: Fallback baseline from deterministic core
     const baselineProfile = inferProductUXProfile({
       productName: 'Domain Query',
-      description: input.userBrief
+      description: input.userBrief,
+      domain: input.userBrief
     });
 
     let classification = baselineProfile.domainClassification;
@@ -56,10 +57,21 @@ export class DomainIntelligenceV2Engine {
             });
           }
 
-          // If source has specific domain classification, align with highest-trust source
+          // If baseline was generic and source has a specific domain classification, align with highest-trust source
           const topSource = matchingSources[0];
-          if (topSource && topSource.domains.length > 0) {
-            classification = topSource.domains[0] as any;
+          if (topSource && topSource.domains.length > 0 && ((classification as string) === 'GENERAL_OPERATIONAL' || classification === 'B2B_ENTERPRISE')) {
+            const specificDomain = topSource.domains.find(
+              (d) =>
+                d === 'INDUSTRIAL_OPERATIONAL' ||
+                d === 'ENTERPRISE_SAAS' ||
+                d === 'FINANCIAL_TRADING' ||
+                d === 'HEALTHCARE_CLINICAL' ||
+                d === 'DEVELOPER_INFRASTRUCTURE' ||
+                d === 'CREATIVE_CONSUMER'
+            );
+            if (specificDomain) {
+              classification = specificDomain as any;
+            }
           }
         }
       } catch {
@@ -108,5 +120,9 @@ export class DomainIntelligenceV2Engine {
     };
 
     return DomainResearchResultSchema.parse(result);
+  }
+
+  public async researchDomain(input: DomainResearchInput): Promise<DomainResearchResult> {
+    return this.researchDomainSync(input);
   }
 }

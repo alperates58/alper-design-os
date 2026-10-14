@@ -9,6 +9,84 @@ import {
 } from './types.js';
 
 // =========================================================================
+// 0. Discovery Readiness, Request Classification & Safe Assumptions (1H.1)
+// =========================================================================
+
+export const DiscoveryReadinessStateSchema = z.enum([
+  'READY',
+  'NEEDS_CLARIFICATION',
+  'BLOCKED_BY_AMBIGUITY'
+]);
+export type DiscoveryReadinessState = z.infer<typeof DiscoveryReadinessStateSchema>;
+
+export const RequestComplexityClassificationSchema = z.enum([
+  'CLEAR_BOUNDED_TASK',
+  'STANDARD_PRODUCT',
+  'AMBIGUOUS_PRODUCT',
+  'HIGH_COMPLEXITY_PRODUCT',
+  'INSUFFICIENT_CONTEXT'
+]);
+export type RequestComplexityClassification = z.infer<typeof RequestComplexityClassificationSchema>;
+
+export const AssumptionCategorySchema = z.enum([
+  'LOW_IMPACT_DEFAULT',
+  'REVERSIBLE_ASSUMPTION',
+  'HIGH_IMPACT_UNKNOWN'
+]);
+export type AssumptionCategory = z.infer<typeof AssumptionCategorySchema>;
+
+export const QuestionPriorityCategorySchema = z.enum([
+  'ARCHITECTURE',
+  'BUSINESS_RULE',
+  'DATA_MODEL',
+  'INTEGRATION',
+  'SECURITY_COMPLIANCE',
+  'WORKFLOW'
+]);
+export type QuestionPriorityCategory = z.infer<typeof QuestionPriorityCategorySchema>;
+
+export const CategorizedAssumptionSchema = z.object({
+  id: z.string(),
+  statement: z.string(),
+  category: AssumptionCategorySchema,
+  reversible: z.boolean().default(true),
+  impactArea: z.string().default('GENERAL')
+});
+export type CategorizedAssumption = z.infer<typeof CategorizedAssumptionSchema>;
+
+export const ClarifyingQuestionSchema = z.object({
+  id: z.string(),
+  question: z.string(),
+  category: QuestionPriorityCategorySchema,
+  impactLevel: z.enum(['CRITICAL', 'HIGH', 'MEDIUM']).default('HIGH'),
+  priorityOrder: z.number().int().positive().default(1),
+  whyItMatters: z.string().optional(),
+  options: z.array(z.string()).optional()
+});
+export type ClarifyingQuestion = z.infer<typeof ClarifyingQuestionSchema>;
+
+export const DiscoveryReadinessSchema = z.object({
+  state: DiscoveryReadinessStateSchema,
+  requestClassification: RequestComplexityClassificationSchema,
+  criticalUnknowns: z.array(z.string()),
+  assumptions: z.array(CategorizedAssumptionSchema),
+  clarifyingQuestions: z.array(ClarifyingQuestionSchema).max(5),
+  confidence: z.number().min(0).max(1),
+  whyBlocked: z.string().optional(),
+  derivedDomainEntities: z.array(z.string()).default([])
+});
+export type DiscoveryReadiness = z.infer<typeof DiscoveryReadinessSchema>;
+
+export const AcceptanceCriterionLifecycleSchema = z.enum([
+  'DEFINED',
+  'IMPLEMENTED',
+  'VERIFIED',
+  'FAILED',
+  'DEFERRED'
+]);
+export type AcceptanceCriterionLifecycle = z.infer<typeof AcceptanceCriterionLifecycleSchema>;
+
+// =========================================================================
 // 1. Greenfield Project Profile (Section 2)
 // =========================================================================
 
@@ -20,7 +98,7 @@ export const GreenfieldProjectProfileSchema = z.object({
   secondaryJobs: z.array(z.string()).default([]),
   domain: z.string().default('General Enterprise'),
   businessCriticality: z.enum(['LOW', 'MEDIUM', 'HIGH', 'MISSION_CRITICAL']).default('MEDIUM'),
-  dataSensitivity: z.enum(['PUBLIC', 'INTERNAL', 'CONFIDENTIAL', 'HIGHLY_SENSITIVE']).default('INTERNAL'),
+  dataSensitivity: z.enum(['PUBLIC', 'INTERNAL', 'CONFIDENTIAL', 'HIGHLY_SENSITIVE', 'REGULATED_PII_PHI']).default('INTERNAL'),
   expectedScale: z.enum([
     'PROTOTYPE',
     'SMALL_TEAM',
@@ -31,8 +109,8 @@ export const GreenfieldProjectProfileSchema = z.object({
     'PUBLIC_FACING_COMMERCIAL',
     'INTERNET_SCALE'
   ]).default('SMALL_TEAM'),
-  concurrency: z.enum(['LOW', 'MEDIUM', 'MODERATE', 'HIGH', 'VERY_HIGH', 'MASSIVE']).default('LOW'),
-  deviceTargets: z.array(z.enum(['DESKTOP', 'TABLET', 'MOBILE', 'RUGGED_TERMINAL', 'KIOSK', 'EMBEDDED'])).default(['DESKTOP', 'MOBILE']),
+  concurrency: z.enum(['SINGLE_USER', 'LOW', 'MEDIUM', 'MODERATE', 'HIGH', 'VERY_HIGH', 'EXTREME', 'MASSIVE']).default('LOW'),
+  deviceTargets: z.array(z.enum(['DESKTOP', 'TABLET', 'MOBILE', 'RUGGED_TERMINAL', 'KIOSK', 'KIOSK_TERMINAL', 'EMBEDDED', 'CLI'])).default(['DESKTOP', 'MOBILE']),
   offlineNeeds: z.boolean().default(false),
   realtimeNeeds: z.boolean().default(false),
   integrationNeeds: z.array(z.string()).default([]),
@@ -40,19 +118,32 @@ export const GreenfieldProjectProfileSchema = z.object({
   localizationNeeds: z.array(z.string()).default(['en']),
   accessibilityNeeds: z.union([z.enum(['WCAG_2_1_AA', 'WCAG_2_1_AAA', 'STANDARD']), z.array(z.string())]).default('WCAG_2_1_AA'),
   deploymentEnvironment: z.enum([
+    'LOCAL_ONLY',
+    'SINGLE_SERVER',
     'DOCKER',
+    'DOCKER_CONTAINER',
     'ON_PREMISE',
+    'ON_PREM',
     'STANDALONE_HOST',
     'SERVERLESS',
     'STATIC_HOST',
+    'STATIC_HOSTING',
+    'CLOUD',
     'CLOUD_VM',
-    'CLOUD_CONTAINER'
+    'CLOUD_CONTAINER',
+    'CLOUD_MANAGED',
+    'KUBERNETES',
+    'HYBRID',
+    'HYBRID_ON_PREM'
   ]).default('DOCKER'),
   operationalConstraints: z.array(z.string()).default([]),
   unknowns: z.array(z.string()).default([]),
   assumptions: z.array(z.string()).default([]),
-  risks: z.array(z.string()).default([])
-});
+  risks: z.array(z.string()).default([]),
+  explicitEntities: z.array(z.string()).optional(),
+  isSyntheticFixture: z.boolean().optional(),
+  discoveryReadiness: DiscoveryReadinessSchema.optional()
+}).passthrough();
 export type GreenfieldProjectProfile = z.infer<typeof GreenfieldProjectProfileSchema>;
 
 // =========================================================================
@@ -67,6 +158,8 @@ export const FunctionalRequirementSchema = z.object({
   priority: z.enum(['MUST_HAVE', 'SHOULD_HAVE', 'COULD_HAVE', 'WONT_HAVE']).default('MUST_HAVE'),
   confidence: z.union([z.number().min(0).max(1), z.enum(['HIGH', 'MEDIUM', 'LOW'])]).default(1.0),
   verificationMethod: z.enum(['UNIT_TEST', 'INTEGRATION_TEST', 'BROWSER_TEST', 'STATIC_ANALYSIS', 'HUMAN_REVIEW']).default('UNIT_TEST'),
+  status: AcceptanceCriterionLifecycleSchema.default('DEFINED'),
+  verificationStatus: VerificationStatusSchema.default('NOT_VERIFIED'),
   acceptanceCriteria: z.array(z.string()).default([])
 });
 export type FunctionalRequirement = z.infer<typeof FunctionalRequirementSchema>;
@@ -79,7 +172,9 @@ export const NonFunctionalRequirementSchema = z.object({
   source: z.string(),
   priority: z.enum(['MUST_HAVE', 'SHOULD_HAVE', 'COULD_HAVE']).default('MUST_HAVE'),
   confidence: z.union([z.number().min(0).max(1), z.enum(['HIGH', 'MEDIUM', 'LOW'])]).default(1.0),
-  verificationMethod: z.enum(['PERFORMANCE_TEST', 'SECURITY_SCAN', 'A11Y_AUDIT', 'LOAD_TEST', 'STATIC_ANALYSIS']).default('STATIC_ANALYSIS')
+  verificationMethod: z.enum(['PERFORMANCE_TEST', 'SECURITY_SCAN', 'A11Y_AUDIT', 'LOAD_TEST', 'STATIC_ANALYSIS']).default('STATIC_ANALYSIS'),
+  status: AcceptanceCriterionLifecycleSchema.default('DEFINED'),
+  verificationStatus: VerificationStatusSchema.default('NOT_VERIFIED')
 });
 export type NonFunctionalRequirement = z.infer<typeof NonFunctionalRequirementSchema>;
 
@@ -99,7 +194,10 @@ export const AcceptanceCriterionSchema = z.object({
   given: z.string().optional(),
   when: z.string().optional(),
   then: z.string().optional(),
-  verified: z.boolean().default(false)
+  status: AcceptanceCriterionLifecycleSchema.default('DEFINED'),
+  verificationStatus: VerificationStatusSchema.default('NOT_VERIFIED'),
+  verified: z.boolean().default(false),
+  evidenceIds: z.array(z.string()).default([])
 });
 export type AcceptanceCriterion = z.infer<typeof AcceptanceCriterionSchema>;
 
@@ -188,7 +286,8 @@ export const ArchitectureStyleSchema = z.enum([
   'SPA_API',
   'SSR',
   'SERVER_RENDERED',
-  'EVENT_DRIVEN'
+  'EVENT_DRIVEN',
+  'MICROSERVICES'
 ]);
 export type ArchitectureStyle = z.infer<typeof ArchitectureStyleSchema>;
 
@@ -218,6 +317,7 @@ export type ArchitectureFitnessAssessment = z.infer<typeof ArchitectureFitnessAs
 export const ArchitectureRecommendationSchema = z.object({
   selectedStyle: ArchitectureStyleSchema,
   style: ArchitectureStyleSchema.optional(),
+  artifactStatus: z.enum(['FINAL', 'DRAFT', 'OPTIONS', 'RESEARCH', 'QUESTIONS']).default('FINAL'),
   rationale: z.string(),
   complexityBudget: ComplexityBudgetSchema,
   fitnessAssessment: ArchitectureFitnessAssessmentSchema,
@@ -324,6 +424,9 @@ export const DatabaseEntitySchema = z.object({
 export type DatabaseEntity = z.infer<typeof DatabaseEntitySchema>;
 
 export const DatabaseBlueprintSchema = z.object({
+  status: z.enum(['READY', 'NEEDS_CLARIFICATION', 'DRAFT']).default('READY'),
+  artifactStatus: z.enum(['FINAL', 'DRAFT', 'OPTIONS', 'RESEARCH', 'QUESTIONS']).default('FINAL'),
+  clarifyingQuestions: z.array(ClarifyingQuestionSchema).default([]),
   databaseEngine: DatabaseEngineTypeSchema,
   engine: DatabaseEngineTypeSchema.optional(),
   entities: z.array(DatabaseEntitySchema),
@@ -644,7 +747,8 @@ export const NewProjectCompletionContractSchema = z.object({
   overallAssurance: AssuranceLevelSchema,
   isComplete: z.boolean(),
   verdict: z.enum(['COMPLETE', 'INCOMPLETE', 'REJECTED']),
-  blockReasons: z.array(z.string())
+  blockReasons: z.array(z.string()),
+  blockingReasons: z.array(z.string()).default([])
 }).passthrough();
 export type NewProjectCompletionContract = z.infer<typeof NewProjectCompletionContractSchema>;
 
@@ -665,13 +769,18 @@ export const ScaffoldResultSchema = z.object({
   workspaceDir: z.string(),
   stack: GreenfieldStackTypeSchema,
   filesCreated: z.array(z.string()),
-  filesGenerated: z.array(z.string()).optional(),
+  filesGenerated: z.array(z.string()).default([]),
   hasDockerConfig: z.boolean(),
   hasEnvExample: z.boolean(),
   truthfulDataVerified: z.boolean(),
+  buildStatus: VerificationStatusSchema.default('NOT_VERIFIED'),
+  buildable: z.boolean().default(false),
+  syntaxValid: z.boolean().default(false),
   buildEvidence: z.object({
+    buildStatus: VerificationStatusSchema.default('NOT_VERIFIED'),
     buildable: z.boolean(),
     syntaxValid: z.boolean(),
+    verifiedByBuild: z.boolean().default(false),
     details: z.string()
   })
 }).passthrough();

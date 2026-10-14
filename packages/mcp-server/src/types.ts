@@ -193,7 +193,11 @@ export const EvaluateReleaseGatesInputSchema = z.object({
   staticIssues: z.array(z.any()).optional(),
   dynamicIssues: z.array(z.any()).optional(),
   vulnerableDependencies: z.array(z.any()).optional(),
-  detectedSecrets: z.array(z.any()).optional()
+  detectedSecrets: z.array(z.any()).optional(),
+  criticalTestsFailed: z.union([z.boolean(), z.number()]).optional(),
+  a11yScore: z.number().optional(),
+  visualRegressionDiffs: z.number().optional(),
+  unresolvedConflicts: z.number().optional()
 });
 export type EvaluateReleaseGatesInput = z.infer<typeof EvaluateReleaseGatesInputSchema>;
 
@@ -615,6 +619,8 @@ export type CreateAppShellBlueprintInput = z.infer<typeof CreateAppShellBlueprin
 // 70. render_blueprint
 export const RenderBlueprintInputSchema = z.object({
   blueprintId: z.string().optional().default('data-management-workspace'),
+  blueprintPreset: z.string().optional(),
+  customPageTitle: z.string().optional(),
   targetStack: z.enum(['html-css-js', 'react-typescript', 'laravel-blade', 'aspnet-razor']).optional().default('html-css-js'),
   theme: z.enum(['LIGHT', 'DARK', 'HIGH_CONTRAST']).optional().default('LIGHT'),
   density: z.enum(['COMPACT', 'COMFORTABLE', 'SPACIOUS']).optional().default('COMPACT')
@@ -960,26 +966,28 @@ export type EvaluateModernizationCompletionInput = z.infer<typeof EvaluateModern
 export const CreateGreenfieldProjectProfileInputSchema = z.object({
   productName: z.string().describe('Name of the new product/project'),
   productPurpose: z.string().describe('Primary purpose and problem the product solves'),
-  targetUsers: z.array(z.string()).optional().default(['Internal Operators']),
-  primaryJobs: z.array(z.string()).optional().default(['Manage records', 'Perform daily workflows']),
-  secondaryJobs: z.array(z.string()).optional().default([]),
-  domain: z.string().optional().default('General Business Operations'),
-  businessCriticality: z.enum(['LOW', 'MEDIUM', 'HIGH', 'MISSION_CRITICAL']).optional().default('MEDIUM'),
-  dataSensitivity: z.enum(['PUBLIC', 'INTERNAL', 'CONFIDENTIAL', 'HIGHLY_SENSITIVE']).optional().default('INTERNAL'),
-  expectedScale: z.enum(['SMALL_INTERNAL', 'DEPARTMENTAL', 'ENTERPRISE_INTERNAL', 'PUBLIC_FACING_COMMERCIAL']).optional().default('SMALL_INTERNAL'),
-  concurrency: z.enum(['LOW', 'MODERATE', 'HIGH', 'MASSIVE']).optional().default('LOW'),
-  deviceTargets: z.array(z.enum(['DESKTOP', 'TABLET', 'MOBILE', 'EMBEDDED'])).optional().default(['DESKTOP']),
-  offlineNeeds: z.boolean().optional().default(false),
-  realtimeNeeds: z.boolean().optional().default(false),
-  integrationNeeds: z.array(z.string()).optional().default([]),
-  reportingNeeds: z.array(z.string()).optional().default([]),
-  localizationNeeds: z.array(z.string()).optional().default(['en-US']),
-  accessibilityNeeds: z.array(z.string()).optional().default(['WCAG_2_1_AA']),
-  deploymentEnvironment: z.enum(['DOCKER', 'STANDALONE_HOST', 'CLOUD_CONTAINER', 'SERVERLESS']).optional().default('DOCKER'),
-  operationalConstraints: z.array(z.string()).optional().default([]),
-  unknowns: z.array(z.string()).optional().default([]),
-  assumptions: z.array(z.string()).optional().default([]),
-  risks: z.array(z.string()).optional().default([])
+  targetUsers: z.array(z.string()).optional(),
+  primaryJobs: z.array(z.string()).optional(),
+  secondaryJobs: z.array(z.string()).optional(),
+  domain: z.string().optional(),
+  businessCriticality: z.enum(['LOW', 'MEDIUM', 'HIGH', 'MISSION_CRITICAL']).optional(),
+  dataSensitivity: z.enum(['PUBLIC', 'INTERNAL', 'CONFIDENTIAL', 'HIGHLY_SENSITIVE', 'REGULATED_PII_PHI']).optional(),
+  expectedScale: z.enum(['PROTOTYPE', 'SMALL_TEAM', 'SMALL_INTERNAL', 'DEPARTMENTAL', 'ENTERPRISE', 'ENTERPRISE_INTERNAL', 'PUBLIC_FACING_COMMERCIAL', 'INTERNET_SCALE']).optional(),
+  concurrency: z.enum(['SINGLE_USER', 'LOW', 'MODERATE', 'HIGH', 'EXTREME', 'MASSIVE']).optional(),
+  deviceTargets: z.array(z.enum(['DESKTOP', 'TABLET', 'MOBILE', 'KIOSK_TERMINAL', 'EMBEDDED'])).optional(),
+  offlineNeeds: z.boolean().optional(),
+  realtimeNeeds: z.boolean().optional(),
+  integrationNeeds: z.array(z.string()).optional(),
+  reportingNeeds: z.array(z.string()).optional(),
+  localizationNeeds: z.array(z.string()).optional(),
+  accessibilityNeeds: z.array(z.string()).optional(),
+  deploymentEnvironment: z.enum(['LOCAL_ONLY', 'SINGLE_SERVER', 'DOCKER', 'DOCKER_CONTAINER', 'STANDALONE_HOST', 'CLOUD_CONTAINER', 'CLOUD_MANAGED', 'HYBRID_ON_PREM', 'SERVERLESS']).optional(),
+  operationalConstraints: z.array(z.string()).optional(),
+  unknowns: z.array(z.string()).optional(),
+  assumptions: z.array(z.string()).optional(),
+  risks: z.array(z.string()).optional(),
+  explicitEntities: z.array(z.string()).optional(),
+  isDemoOrSyntheticFixture: z.boolean().optional()
 });
 export type CreateGreenfieldProjectProfileInput = z.infer<typeof CreateGreenfieldProjectProfileInputSchema>;
 
@@ -1068,23 +1076,31 @@ export type CreateProjectImplementationPlanInput = z.infer<typeof CreateProjectI
 // 109. scaffold_new_project
 export const ScaffoldNewProjectInputSchema = z.object({
   blueprint: z.any().describe('NewProjectBlueprint'),
-  targetDirectory: z.string().describe('Target directory to scaffold files into')
+  targetDirectory: z.string().describe('Target directory to scaffold files into'),
+  verifiedBuildEvidence: z.object({
+    buildPassed: z.boolean(),
+    syntaxValid: z.boolean(),
+    command: z.string().optional(),
+    outputSummary: z.string().optional()
+  }).optional()
 });
 export type ScaffoldNewProjectInput = z.infer<typeof ScaffoldNewProjectInputSchema>;
 
 // 110. evaluate_new_project_completion
 export const EvaluateNewProjectCompletionInputSchema = z.object({
-  technical: z.enum(['PASS', 'FAIL']).default('PASS'),
-  functional: z.enum(['PASS', 'FAIL']).default('PASS'),
-  visualAI: z.enum(['PASS', 'FAIL']).default('PASS'),
-  ux: z.enum(['PASS', 'FAIL']).default('PASS'),
-  accessibility: z.enum(['PASS', 'FAIL']).default('PASS'),
-  security: z.enum(['PASS', 'FAIL']).default('PASS'),
-  truthfulUI: z.enum(['PASS', 'FAIL']).default('PASS'),
-  traceability: z.enum(['PASS', 'FAIL']).default('PASS'),
-  testCoverage: z.enum(['PASS', 'FAIL']).optional().default('PASS'),
-  boundaryCompliance: z.enum(['PASS', 'FAIL']).optional().default('PASS'),
-  evidenceRecords: z.array(z.any()).optional().default([]),
+  technical: z.enum(['PASS', 'FAIL']).optional(),
+  functional: z.enum(['PASS', 'FAIL']).optional(),
+  visualAI: z.enum(['PASS', 'FAIL']).optional(),
+  ux: z.enum(['PASS', 'FAIL']).optional(),
+  accessibility: z.enum(['PASS', 'FAIL']).optional(),
+  security: z.enum(['PASS', 'FAIL']).optional(),
+  truthfulUI: z.enum(['PASS', 'FAIL']).optional(),
+  traceability: z.enum(['PASS', 'FAIL']).optional(),
+  testCoverage: z.enum(['PASS', 'FAIL']).optional(),
+  boundaryCompliance: z.enum(['PASS', 'FAIL']).optional(),
+  evidence: z.record(z.any()).optional(),
+  evidenceRecords: z.array(z.any()).optional(),
+  gatePolicies: z.record(z.any()).optional(),
   isSyntheticFixture: z.boolean().optional().default(false)
 });
 export type EvaluateNewProjectCompletionInput = z.infer<typeof EvaluateNewProjectCompletionInputSchema>;
@@ -1127,7 +1143,9 @@ export const RecordProjectDecisionInputSchema = z.object({
   affectedComponents: z.array(z.string()).optional().default([]),
   status: z.enum(['PROPOSED', 'ACCEPTED', 'REJECTED', 'SUPERSEDED', 'DEPRECATED']).optional().default('ACCEPTED'),
   supersedes: z.string().nullable().optional(),
-  approvedBy: z.string().describe('Name of human user or system authority')
+  approvedBy: z.string().describe('Name of human user or system authority'),
+  confirmedByUser: z.boolean().optional().default(false),
+  authoritySource: z.enum(['USER_DECISION', 'SYSTEM_RECOMMENDATION', 'RESEARCH_FINDING', 'IMPLEMENTATION_FACT']).optional()
 });
 export type RecordProjectDecisionInput = z.infer<typeof RecordProjectDecisionInputSchema>;
 
@@ -1137,6 +1155,20 @@ export const RecordBusinessRuleInputSchema = z.object({
   ruleId: z.string().describe('Business rule identifier, e.g. BR-001'),
   statement: z.string().describe('Invariant rule statement'),
   source: z.string().describe('Verifiable domain or user authority source'),
+  sourceType: z.enum([
+    'EXPLICIT_USER_SPECIFICATION',
+    'VERIFIED_CODE_FACT',
+    'APPROVED_REQUIREMENT',
+    'REGULATORY_SOURCE',
+    'AUTHORITATIVE_DOCUMENT',
+    'DOMAIN_RESEARCH',
+    'SYSTEM_INFERENCE',
+    'MODEL_INFERENCE',
+    'UNKNOWN'
+  ]).optional(),
+  sourceRef: z.string().optional(),
+  evidenceRefs: z.array(z.string()).optional().default([]),
+  confirmedByUser: z.boolean().optional().default(false),
   priority: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']).optional().default('HIGH'),
   scope: z.string().optional().default('PROJECT'),
   inputs: z.array(z.string()).optional().default([]),

@@ -355,7 +355,7 @@ export function inferProductUXProfile(input: ProductBriefInput): ProductUXProfil
       steps: [
         'Inspect pending item list and filter by operational urgency',
         'Adjust allocation time slot or reassign resource block',
-        'System evaluates finite capacity and frozen horizon constraints',
+        'System evaluates capacity and operational boundary constraints',
         'Visual indicators signal downstream impacts and constraint violations',
         'Commit modified plan with single key shortcut'
       ],

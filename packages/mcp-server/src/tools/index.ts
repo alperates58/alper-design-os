@@ -110,7 +110,8 @@ import {
   detectKnowledgeConflicts,
   recordLessonLearned,
   proposeImprovementCandidate,
-  evaluateProjectKnowledgeHealth
+  evaluateProjectKnowledgeHealth,
+  DomainIntelligenceV2Engine
 } from '@alper-design-os/agent-governance';
 import {
   createDesignIntent,
@@ -132,6 +133,9 @@ import {
   AspNetRazorRenderer
 } from '@alper-design-os/design-language';
 import * as T from '../types.js';
+import { McpToolDefinition, createCanonicalToolDefinitions } from './definitions.js';
+
+export type { McpToolDefinition };
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -152,7 +156,7 @@ function collectProjectFiles(targetDir: string, maxFiles: number = 250): Project
         if (result.length >= maxFiles) break;
         const fullPath = path.join(current, entry.name);
         const ext = path.extname(entry.name).toLowerCase();
-        const shouldReadContent = ['.json', '.html', '.css', '.js', '.jsx', '.tsx', '.ts', '.php', '.cs', '.cshtml', '.yaml', '.yml', '.lock', '.example'].includes(ext) || entry.name.startsWith('.env');
+        const shouldReadContent = ['.json', '.html', '.css', '.js', '.jsx', '.tsx', '.ts', '.php', '.cs', '.cshtml', '.yaml', '.yml', '.lock', '.example', '.sql'].includes(ext) || entry.name.startsWith('.env');
         let content: string | undefined = undefined;
 
         if (shouldReadContent) {
@@ -219,7 +223,11 @@ export function handleUnderstandProduct(input: T.UnderstandProductInput) {
 
 // 4. research_domain
 export function handleResearchDomain(input: T.ResearchDomainInput) {
-  const profile = inferProductUXProfile({
+  const domainEngine = new DomainIntelligenceV2Engine();
+  const v2Result = domainEngine.researchDomainSync({
+    userBrief: input.domainQuery
+  });
+  const profile = v2Result.uxProfile || inferProductUXProfile({
     name: input.domainQuery,
     description: `Domain investigation for ${input.domainQuery}`,
     domain: input.domainQuery
@@ -227,22 +235,32 @@ export function handleResearchDomain(input: T.ResearchDomainInput) {
 
   return {
     query: input.domainQuery,
-    classification: profile.domainClassification,
+    classification: v2Result.classification,
     typicalPersonas: profile.personas,
     criticalJobs: profile.primaryJobsAndTasks,
     recommendedDensity: profile.informationDensity,
     recommendedInteraction: profile.interactionStyle,
-    keyPatterns: profile.requiredVisualPatterns
+    keyPatterns: profile.requiredVisualPatterns,
+    confidenceScore: v2Result.confidenceScore,
+    isFallback: v2Result.isFallback,
+    evidence: v2Result.evidence,
+    domainIntelligenceV2: v2Result
   };
 }
 
 // 5. recommend_ux_patterns
 export function handleRecommendUXPatterns(input: T.RecommendUXPatternsInput) {
   const targetDensity = input.density || input.profile?.informationDensity || 'HIGH';
-  const patterns = coreUXPatterns.filter((p) => p.supportedDensities.includes(targetDensity));
+  const targetInteractionStyle = input.interactionStyle || input.profile?.interactionStyle;
+  let patterns = coreUXPatterns.filter((p) => p.supportedDensities.includes(targetDensity));
+
+  if (targetInteractionStyle === 'KEYBOARD_FIRST') {
+    patterns = [...patterns].sort((a, b) => (b.keyboardShortcuts?.length || 0) - (a.keyboardShortcuts?.length || 0));
+  }
 
   return {
     targetDensity,
+    targetInteractionStyle,
     recommendedPatterns: patterns.map((p) => ({
       id: p.id,
       name: p.name,
@@ -289,6 +307,7 @@ export function handleGetDesignTokens(input: T.GetDesignTokensInput) {
   const output = compiler.compile(input.format);
   return {
     format: input.format,
+    density: input.density || 'HIGH',
     filename: output.filename,
     content: output.content
   };
@@ -339,7 +358,11 @@ export function handleAuditExistingUI(input: T.AuditExistingUIInput) {
 // 11. audit_accessibility
 export function handleAuditAccessibility(input: T.AuditAccessibilityInput) {
   const files = collectProjectFiles(input.projectPath);
-  return auditAccessibility(files);
+  const audit = auditAccessibility(files);
+  return {
+    ...audit,
+    wcagLevelTarget: input.targetLevel || audit.wcagLevelTarget
+  };
 }
 
 // 12. audit_responsive
@@ -455,10 +478,17 @@ export function handleSearchSources(input: T.SearchSourcesInput) {
 // 18. rank_sources
 export function handleRankSources(input: T.RankSourcesInput) {
   const engine = SourceIntelligenceEngine.getInstance();
-  const ranked = engine.recommendSourcesForStack(input.framework || 'Framework Agnostic', input.domain);
+  let ranked = engine.recommendSourcesForStack(input.framework || 'Framework Agnostic', input.domain);
+  if (input.requirePermissiveLicense) {
+    ranked = ranked.filter((r: any) => {
+      const lic = (r.source?.license || r.license || '').toUpperCase();
+      return lic.includes('MIT') || lic.includes('APACHE') || lic.includes('BSD') || lic.includes('ISC') || lic.includes('CC0');
+    });
+  }
 
   return {
     totalRanked: ranked.length,
+    requirePermissiveLicense: Boolean(input.requirePermissiveLicense),
     rankedSources: ranked
   };
 }
@@ -516,14 +546,18 @@ export function handleCheckSourceLicense(input: T.CheckSourceLicenseInput) {
 
 // 23. generate_engineering_policy
 export function handleGenerateEngineeringPolicy(input: T.GenerateEngineeringPolicyInput) {
-  return generateEngineeringProfile(input.stack, {
+  const profile = generateEngineeringProfile(input.stack, {
     securityLevel: input.securityLevel ? (`LEVEL_${input.securityLevel === 'CRITICAL' ? '3' : input.securityLevel === 'HIGH' ? '2' : '1'}` as any) : undefined
   });
+  return {
+    ...profile,
+    targetEnvironment: input.targetEnvironment || 'PRODUCTION'
+  };
 }
 
 // 24. evaluate_release_gates
 export function handleEvaluateReleaseGates(input: T.EvaluateReleaseGatesInput) {
-  const policy: ReleaseGatePolicy = {
+  const defaultPolicy: ReleaseGatePolicy = {
     blockOnCriticalSecurity: true,
     blockOnHighSecurity: true,
     blockOnSecretDetected: true,
@@ -533,6 +567,21 @@ export function handleEvaluateReleaseGates(input: T.EvaluateReleaseGatesInput) {
     lowSecurityAction: 'IGNORE'
   };
 
+  const profileOverrides = input.profile
+    ? (input.profile.releaseGatePolicy || input.profile)
+    : {};
+
+  const policy: ReleaseGatePolicy = {
+    ...defaultPolicy,
+    ...(typeof profileOverrides.blockOnCriticalSecurity === 'boolean' ? { blockOnCriticalSecurity: profileOverrides.blockOnCriticalSecurity } : {}),
+    ...(typeof profileOverrides.blockOnHighSecurity === 'boolean' ? { blockOnHighSecurity: profileOverrides.blockOnHighSecurity } : {}),
+    ...(typeof profileOverrides.blockOnSecretDetected === 'boolean' ? { blockOnSecretDetected: profileOverrides.blockOnSecretDetected } : {}),
+    ...(typeof profileOverrides.blockOnExploitableDependency === 'boolean' ? { blockOnExploitableDependency: profileOverrides.blockOnExploitableDependency } : {}),
+    ...(typeof profileOverrides.blockOnFailedCriticalTests === 'boolean' ? { blockOnFailedCriticalTests: profileOverrides.blockOnFailedCriticalTests } : {}),
+    ...(profileOverrides.mediumSecurityAction ? { mediumSecurityAction: profileOverrides.mediumSecurityAction } : {}),
+    ...(profileOverrides.lowSecurityAction ? { lowSecurityAction: profileOverrides.lowSecurityAction } : {})
+  };
+
   const allFindings: AuditFinding[] = [
     ...(input.staticIssues || []),
     ...(input.dynamicIssues || []),
@@ -540,7 +589,61 @@ export function handleEvaluateReleaseGates(input: T.EvaluateReleaseGatesInput) {
     ...(input.detectedSecrets || [])
   ];
 
-  return evaluateReleaseGates(allFindings, policy, false);
+  if (typeof input.criticalTestsFailed === 'number' && input.criticalTestsFailed > 0) {
+    allFindings.push({
+      id: 'gate-failed-critical-tests',
+      category: 'TESTING',
+      severity: 'CRITICAL',
+      title: 'Critical Tests Failed',
+      description: `${input.criticalTestsFailed} critical test(s) failed in test runner.`,
+      tool: 'test-runner',
+      remediation: 'Resolve all failing critical tests before release.'
+    });
+  }
+
+  if (typeof input.a11yScore === 'number' && input.a11yScore < 80) {
+    allFindings.push({
+      id: 'gate-a11y-score-failed',
+      category: 'CODE_QUALITY',
+      severity: 'CRITICAL',
+      title: 'Accessibility Score Below Threshold',
+      description: `Accessibility score ${input.a11yScore} is below required threshold of 80.`,
+      tool: 'a11y-auditor',
+      remediation: 'Fix accessibility violations.'
+    });
+  }
+
+  if (typeof input.unresolvedConflicts === 'number' && input.unresolvedConflicts > 0) {
+    allFindings.push({
+      id: 'gate-unresolved-conflicts',
+      category: 'RELIABILITY',
+      severity: 'CRITICAL',
+      title: 'Unresolved Conflicts Detected',
+      description: `${input.unresolvedConflicts} unresolved conflict(s) detected.`,
+      tool: 'conflict-detector',
+      remediation: 'Resolve architecture and knowledge conflicts.'
+    });
+  }
+
+  if (typeof input.visualRegressionDiffs === 'number' && input.visualRegressionDiffs > 0) {
+    allFindings.push({
+      id: 'gate-visual-diffs',
+      category: 'CODE_QUALITY',
+      severity: 'MEDIUM',
+      title: 'Visual Regression Diffs Detected',
+      description: `${input.visualRegressionDiffs} visual regression diff(s) detected.`,
+      tool: 'visual-regression',
+      remediation: 'Review visual diffs.'
+    });
+  }
+
+  const criticalTestsFailed = Boolean(
+    (typeof input.criticalTestsFailed === 'number' && input.criticalTestsFailed > 0) ||
+    input.criticalTestsFailed === true ||
+    input.profile?.criticalTestsFailed === true
+  );
+
+  return evaluateReleaseGates(allFindings, policy, criticalTestsFailed);
 }
 
 // 25. generate_threat_model
@@ -643,6 +746,7 @@ export function handleAnalyzeArchitecture(input: T.AnalyzeArchitectureInput) {
 // 33. generate_adr
 export function handleGenerateADR(input: T.GenerateADRInput) {
   return createArchitectureDecisionRecord({
+    number: input.number,
     title: input.title,
     context: input.context,
     decision: input.decision,
@@ -652,16 +756,32 @@ export function handleGenerateADR(input: T.GenerateADRInput) {
 
 // 34. analyze_database_schema
 export function handleAnalyzeDatabaseSchema(input: T.AnalyzeDatabaseSchemaInput) {
-  const migrationEvaluation = input.migrationContent
-    ? detectMigrationRisk(input.migrationContent.split('\n'))
+  const discoveredMigrationLines: string[] = [];
+  if (input.projectPath) {
+    const files = collectProjectFiles(input.projectPath, 100);
+    for (const file of files) {
+      if ((file.extension === '.sql' || file.path.toLowerCase().includes('migration')) && file.content) {
+        discoveredMigrationLines.push(...file.content.split('\n'));
+      }
+    }
+  }
+
+  const allMigrationLines = [
+    ...(input.migrationContent ? input.migrationContent.split('\n') : []),
+    ...discoveredMigrationLines
+  ];
+
+  const migrationEvaluation = allMigrationLines.length > 0
+    ? detectMigrationRisk(allMigrationLines)
     : null;
 
   const dbProfile = analyzeDatabase({
     sqlStatements: input.querySample ? [input.querySample] : [],
-    migrationDdl: input.migrationContent ? input.migrationContent.split('\n') : []
+    migrationDdl: allMigrationLines
   });
 
   return {
+    projectPath: input.projectPath,
     databaseProfile: dbProfile,
     migrationEvaluation
   };
@@ -728,6 +848,8 @@ export function handleCreateCheckpointPlan(input: T.CreateCheckpointPlanInput) {
 export function handleCreateVerificationPlan(input: T.CreateVerificationPlanInput) {
   return planPipeline({
     objective: input.objective,
+    isUI: input.isUI,
+    isSecuritySensitive: input.isSecuritySensitive,
     riskLevel: input.riskLevel
   });
 }
@@ -868,6 +990,7 @@ export async function handleSyncDesignSources(input: T.SyncDesignSourcesInput) {
 
   const result = await sourceSyncEngine.syncAllSources(sourcesToSync);
   return {
+    force: Boolean(input.force),
     totalChecked: result.total,
     syncedCount: result.synced,
     results: result.results
@@ -907,9 +1030,18 @@ export function handleSearchPatterns(input: T.SearchPatternsInput) {
   if (input.category) {
     filtered = filtered.filter((p) => p.category.toLowerCase() === input.category!.toLowerCase());
   }
+  if (input.applicableDomain) {
+    const dom = input.applicableDomain.toLowerCase();
+    filtered = filtered.filter((p: any) =>
+      !p.applicableDomains ||
+      p.applicableDomains.some((d: string) => d.toLowerCase().includes(dom) || d.toLowerCase().includes('all'))
+    );
+  }
 
   return {
     query: input.query || '',
+    category: input.category,
+    applicableDomain: input.applicableDomain,
     totalPatterns: filtered.length,
     patterns: filtered
   };
@@ -932,9 +1064,17 @@ export function handleSearchRegistries(input: T.SearchRegistriesInput) {
   if (input.freeTierOnly) {
     filtered = filtered.filter((r) => r.freeTier);
   }
+  if (input.framework) {
+    const fw = input.framework.toLowerCase();
+    filtered = filtered.filter((r: any) =>
+      !r.frameworks ||
+      r.frameworks.some((f: string) => f.toLowerCase().includes(fw) || f.toLowerCase().includes('agnostic'))
+    );
+  }
 
   return {
     query: input.query || '',
+    framework: input.framework,
     totalRegistries: filtered.length,
     registries: filtered
   };
@@ -1069,12 +1209,58 @@ export function handleCreateDesignIntent(input: T.CreateDesignIntentInput) {
   return createDesignIntent(input);
 }
 
-// 67. create_page_blueprint
-export function handleCreatePageBlueprint(input: T.CreatePageBlueprintInput) {
-  if (input.preset === 'DATA_MANAGEMENT_WORKSPACE') {
+// In-memory store for custom blueprints created during the session
+const customPageBlueprints = new Map<string, any>();
+
+function resolvePageBlueprintById(blueprintId?: string) {
+  if (!blueprintId || blueprintId === 'data-management-workspace' || blueprintId === 'DATA_MANAGEMENT_WORKSPACE') {
     return createDataManagementWorkspaceBlueprint();
   }
-  return createRecipeBlueprint(input.preset as any);
+
+  if (customPageBlueprints.has(blueprintId)) {
+    return customPageBlueprints.get(blueprintId)!;
+  }
+
+  const upper = blueprintId.toUpperCase().replace(/-/g, '_');
+  const recipeTypes = ['LOGIN_PAGE', 'SETTINGS_PAGE', 'LIST_DETAIL_PAGE', 'DATA_MANAGEMENT_PAGE', 'DASHBOARD_PAGE', 'FORM_PAGE'];
+  for (const rType of recipeTypes) {
+    if (upper === rType || upper === `RECIPE_${rType}` || upper.includes(rType.replace('_PAGE', ''))) {
+      const bp = createRecipeBlueprint(rType as any);
+      return {
+        ...bp,
+        id: blueprintId,
+        title: `${bp.title} (${blueprintId})`
+      };
+    }
+  }
+
+  const fallbackBp = createDataManagementWorkspaceBlueprint();
+  return {
+    ...fallbackBp,
+    id: blueprintId,
+    title: `${fallbackBp.title} (${blueprintId})`,
+    description: `Canonical page blueprint for ${blueprintId}`
+  };
+}
+
+// 67. create_page_blueprint
+export function handleCreatePageBlueprint(input: T.CreatePageBlueprintInput) {
+  const baseBlueprint = input.preset === 'DATA_MANAGEMENT_WORKSPACE'
+    ? createDataManagementWorkspaceBlueprint()
+    : createRecipeBlueprint((input.preset || 'DATA_MANAGEMENT_WORKSPACE') as any);
+
+  const customized = {
+    ...baseBlueprint,
+    id: input.id || baseBlueprint.id,
+    title: input.title || baseBlueprint.title,
+    description: input.title ? `Canonical page blueprint for ${input.title}` : baseBlueprint.description
+  };
+
+  if (input.id) {
+    customPageBlueprints.set(input.id, customized);
+  }
+
+  return customized;
 }
 
 // 68. create_component_blueprint
@@ -1099,7 +1285,9 @@ export function handleCreateAppShellBlueprint(input: T.CreateAppShellBlueprintIn
 
 // 70. render_blueprint
 export function handleRenderBlueprint(input: T.RenderBlueprintInput) {
-  const blueprint = createDataManagementWorkspaceBlueprint();
+  const bpId = input.blueprintId || input.blueprintPreset || 'data-management-workspace';
+  const rawBp = resolvePageBlueprintById(bpId);
+  const blueprint = input.customPageTitle ? { ...rawBp, title: input.customPageTitle } : rawBp;
   let renderer;
   switch (input.targetStack) {
     case 'react-typescript':
@@ -1117,10 +1305,19 @@ export function handleRenderBlueprint(input: T.RenderBlueprintInput) {
       break;
   }
 
-  return renderer.renderPageBlueprint(blueprint, {
+  const result = renderer.renderPageBlueprint(blueprint, {
     theme: input.theme,
     density: input.density
   });
+
+  if (input.customPageTitle && result?.primaryFile?.content) {
+    result.primaryFile.content = result.primaryFile.content.replace(
+      new RegExp(rawBp.title, 'g'),
+      input.customPageTitle
+    );
+  }
+
+  return result;
 }
 
 // 71. render_component
@@ -1510,7 +1707,13 @@ export function handleCreateProjectImplementationPlan(input: T.CreateProjectImpl
 
 // 109. scaffold_new_project
 export function handleScaffoldNewProject(input: T.ScaffoldNewProjectInput) {
-  return scaffoldNewProject(input.blueprint, input.targetDirectory);
+  return scaffoldNewProject(input.blueprint, input.targetDirectory, input.verifiedBuildEvidence ? {
+    verifiedBuildEvidence: {
+      buildable: input.verifiedBuildEvidence.buildPassed,
+      syntaxValid: input.verifiedBuildEvidence.syntaxValid,
+      details: input.verifiedBuildEvidence.outputSummary || input.verifiedBuildEvidence.command || 'Verified by build'
+    }
+  } : undefined);
 }
 
 // 110. evaluate_new_project_completion
@@ -1589,135 +1792,146 @@ export function handleEvaluateProjectKnowledgeHealth(input: T.EvaluateProjectKno
 }
 
 /**
- * Canonical Tool Registry Map:
- * Complete, typed mapping of all 124 registered Alper Design OS MCP tools to their handler functions.
+ * Single Source of Truth: Canonical Tool Definitions & Registry
  */
-export const toolRegistry = new Map<string, Function>([
-  ['analyze_project', handleAnalyzeProject],
-  ['detect_stack', handleDetectStack],
-  ['understand_product', handleUnderstandProduct],
-  ['research_domain', handleResearchDomain],
-  ['recommend_ux_patterns', handleRecommendUXPatterns],
-  ['search_design_patterns', handleSearchDesignPatterns],
-  ['search_components', handleSearchComponents],
-  ['get_design_tokens', handleGetDesignTokens],
-  ['create_design_plan', handleCreateDesignPlan],
-  ['audit_existing_ui', handleAuditExistingUI],
-  ['audit_accessibility', handleAuditAccessibility],
-  ['audit_responsive', handleAuditResponsive],
-  ['recommend_modernization', handleRecommendModernization],
-  ['search_public_apis', handleSearchPublicApis],
-  ['search_mcp_servers', handleSearchMcpServers],
-  ['discover_sources', handleDiscoverSources],
-  ['search_sources', handleSearchSources],
-  ['rank_sources', handleRankSources],
-  ['inspect_source', handleInspectSource],
-  ['recommend_sources_for_product', handleRecommendSourcesForProduct],
-  ['recommend_sources_for_stack', handleRecommendSourcesForStack],
-  ['check_source_license', handleCheckSourceLicense],
-  ['generate_engineering_policy', handleGenerateEngineeringPolicy],
-  ['evaluate_release_gates', handleEvaluateReleaseGates],
-  ['generate_threat_model', handleGenerateThreatModel],
-  ['detect_tool_capabilities', handleDetectToolCapabilities],
-  ['run_safe_security_scan', handleRunSafeSecurityScan],
-  ['generate_user_journeys', handleGenerateUserJourneys],
-  ['generate_playwright_test', handleGeneratePlaywrightTest],
-  ['generate_qa_report', handleGenerateQAReport],
-  ['generate_test_pyramid', handleGenerateTestPyramid],
-  ['analyze_architecture', handleAnalyzeArchitecture],
-  ['generate_adr', handleGenerateADR],
-  ['analyze_database_schema', handleAnalyzeDatabaseSchema],
-  ['evaluate_api_compatibility', handleEvaluateAPICompatibility],
-  ['classify_code_paths', handleClassifyCodePaths],
-  ['create_action_plan', handleCreateActionPlan],
-  ['evaluate_scope', handleEvaluateScope],
-  ['evaluate_change_risk', handleEvaluateChangeRisk],
-  ['create_checkpoint_plan', handleCreateCheckpointPlan],
-  ['create_verification_plan', handleCreateVerificationPlan],
-  ['normalize_verification_evidence', handleNormalizeVerificationEvidence],
-  ['review_change', handleReviewChange],
-  ['detect_regression', handleDetectRegression],
-  ['create_environment_profile', handleCreateEnvironmentProfile],
-  ['route_context', handleRouteContext],
-  ['route_tool', handleRouteTool],
-  ['create_execution_journal', handleCreateExecutionJournal],
-  ['evaluate_completion_claim', handleEvaluateCompletionClaim],
-  ['discover_design_sources', handleDiscoverDesignSources],
-  ['search_design_sources', handleSearchDesignSources],
-  ['inspect_design_source', handleInspectDesignSource],
-  ['sync_design_sources', handleSyncDesignSources],
-  ['recommend_design_sources', handleRecommendDesignSources],
-  ['search_patterns', handleSearchPatterns],
-  ['inspect_pattern', handleInspectPattern],
-  ['search_registries', handleSearchRegistries],
-  ['search_registry_components', handleSearchRegistryComponents],
-  ['inspect_registry_component', handleInspectRegistryComponent],
-  ['discover_ai_skills', handleDiscoverAiSkills],
-  ['inspect_ai_skill', handleInspectAiSkill],
-  ['recommend_icon_system', handleRecommendIconSystem],
-  ['recommend_chart_library', handleRecommendChartLibrary],
-  ['recommend_data_grid', handleRecommendDataGrid],
-  ['explain_source_recommendation', handleExplainSourceRecommendation],
-  ['create_design_intent', handleCreateDesignIntent],
-  ['create_page_blueprint', handleCreatePageBlueprint],
-  ['create_component_blueprint', handleCreateComponentBlueprint],
-  ['create_app_shell_blueprint', handleCreateAppShellBlueprint],
-  ['render_blueprint', handleRenderBlueprint],
-  ['render_component', handleRenderComponent],
-  ['create_ui_recipe', handleCreateUiRecipe],
-  ['select_design_personality', handleSelectDesignPersonality],
-  ['evaluate_design_antipatterns', handleEvaluateDesignAntipatterns],
-  ['compare_renderer_parity', handleCompareRendererParity],
-  ['inspect_alper_registry', handleInspectAlperRegistry],
-  ['evaluate_truthful_ui', handleEvaluateTruthfulUi],
-  ['audit_data_provenance', handleAuditDataProvenance],
-  ['evaluate_page_intent', handleEvaluatePageIntent],
-  ['audit_information_relevance', handleAuditInformationRelevance],
-  ['classify_source_authority', handleClassifySourceAuthority],
-  ['evaluate_content_truth_gate', handleEvaluateContentTruthGate],
-  ['manage_human_visual_approval', handleManageHumanVisualApproval],
-  ['audit_track_trace_telemetry', handleAuditTrackTraceTelemetry],
-  ['create_manual_run_bundle', handleCreateManualRunBundle],
-  ['verify_manual_run_evidence', handleVerifyManualRunEvidence],
-  ['resolve_browser_runtime', handleResolveBrowserRuntime],
-  ['run_operator_doctor', handleRunOperatorDoctor],
-  ['profile_existing_project', handleProfileExistingProject],
-  ['create_behavioral_baseline', handleCreateBehavioralBaseline],
-  ['create_preservation_contract', handleCreatePreservationContract],
-  ['classify_existing_elements', handleClassifyExistingElements],
-  ['create_modernization_intent', handleCreateModernizationIntent],
-  ['create_modernization_plan', handleCreateModernizationPlan],
-  ['select_modernization_strategy', handleSelectModernizationStrategy],
-  ['create_modernization_stages', handleCreateModernizationStages],
-  ['evaluate_modernization_completion', handleEvaluateModernizationCompletion],
-  ['create_greenfield_project_profile', handleCreateGreenfieldProjectProfile],
-  ['derive_requirements', handleDeriveRequirements],
-  ['create_requirement_traceability', handleCreateRequirementTraceability],
-  ['recommend_architecture', handleRecommendArchitecture],
-  ['recommend_stack', handleRecommendStack],
-  ['create_database_blueprint', handleCreateDatabaseBlueprint],
-  ['create_api_blueprint', handleCreateApiBlueprint],
-  ['create_auth_model', handleCreateAuthModel],
-  ['create_page_inventory', handleCreatePageInventory],
-  ['create_project_blueprint', handleCreateProjectBlueprint],
-  ['create_project_implementation_plan', handleCreateProjectImplementationPlan],
-  ['scaffold_new_project', handleScaffoldNewProject],
-  ['evaluate_new_project_completion', handleEvaluateNewProjectCompletion],
-  ['initialize_project_intelligence', handleInitializeProjectIntelligence],
-  ['load_project_intelligence', handleLoadProjectIntelligence],
-  ['record_project_decision', handleRecordProjectDecision],
-  ['record_business_rule', handleRecordBusinessRule],
-  ['record_project_invariant', handleRecordProjectInvariant],
-  ['build_project_architecture_graph', handleBuildProjectArchitectureGraph],
-  ['create_project_snapshot', handleCreateProjectSnapshot],
-  ['detect_project_drift', handleDetectProjectDrift],
-  ['analyze_change_impact', handleAnalyzeChangeImpact],
-  ['build_task_context', handleBuildTaskContext],
-  ['detect_knowledge_conflicts', handleDetectKnowledgeConflicts],
-  ['record_lesson_learned', handleRecordLessonLearned],
-  ['propose_improvement_candidate', handleProposeImprovementCandidate],
-  ['evaluate_project_knowledge_health', handleEvaluateProjectKnowledgeHealth]
-]);
+export const CANONICAL_TOOL_DEFINITIONS: McpToolDefinition[] = createCanonicalToolDefinitions({
+  handleAnalyzeProject,
+  handleDetectStack,
+  handleUnderstandProduct,
+  handleResearchDomain,
+  handleRecommendUXPatterns,
+  handleSearchDesignPatterns,
+  handleSearchComponents,
+  handleGetDesignTokens,
+  handleCreateDesignPlan,
+  handleAuditExistingUI,
+  handleAuditAccessibility,
+  handleAuditResponsive,
+  handleRecommendModernization,
+  handleSearchPublicApis,
+  handleSearchMcpServers,
+  handleDiscoverSources,
+  handleSearchSources,
+  handleRankSources,
+  handleInspectSource,
+  handleRecommendSourcesForProduct,
+  handleRecommendSourcesForStack,
+  handleCheckSourceLicense,
+  handleGenerateEngineeringPolicy,
+  handleEvaluateReleaseGates,
+  handleGenerateThreatModel,
+  handleDetectToolCapabilities,
+  handleRunSafeSecurityScan,
+  handleGenerateUserJourneys,
+  handleGeneratePlaywrightTest,
+  handleGenerateQAReport,
+  handleGenerateTestPyramid,
+  handleAnalyzeArchitecture,
+  handleGenerateADR,
+  handleAnalyzeDatabaseSchema,
+  handleEvaluateAPICompatibility,
+  handleClassifyCodePaths,
+  handleCreateActionPlan,
+  handleEvaluateScope,
+  handleEvaluateChangeRisk,
+  handleCreateCheckpointPlan,
+  handleCreateVerificationPlan,
+  handleNormalizeVerificationEvidence,
+  handleReviewChange,
+  handleDetectRegression,
+  handleCreateEnvironmentProfile,
+  handleRouteContext,
+  handleRouteTool,
+  handleCreateExecutionJournal,
+  handleEvaluateCompletionClaim,
+  handleDiscoverDesignSources,
+  handleSearchDesignSources,
+  handleInspectDesignSource,
+  handleSyncDesignSources,
+  handleRecommendDesignSources,
+  handleSearchPatterns,
+  handleInspectPattern,
+  handleSearchRegistries,
+  handleSearchRegistryComponents,
+  handleInspectRegistryComponent,
+  handleDiscoverAiSkills,
+  handleInspectAiSkill,
+  handleRecommendIconSystem,
+  handleRecommendChartLibrary,
+  handleRecommendDataGrid,
+  handleExplainSourceRecommendation,
+  handleCreateDesignIntent,
+  handleCreatePageBlueprint,
+  handleCreateComponentBlueprint,
+  handleCreateAppShellBlueprint,
+  handleRenderBlueprint,
+  handleRenderComponent,
+  handleCreateUiRecipe,
+  handleSelectDesignPersonality,
+  handleEvaluateDesignAntipatterns,
+  handleCompareRendererParity,
+  handleInspectAlperRegistry,
+  handleEvaluateTruthfulUi,
+  handleAuditDataProvenance,
+  handleEvaluatePageIntent,
+  handleAuditInformationRelevance,
+  handleClassifySourceAuthority,
+  handleEvaluateContentTruthGate,
+  handleManageHumanVisualApproval,
+  handleAuditTrackTraceTelemetry,
+  handleCreateManualRunBundle,
+  handleVerifyManualRunEvidence,
+  handleResolveBrowserRuntime,
+  handleRunOperatorDoctor,
+  handleProfileExistingProject,
+  handleCreateBehavioralBaseline,
+  handleCreatePreservationContract,
+  handleClassifyExistingElements,
+  handleCreateModernizationIntent,
+  handleCreateModernizationPlan,
+  handleSelectModernizationStrategy,
+  handleCreateModernizationStages,
+  handleEvaluateModernizationCompletion,
+  handleCreateGreenfieldProjectProfile,
+  handleDeriveRequirements,
+  handleCreateRequirementTraceability,
+  handleRecommendArchitecture,
+  handleRecommendStack,
+  handleCreateDatabaseBlueprint,
+  handleCreateApiBlueprint,
+  handleCreateAuthModel,
+  handleCreatePageInventory,
+  handleCreateProjectBlueprint,
+  handleCreateProjectImplementationPlan,
+  handleScaffoldNewProject,
+  handleEvaluateNewProjectCompletion,
+  handleInitializeProjectIntelligence,
+  handleLoadProjectIntelligence,
+  handleRecordProjectDecision,
+  handleRecordBusinessRule,
+  handleRecordProjectInvariant,
+  handleBuildProjectArchitectureGraph,
+  handleCreateProjectSnapshot,
+  handleDetectProjectDrift,
+  handleAnalyzeChangeImpact,
+  handleBuildTaskContext,
+  handleDetectKnowledgeConflicts,
+  handleRecordLessonLearned,
+  handleProposeImprovementCandidate,
+  handleEvaluateProjectKnowledgeHealth
+});
+
+export const canonicalToolRegistry = new Map<string, McpToolDefinition>(
+  CANONICAL_TOOL_DEFINITIONS.map((def) => [def.name, def])
+);
+
+/**
+ * Backward-compatible handler map derived directly from canonicalToolRegistry.
+ */
+export const toolRegistry = new Map<string, Function>(
+  Array.from(canonicalToolRegistry.entries()).map(([name, def]) => [name, def.handler])
+);
+
 
 
 

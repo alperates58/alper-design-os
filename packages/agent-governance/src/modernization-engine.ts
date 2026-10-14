@@ -632,6 +632,12 @@ export function compareBehavioralBaselines(
   regressionsDetected: Array<{ category: string; description: string; severity: 'HIGH' | 'CRITICAL' }>;
   preservedCount: number;
   additions: string[];
+  authPreserved: boolean;
+  routesPreserved: boolean;
+  csrfPreserved: boolean;
+  antiforgeryPreserved: boolean;
+  formActionPreserved: boolean;
+  summary: string;
 } {
   const regressions: Array<{ category: string; description: string; severity: 'HIGH' | 'CRITICAL' }> = [];
   const additions: string[] = [];
@@ -716,7 +722,10 @@ export function compareBehavioralBaselines(
     routesPreserved,
     csrfPreserved,
     antiforgeryPreserved,
-    formActionPreserved
+    formActionPreserved,
+    summary: regressions.length === 0
+      ? `All ${preservedCount} baseline behavioral contracts preserved.`
+      : `${regressions.length} behavioral regression(s) detected.`
   };
 }
 
@@ -1098,7 +1107,7 @@ export function createModernizationIntent(
     if (projectProfile && (projectProfile.technicalDebt.length > 0 || projectProfile.visualDebt.length > 0 || projectProfile.legacyCharacteristics.length > 0 || projectProfile.projectIdentity?.name)) {
       // Auto-supplement with project analysis findings
       const debtProblems = projectProfile.technicalDebt.map(d => d.description);
-      const visualProblems = projectProfile.visualDebt.map(d => d.description);
+      const visualProblems = projectProfile.visualDebt.map((d: any) => d.description || d.issue);
       const legacyProblems = projectProfile.legacyCharacteristics;
       const combinedProblems = [...debtProblems, ...visualProblems, ...legacyProblems];
 
@@ -1277,7 +1286,7 @@ export function createModernizationStages(
   strategy: ModernizationStrategyDecision,
   changes: ChangeClassification[]
 ): ModernizationStage[] {
-  const stages: ModernizationStage[] = [];
+  const stages: Array<Record<string, unknown>> = [];
 
   // Stage 1: Foundation
   stages.push({
@@ -2279,7 +2288,7 @@ export function validateEvidenceLevelIntegrity(
   }
 
   // 3. Unit test cannot masquerade as BROWSER
-  if ((audit.hasUnitTestExecution || audit.isUnitTestOnly) && !audit.hasBrowserExecution) {
+  if ((audit.hasUnitTestExecution || (audit as any).isUnitTestOnly) && !audit.hasBrowserExecution) {
     if (declaredLevel === 'BROWSER' || declaredLevel === 'BROWSER_TEST') {
       return {
         valid: false,

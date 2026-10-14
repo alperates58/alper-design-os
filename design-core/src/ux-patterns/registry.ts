@@ -3,10 +3,10 @@ import { UXPatternSpec } from './schema.js';
 export const coreUXPatterns: UXPatternSpec[] = [
   {
     id: 'gantt-timeline',
-    name: 'Finite Capacity Gantt Timeline',
+    name: 'Interactive Multi-Track Timeline',
     category: 'SCHEDULING_WORKBENCH',
-    description: 'Horizontal multi-track timeline representing machine schedules, frozen horizons, and setup matrix dependencies.',
-    keyboardShortcuts: ['ArrowLeft/Right (Pan)', 'Ctrl+Wheel (Zoom)', 'Space (Inspect Operation)', 'Alt+M (Move to Machine)'],
+    description: 'Horizontal multi-track timeline representing temporal sequences, boundary constraints, and resource dependencies.',
+    keyboardShortcuts: ['ArrowLeft/Right (Pan)', 'Ctrl+Wheel (Zoom)', 'Space (Inspect Item)', 'Alt+M (Reassign Track)'],
     accessibilityRole: 'grid',
     supportedDensities: ['EXTREME', 'HIGH']
   },
@@ -30,9 +30,9 @@ export const coreUXPatterns: UXPatternSpec[] = [
   },
   {
     id: 'bottleneck-indicator',
-    name: 'Resource Overload & Bottleneck Heatmap',
+    name: 'Capacity & Constraint Utilization Heatmap',
     category: 'FEEDBACK_ALERTS',
-    description: 'Visual indicator of work center utilization percentages with warning threshold highlights.',
+    description: 'Visual indicator of resource or channel utilization percentages with threshold warning highlights.',
     keyboardShortcuts: ['Alt+H (Jump to Highest Bottleneck)'],
     accessibilityRole: 'status',
     supportedDensities: ['EXTREME', 'HIGH', 'MEDIUM']
@@ -41,7 +41,7 @@ export const coreUXPatterns: UXPatternSpec[] = [
     id: 'filter-bar',
     name: 'Faceted Operational Filter Bar',
     category: 'INPUT_CONTROLS',
-    description: 'Quick-filter toolbar for routing codes, shift windows, priority flags, and work centers.',
+    description: 'Quick-filter toolbar for status codes, time windows, priority flags, and operational categories.',
     keyboardShortcuts: ['/', 'Ctrl+F (Focus Search)', 'Alt+C (Clear Filters)'],
     accessibilityRole: 'search',
     supportedDensities: ['HIGH', 'MEDIUM', 'SPACIOUS']
@@ -50,7 +50,7 @@ export const coreUXPatterns: UXPatternSpec[] = [
     id: 'context-menu',
     name: 'Radial / Hierarchical Context Menu',
     category: 'NAVIGATION',
-    description: 'Instant contextual action menu triggered by right-click or Shift+F10 on any grid row or Gantt operation.',
+    description: 'Instant contextual action menu triggered by right-click or Shift+F10 on any grid row or timeline item.',
     keyboardShortcuts: ['Shift+F10 (Open Menu)', 'ArrowDown/Up (Navigate)', 'Enter (Select)', 'Escape (Close)'],
     accessibilityRole: 'menu',
     supportedDensities: ['EXTREME', 'HIGH', 'MEDIUM']

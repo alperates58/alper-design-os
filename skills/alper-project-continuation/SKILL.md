@@ -1,23 +1,26 @@
 ---
 name: alper-project-continuation
-description: Enables instant project onboarding and continuity for new agent sessions by reading durable intelligence, constraints, active risks, and recent decisions.
+description: Enables truthful project onboarding and continuity for new agent sessions by reading durable intelligence, repository completeness, active risks, and verification debt.
 ---
 
 # Alper Project Continuation Skill
 
-Enables any new AI coding session or agent to instantly understand the project's historical context, current state, active constraints, and architectural invariants without requiring repetitive user explanations or expensive re-indexing.
+Enables any new AI coding session or agent to understand the project's verified historical context, current architecture completeness, active constraints, and unverified areas without relying on fabricated defaults or unverified inferences.
 
 ## Core Responsibilities
 
-1. **Instant Session Briefing**:
-   - Synthesizes compact executive briefing: Project Brief, Current Architecture, Current Phase, Active Constraints, Open Risks, and Recent Decisions.
-2. **Context Efficiency**:
-   - Avoids dumping full memory logs into LLM context; selects only relevant, authoritative knowledge for the task at hand.
-3. **Verification Debt Visibility**:
-   - Keeps track of unverified runtime or browser requirements so they are not silently forgotten across turns.
-4. **Living Document Sync**:
-   - Compares living documents (`PROJECT.md`, `ARCHITECTURE.md`, `STATUS.md`) against structured truth to detect and flag document drift.
+1. **Truthful Session Briefing**:
+   - Synthesizes executive briefing from durable `.alper-design-os/project-intelligence/` artifacts: Project Identity, Architecture Completeness (`COMPLETE | PARTIAL | EMPTY`), Active Constraints, Open Risks, and Recent Decisions.
+   - Explicitly surfaces `NOT_INITIALIZED` or `INSUFFICIENT_DATA` states instead of assuming default routes, tables, or health scores.
+2. **Provenance-Aware Context Selection**:
+   - Distinguishes `VERIFIED` user-confirmed business rules and ADRs from `UNVERIFIED` or `PROPOSED` system inferences so inferred rules are never treated as unbreakable user mandates.
+3. **Verification Debt & Unknown Areas Visibility**:
+   - Surfaces `unknownAreas` from the architecture graph and `NOT_VERIFIED` snapshot fingerprints so missing verification evidence is visible across turns.
+4. **Living Document Sync & Conflict Check**:
+   - Runs `detect_knowledge_conflicts` to compare living documents (`PROJECT.md`, `DECISIONS.md`, `INVARIANTS.md`) and ADRs against actual repository facts.
 
 ## Associated MCP Tools
-- `load_project_intelligence`: Retrieves concise project summary, active profile, and knowledge health.
-- `build_task_context`: Extracts scoped, high-relevance context for specific user instructions.
+- `load_project_intelligence`: Retrieves project summary, decisions, business rules, and snapshots.
+- `build_task_context`: Extracts scoped, provenance-tagged context for specific user tasks.
+- `detect_knowledge_conflicts`: Flags drift between living docs, ADRs, and repository code facts.
+- `evaluate_project_knowledge_health`: Reports truthful knowledge coverage and readiness.

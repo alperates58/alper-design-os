@@ -69,11 +69,14 @@ describe('ALPER DESIGN OS - FAZ 1G: New Project Generation Engine V1', () => {
       }
     }
 
-    // Acceptance criteria must carry Gherkin format
+    // Acceptance criteria must carry Gherkin format and initialize as DEFINED / NOT_VERIFIED
     for (const ac of bundle.acceptanceCriteria) {
       expect(ac.given).toBeDefined();
       expect(ac.when).toBeDefined();
       expect(ac.then).toBeDefined();
+      expect(ac.verified).toBe(false);
+      expect(ac.status).toBe('DEFINED');
+      expect(ac.verificationStatus).toBe('NOT_VERIFIED');
     }
   });
 
@@ -315,8 +318,15 @@ describe('ALPER DESIGN OS - FAZ 1G: New Project Generation Engine V1', () => {
     const result = scaffoldNewProject(blueprint, targetDir);
 
     expect(result.success).toBe(true);
+    expect(result.buildStatus).toBe('NOT_VERIFIED');
+    expect(result.buildable).toBe(false);
+    expect(result.syntaxValid).toBe(false);
     expect(result.filesGenerated.length).toBeGreaterThanOrEqual(10);
     expect(fs.existsSync(path.join(targetDir, 'package.json'))).toBe(true);
+    expect(fs.existsSync(path.join(targetDir, 'index.html'))).toBe(true);
+    expect(fs.existsSync(path.join(targetDir, 'src/main.tsx'))).toBe(true);
+    expect(fs.existsSync(path.join(targetDir, 'src/vite-env.d.ts'))).toBe(true);
+    expect(fs.existsSync(path.join(targetDir, 'tsconfig.json'))).toBe(true);
     expect(fs.existsSync(path.join(targetDir, 'vite.config.ts'))).toBe(true);
     expect(fs.existsSync(path.join(targetDir, 'src/styles/tokens.css'))).toBe(true);
     expect(fs.existsSync(path.join(targetDir, 'src/App.tsx'))).toBe(true);
@@ -339,11 +349,16 @@ describe('ALPER DESIGN OS - FAZ 1G: New Project Generation Engine V1', () => {
     const result = scaffoldNewProject(blueprint, targetDir);
 
     expect(result.success).toBe(true);
+    expect(result.buildStatus).toBe('NOT_VERIFIED');
     expect(fs.existsSync(path.join(targetDir, 'composer.json'))).toBe(true);
     expect(fs.existsSync(path.join(targetDir, 'routes/web.php'))).toBe(true);
     expect(fs.existsSync(path.join(targetDir, 'resources/views/layouts/app.blade.php'))).toBe(true);
     expect(fs.existsSync(path.join(targetDir, 'public/css/tokens.css'))).toBe(true);
     expect(fs.existsSync(path.join(targetDir, 'Dockerfile'))).toBe(true);
+
+    const dockerfileContent = fs.readFileSync(path.join(targetDir, 'Dockerfile'), 'utf-8');
+    expect(dockerfileContent).toContain('php:8.2-fpm-alpine');
+    expect(dockerfileContent).not.toContain('node:20-alpine');
 
     // Verify Blade @csrf invariant
     const layoutContent = fs.readFileSync(path.join(targetDir, 'resources/views/layouts/app.blade.php'), 'utf-8');
@@ -360,11 +375,16 @@ describe('ALPER DESIGN OS - FAZ 1G: New Project Generation Engine V1', () => {
     const result = scaffoldNewProject(blueprint, targetDir);
 
     expect(result.success).toBe(true);
+    expect(result.buildStatus).toBe('NOT_VERIFIED');
     expect(fs.existsSync(path.join(targetDir, 'App.csproj'))).toBe(true);
     expect(fs.existsSync(path.join(targetDir, 'Program.cs'))).toBe(true);
     expect(fs.existsSync(path.join(targetDir, 'Views/Shared/_Layout.cshtml'))).toBe(true);
     expect(fs.existsSync(path.join(targetDir, 'wwwroot/css/tokens.css'))).toBe(true);
     expect(fs.existsSync(path.join(targetDir, 'Dockerfile'))).toBe(true);
+
+    const dockerfileContent = fs.readFileSync(path.join(targetDir, 'Dockerfile'), 'utf-8');
+    expect(dockerfileContent).toContain('mcr.microsoft.com/dotnet/sdk:8.0');
+    expect(dockerfileContent).not.toContain('node:20-alpine');
 
     // Verify Razor anti-forgery invariant
     const layoutContent = fs.readFileSync(path.join(targetDir, 'Views/Shared/_Layout.cshtml'), 'utf-8');
@@ -381,11 +401,16 @@ describe('ALPER DESIGN OS - FAZ 1G: New Project Generation Engine V1', () => {
     const result = scaffoldNewProject(blueprint, targetDir);
 
     expect(result.success).toBe(true);
+    expect(result.buildStatus).toBe('NOT_VERIFIED');
     expect(fs.existsSync(path.join(targetDir, 'index.html'))).toBe(true);
     expect(fs.existsSync(path.join(targetDir, 'styles.css'))).toBe(true);
     expect(fs.existsSync(path.join(targetDir, 'app.js'))).toBe(true);
     expect(fs.existsSync(path.join(targetDir, 'Dockerfile'))).toBe(true);
     expect(fs.existsSync(path.join(targetDir, 'package.json'))).toBe(false); // Zero npm packages!
+
+    const dockerfileContent = fs.readFileSync(path.join(targetDir, 'Dockerfile'), 'utf-8');
+    expect(dockerfileContent).toContain('nginx:alpine');
+    expect(dockerfileContent).not.toContain('node:20-alpine');
 
     // Verify Truthful UI in plain web app
     const htmlContent = fs.readFileSync(path.join(targetDir, 'index.html'), 'utf-8');
@@ -395,7 +420,8 @@ describe('ALPER DESIGN OS - FAZ 1G: New Project Generation Engine V1', () => {
 
   // 19. Completion Evaluation Contract with Evidence Taxonomy
   it('19. evaluates new project completion contract using evidence taxonomy without inflation', () => {
-    const completion = evaluateNewProjectCompletion({
+    // Missing evidence for required gates must resolve to NOT_VERIFIED (isComplete: false)
+    const partialCompletion = evaluateNewProjectCompletion({
       technical: 'PASS',
       functional: 'PASS',
       visualAI: 'PASS',
@@ -416,6 +442,36 @@ describe('ALPER DESIGN OS - FAZ 1G: New Project Generation Engine V1', () => {
       isSyntheticFixture: true
     });
 
+    expect(partialCompletion.isComplete).toBe(false);
+    expect(partialCompletion.gateResults.traceability.status).toBe('NOT_VERIFIED');
+    expect(partialCompletion.gateResults.ux.status).toBe('NOT_VERIFIED');
+
+    // Full qualifying evidence across all required gates resolves to VERIFIED
+    const completion = evaluateNewProjectCompletion({
+      technical: 'PASS',
+      functional: 'PASS',
+      visualAI: 'PASS',
+      ux: 'PASS',
+      accessibility: 'PASS',
+      security: 'PASS',
+      truthfulUI: 'PASS',
+      traceability: 'PASS',
+      testCoverage: 'PASS',
+      boundaryCompliance: 'PASS',
+      evidenceRecords: [
+        { gate: 'technical', kind: 'STATIC_ANALYSIS', status: 'VERIFIED', description: 'Clean compilation & linting' },
+        { gate: 'functional', kind: 'UNIT_TEST', status: 'VERIFIED', description: 'Unit test suite passed 100%' },
+        { gate: 'ux', kind: 'STATIC_ANALYSIS', status: 'VERIFIED', description: 'All 8 UX states verified' },
+        { gate: 'accessibility', kind: 'STATIC_ANALYSIS', status: 'VERIFIED', description: 'A11y markup audit clean' },
+        { gate: 'security', kind: 'STATIC_ANALYSIS', status: 'VERIFIED', description: 'Zero high severity vulnerabilities' },
+        { gate: 'truthfulUI', kind: 'STATIC_ANALYSIS', status: 'VERIFIED', description: 'No fake telemetry verified' },
+        { gate: 'traceability', kind: 'STATIC_ANALYSIS', status: 'VERIFIED', description: '100% forward/backward RTM verified' },
+        { gate: 'testCoverage', kind: 'UNIT_TEST', status: 'VERIFIED', description: 'Test coverage threshold met' },
+        { gate: 'boundaryCompliance', kind: 'STATIC_ANALYSIS', status: 'VERIFIED', description: 'Zero unauthorized features' }
+      ],
+      isSyntheticFixture: true
+    });
+
     expect(completion.isComplete).toBe(true);
     expect(completion.overallAssurance).toBeDefined();
     expect(completion.gateResults.technical.status).toBe('VERIFIED');
@@ -428,22 +484,25 @@ describe('ALPER DESIGN OS - FAZ 1G: New Project Generation Engine V1', () => {
     // 98. create_greenfield_project_profile
     const profile = Tools.handleCreateGreenfieldProjectProfile({
       productName: 'MCP Test Product',
-      productPurpose: 'Testing MCP invocation pipeline'
+      productPurpose: 'Internal application to track hardware assets and assign laptops to staff',
+      targetUsers: ['IT Operators', 'Department Managers'],
+      primaryJobs: ['Track hardware assets', 'Assign laptops to staff']
     });
     expect(profile.productName).toBe('MCP Test Product');
+    expect(profile.discoveryReadiness?.state).toBe('READY');
 
     // 99. derive_requirements
     const bundle = Tools.handleDeriveRequirements({
       profile,
-      explicitUserBrief: 'Test brief'
+      explicitUserBrief: 'Internal application to track hardware assets and assign laptops to staff'
     });
     expect(bundle.functional.length).toBeGreaterThan(0);
 
     // 100. create_requirement_traceability
     const rtm = Tools.handleCreateRequirementTraceability({
       requirements: bundle.functional,
-      apiEndpoints: ['GET /api/v1/test'],
-      pages: ['Test Page']
+      apiEndpoints: ['GET /api/v1/assets'],
+      pages: ['Assets Workspace']
     });
     expect(rtm.matrix.length).toBe(bundle.functional.length);
 
@@ -483,17 +542,26 @@ describe('ALPER DESIGN OS - FAZ 1G: New Project Generation Engine V1', () => {
     const targetDir = path.join(workspacesDir, 'mcp-scaffold-test');
     const scaffoldResult = Tools.handleScaffoldNewProject({ blueprint, targetDirectory: targetDir });
     expect(scaffoldResult.success).toBe(true);
+    expect(scaffoldResult.buildStatus).toBe('NOT_VERIFIED');
 
     // 110. evaluate_new_project_completion
+    const unverifiedEval = Tools.handleEvaluateNewProjectCompletion({
+      isSyntheticFixture: true
+    });
+    expect(unverifiedEval.isComplete).toBe(false);
+
     const evalResult = Tools.handleEvaluateNewProjectCompletion({
-      technical: 'PASS',
-      functional: 'PASS',
-      visualAI: 'PASS',
-      ux: 'PASS',
-      accessibility: 'PASS',
-      security: 'PASS',
-      truthfulUI: 'PASS',
-      traceability: 'PASS',
+      evidenceRecords: [
+        { gate: 'technical', kind: 'STATIC_ANALYSIS', status: 'VERIFIED', description: 'Clean build' },
+        { gate: 'functional', kind: 'UNIT_TEST', status: 'VERIFIED', description: 'Unit tests pass' },
+        { gate: 'ux', kind: 'STATIC_ANALYSIS', status: 'VERIFIED', description: 'UX states verified' },
+        { gate: 'accessibility', kind: 'STATIC_ANALYSIS', status: 'VERIFIED', description: 'A11y clean' },
+        { gate: 'security', kind: 'STATIC_ANALYSIS', status: 'VERIFIED', description: 'Security clean' },
+        { gate: 'truthfulUI', kind: 'STATIC_ANALYSIS', status: 'VERIFIED', description: 'Truthful UI clean' },
+        { gate: 'traceability', kind: 'STATIC_ANALYSIS', status: 'VERIFIED', description: 'RTM complete' },
+        { gate: 'testCoverage', kind: 'UNIT_TEST', status: 'VERIFIED', description: 'Coverage met' },
+        { gate: 'boundaryCompliance', kind: 'STATIC_ANALYSIS', status: 'VERIFIED', description: 'No feature creep' }
+      ],
       isSyntheticFixture: true
     });
     expect(evalResult.isComplete).toBe(true);

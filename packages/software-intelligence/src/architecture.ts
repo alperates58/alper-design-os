@@ -92,17 +92,21 @@ export function analyzeArchitecture(input: ArchitectureAnalysisInput): Architect
 }
 
 export function createArchitectureDecisionRecord(input: {
+  number?: number;
   title: string;
   context: string;
   decision: string;
-  consequences: { positive: string[]; negative: string[]; risks?: string[] };
+  consequences: { positive: string[]; negative: string[]; neutral?: string[]; risks?: string[] };
 }): { adr: ADRDocument; markdown: string } {
   const dateStr = new Date().toISOString().split('T')[0]!;
   const slug = input.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-  const adrId = `ADR-${dateStr}-${slug}`;
+  const numPrefix = input.number !== undefined ? `${String(input.number).padStart(3, '0')}-` : '';
+  const adrId = `ADR-${numPrefix}${dateStr}-${slug}`;
+  const neutralList = input.consequences.neutral || [];
 
   const adr: ADRDocument = {
     id: adrId,
+    ...(input.number !== undefined ? { number: input.number } : {}),
     title: input.title,
     status: 'ACCEPTED',
     date: dateStr,
@@ -111,15 +115,20 @@ export function createArchitectureDecisionRecord(input: {
     consequences: {
       positive: input.consequences.positive,
       negative: input.consequences.negative,
+      neutral: neutralList,
       risks: input.consequences.risks || []
     }
   };
 
   const validated = ADRDocumentSchema.parse(adr);
 
+  const neutralSection = neutralList.length > 0
+    ? `\n### Neutral\n${neutralList.map((n) => `- ${n}`).join('\n')}\n`
+    : '';
+
   const markdown = `# ${adr.id}: ${adr.title}
 **Status**: ${adr.status}  
-**Date**: ${adr.date}
+**Date**: ${adr.date}${input.number !== undefined ? `  \n**ADR Number**: ${input.number}` : ''}
 
 ## Context
 ${adr.context}
@@ -134,7 +143,7 @@ ${adr.consequences.positive.map((p) => `- ${p}`).join('\n')}
 
 ### Negative & Trade-offs
 ${adr.consequences.negative.map((n) => `- ${n}`).join('\n')}
-
+${neutralSection}
 ### Mitigation of Risks
 ${adr.consequences.risks.map((r) => `- ${r}`).join('\n')}
 `;

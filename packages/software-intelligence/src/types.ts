@@ -53,6 +53,7 @@ export type ADRStatus = z.infer<typeof ADRStatusSchema>;
 
 export const ADRDocumentSchema = z.object({
   id: z.string(),
+  number: z.number().int().positive().optional(),
   title: z.string(),
   status: ADRStatusSchema,
   date: z.string(),
@@ -61,6 +62,7 @@ export const ADRDocumentSchema = z.object({
   consequences: z.object({
     positive: z.array(z.string()),
     negative: z.array(z.string()),
+    neutral: z.array(z.string()).default([]),
     risks: z.array(z.string())
   })
 });
