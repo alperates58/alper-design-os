@@ -1,0 +1,94 @@
+{
+  "$schema": "https://alper-design-os.org/schemas/environment-manifest.v1.json",
+  "manifestVersion": "1.0.0",
+  "system": "alper-design-os",
+  "version": "0.1.0",
+  "contract": {
+    "coreRequired": [
+      {
+        "id": "node",
+        "name": "Node.js JavaScript Runtime",
+        "minVersion": "20.0.0",
+        "recommendedVersion": "22.x LTS",
+        "category": "CORE_REQUIRED",
+        "verificationCommand": "node -v",
+        "description": "Required to execute Design OS runtime, TypeScript compiler, and MCP server."
+      },
+      {
+        "id": "packageManager",
+        "name": "Package Manager (pnpm / npm)",
+        "canonical": "pnpm",
+        "minVersion": "9.0.0",
+        "fallback": "npm",
+        "fallbackMinVersion": "10.0.0",
+        "category": "CORE_REQUIRED",
+        "verificationCommand": "pnpm -v || npm -v",
+        "description": "Used for deterministic frozen dependency installation and monorepo script execution."
+      },
+      {
+        "id": "git",
+        "name": "Git Version Control System",
+        "minVersion": "2.30.0",
+        "category": "CORE_REQUIRED",
+        "verificationCommand": "git --version",
+        "description": "Required for repository cloning, branch tracking, atomic commits, and safe update detection."
+      }
+    ],
+    "featureRequired": [
+      {
+        "id": "typescript",
+        "name": "TypeScript Compiler",
+        "minVersion": "5.5.0",
+        "category": "FEATURE_REQUIRED",
+        "verificationCommand": "npx tsc --version",
+        "description": "Required for monorepo type-checking, composite project builds, and DTCG token contract verification."
+      },
+      {
+        "id": "vitest",
+        "name": "Vitest Test Runner",
+        "minVersion": "2.0.0",
+        "category": "FEATURE_REQUIRED",
+        "verificationCommand": "npx vitest --version",
+        "description": "Required to execute unit, integration, and release gate verification suites."
+      }
+    ],
+    "optional": [
+      {
+        "id": "docker",
+        "name": "Docker Engine / Container Runtime",
+        "minVersion": "20.10.0",
+        "category": "OPTIONAL",
+        "verificationCommand": "docker --version",
+        "description": "Optional container runtime for isolated multi-stack execution and containerized deployments."
+      },
+      {
+        "id": "playwright",
+        "name": "Playwright / Headless Browser Runtime",
+        "category": "OPTIONAL",
+        "verificationCommand": "npx playwright --version",
+        "description": "Optional headless browser engine for automated E2E user journeys and truthful UI audit snapshots."
+      },
+      {
+        "id": "dotnet",
+        "name": ".NET SDK (ASP.NET Core)",
+        "minVersion": "8.0.0",
+        "category": "OPTIONAL",
+        "verificationCommand": "dotnet --version",
+        "description": "Optional SDK for native build and test verification of generated ASPNET_RAZOR projects."
+      },
+      {
+        "id": "php",
+        "name": "PHP & Composer",
+        "minVersion": "8.2.0",
+        "category": "OPTIONAL",
+        "verificationCommand": "php -v && composer --version",
+        "description": "Optional runtime and package manager for native build and syntax verification of generated LARAVEL_BLADE projects."
+      }
+    ],
+    "operatorFallback": {
+      "strategy": "MANUAL_RUN_BUNDLE",
+      "model": "OPERATOR_ASSISTED_EXECUTION",
+      "description": "If endpoint protection (EDR, AppLocker, SRP, Xcitium) blocks sub-process or command execution, generate an explicit Manual Run Bundle. Human operator executes commands and submits verbatim logs as verified evidence records."
+    }
+  }
+}

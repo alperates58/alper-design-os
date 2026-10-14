@@ -1901,7 +1901,7 @@ export function createNewProjectBlueprint(
   const pageInventory = createPageInventory(profile, requirements, database, api);
   const performanceBudget = createProjectPerformanceBudget(profile);
   const observability = createProjectObservabilityProfile(profile);
-  const boundaryContract = createRequirementBoundaryContract(profile, requirements);
+  const boundaryContract = createRequirementBoundaryContract(profile, requirements, architecture);
 
   const blueprintId = `blueprint-${profile.productName.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${Date.now()}`;
 
@@ -1934,16 +1934,39 @@ export function createProjectImplementationPlan(
 ): ProjectImplementationPlan {
   const stages: ProjectImplementationStage[] = [];
   const needsDocker =
-    blueprint.productProfile.deploymentEnvironment === 'DOCKER' ||
-    blueprint.productProfile.deploymentEnvironment === 'CLOUD_CONTAINER';
+    blueprint.productProfile?.deploymentEnvironment === 'DOCKER' ||
+    blueprint.productProfile?.deploymentEnvironment === 'CLOUD_CONTAINER';
 
-  const foundationFiles = needsDocker
-    ? ['tokens.css', 'Dockerfile', 'docker-compose.yml', '.env.example', 'README.md']
-    : ['tokens.css', '.env.example', 'README.md'];
+  const stack: GreenfieldStackType = blueprint.stack?.primaryStack || 'REACT_TYPESCRIPT';
 
   let stageOrder = 1;
 
   // Stage 1: Foundation (always needed)
+  let foundationFiles: string[];
+  switch (stack) {
+    case 'LARAVEL_BLADE':
+      foundationFiles = needsDocker
+        ? ['public/css/tokens.css', 'Dockerfile', 'docker-compose.yml', '.env.example', 'README.md', 'composer.json']
+        : ['public/css/tokens.css', '.env.example', 'README.md', 'composer.json'];
+      break;
+    case 'ASPNET_RAZOR':
+      foundationFiles = needsDocker
+        ? ['wwwroot/css/tokens.css', 'Dockerfile', 'docker-compose.yml', '.env.example', 'README.md', 'App.csproj', 'Program.cs']
+        : ['wwwroot/css/tokens.css', '.env.example', 'README.md', 'App.csproj', 'Program.cs'];
+      break;
+    case 'PLAIN_HTML_CSS_JS':
+      foundationFiles = needsDocker
+        ? ['css/tokens.css', 'Dockerfile', 'docker-compose.yml', '.env.example', 'README.md', 'index.html']
+        : ['css/tokens.css', '.env.example', 'README.md', 'index.html'];
+      break;
+    case 'REACT_TYPESCRIPT':
+    default:
+      foundationFiles = needsDocker
+        ? ['src/styles/tokens.css', 'Dockerfile', 'docker-compose.yml', '.env.example', 'README.md', 'package.json', 'tsconfig.json']
+        : ['src/styles/tokens.css', '.env.example', 'README.md', 'package.json', 'tsconfig.json'];
+      break;
+  }
+
   const foundationStageId = `STAGE_${stageOrder}_FOUNDATION`;
   stages.push({
     stageId: foundationStageId,
@@ -1966,6 +1989,23 @@ export function createProjectImplementationPlan(
   );
   let dataStageId: string | undefined;
   if (hasDatabase) {
+    let dataFiles: string[];
+    switch (stack) {
+      case 'LARAVEL_BLADE':
+        dataFiles = ['database/migrations/0001_01_01_000000_create_entities_table.php', 'app/Models/Entity.php'];
+        break;
+      case 'ASPNET_RAZOR':
+        dataFiles = ['Migrations/InitialCreate.cs', 'Models/Entities.cs', 'Data/AppDbContext.cs'];
+        break;
+      case 'PLAIN_HTML_CSS_JS':
+        dataFiles = ['migrations/001_initial_schema.sql', 'js/models/entities.js'];
+        break;
+      case 'REACT_TYPESCRIPT':
+      default:
+        dataFiles = ['migrations/001_initial_schema.sql', 'src/models/entities.ts'];
+        break;
+    }
+
     dataStageId = `STAGE_${stageOrder}_DATA_MODEL`;
     stages.push({
       stageId: dataStageId,
@@ -1973,7 +2013,7 @@ export function createProjectImplementationPlan(
       type: 'DATA',
       name: 'Database Entities & Migrations',
       objective: 'Scaffold database entities, relationships, constraints, and initial SQL migration.',
-      filesToCreate: ['migrations/001_initial_schema.sql', 'models/entities.ts'],
+      filesToCreate: dataFiles,
       dependencies: [foundationStageId],
       requirementsSatisfied: ['BR-001', 'REQ-F-001'],
       testsToRun: ['sql-schema-validation'],
@@ -1986,6 +2026,23 @@ export function createProjectImplementationPlan(
   const hasApi = blueprint.api && blueprint.api.endpoints && blueprint.api.endpoints.length > 0;
   let apiStageId: string | undefined;
   if (hasApi) {
+    let apiFiles: string[];
+    switch (stack) {
+      case 'LARAVEL_BLADE':
+        apiFiles = ['routes/api.php', 'app/Http/Controllers/ApiController.php', 'api/openapi.json'];
+        break;
+      case 'ASPNET_RAZOR':
+        apiFiles = ['Controllers/ApiController.cs', 'Controllers/HealthController.cs', 'api/openapi.json'];
+        break;
+      case 'PLAIN_HTML_CSS_JS':
+        apiFiles = ['api/routes.json', 'js/api/client.js', 'api/openapi.json'];
+        break;
+      case 'REACT_TYPESCRIPT':
+      default:
+        apiFiles = ['src/api/routes.ts', 'src/api/health.ts', 'api/openapi.json'];
+        break;
+    }
+
     apiStageId = `STAGE_${stageOrder}_API_SURFACE`;
     stages.push({
       stageId: apiStageId,
@@ -1993,7 +2050,7 @@ export function createProjectImplementationPlan(
       type: 'API',
       name: 'REST API Contracts & Endpoints',
       objective: 'Implement API router, endpoint request/response schemas, and health endpoint.',
-      filesToCreate: ['api/routes.ts', 'api/health.ts', 'api/openapi.json'],
+      filesToCreate: apiFiles,
       dependencies: dataStageId ? [dataStageId] : [foundationStageId],
       requirementsSatisfied: ['REQ-F-001', 'REQ-F-SEARCH'],
       testsToRun: ['api-contract-tests'],
@@ -2006,6 +2063,23 @@ export function createProjectImplementationPlan(
   const hasAuth = blueprint.authN || blueprint.authZ || blueprint.requirements?.functional?.some((f: any) => f.id.includes('AUTH'));
   let authStageId: string | undefined;
   if (hasAuth) {
+    let authFiles: string[];
+    switch (stack) {
+      case 'LARAVEL_BLADE':
+        authFiles = ['app/Http/Controllers/AuthController.php', 'app/Http/Middleware/EnsureRbacPermission.php'];
+        break;
+      case 'ASPNET_RAZOR':
+        authFiles = ['Controllers/AuthController.cs', 'Middleware/RbacAuthorizationMiddleware.cs'];
+        break;
+      case 'PLAIN_HTML_CSS_JS':
+        authFiles = ['js/auth/auth-client.js', 'js/auth/rbac-guard.js'];
+        break;
+      case 'REACT_TYPESCRIPT':
+      default:
+        authFiles = ['src/auth/auth-controller.ts', 'src/auth/rbac-middleware.ts'];
+        break;
+    }
+
     authStageId = `STAGE_${stageOrder}_AUTH`;
     stages.push({
       stageId: authStageId,
@@ -2013,7 +2087,7 @@ export function createProjectImplementationPlan(
       type: 'AUTH',
       name: 'Security, Session & RBAC Middleware',
       objective: 'Implement credential verification, secure cookie issuance, and RBAC guard middleware.',
-      filesToCreate: ['auth/auth-controller.ts', 'auth/rbac-middleware.ts'],
+      filesToCreate: authFiles,
       dependencies: apiStageId ? [apiStageId] : [foundationStageId],
       requirementsSatisfied: ['REQ-F-AUTH', 'REQ-NFR-SEC', 'BR-002'],
       testsToRun: ['auth-unit-tests'],
@@ -2023,6 +2097,23 @@ export function createProjectImplementationPlan(
   }
 
   // Stage: Application Shell (layout, header, navigation)
+  let shellFiles: string[];
+  switch (stack) {
+    case 'LARAVEL_BLADE':
+      shellFiles = ['resources/views/layouts/app.blade.php', 'resources/views/components/navbar.blade.php', 'resources/views/components/sidebar.blade.php'];
+      break;
+    case 'ASPNET_RAZOR':
+      shellFiles = ['Views/Shared/_Layout.cshtml', 'Pages/Shared/_NavMenu.cshtml', 'Pages/Shared/_Sidebar.cshtml'];
+      break;
+    case 'PLAIN_HTML_CSS_JS':
+      shellFiles = ['templates/shell.html', 'js/components/navbar.js', 'css/shell.css'];
+      break;
+    case 'REACT_TYPESCRIPT':
+    default:
+      shellFiles = ['src/components/Shell.tsx', 'src/components/Navbar.tsx', 'src/components/Sidebar.tsx'];
+      break;
+  }
+
   const shellStageId = `STAGE_${stageOrder}_APP_SHELL`;
   const shellDeps = [foundationStageId];
   if (authStageId) shellDeps.push(authStageId);
@@ -2032,7 +2123,7 @@ export function createProjectImplementationPlan(
     type: 'SHELL',
     name: 'Layout Shell & Master Navigation',
     objective: 'Scaffold responsive application header, sidebar navigation, and main content area.',
-    filesToCreate: ['components/Shell.tsx', 'components/Navbar.tsx', 'components/Sidebar.tsx'],
+    filesToCreate: shellFiles,
     dependencies: shellDeps,
     requirementsSatisfied: ['REQ-NFR-A11Y'],
     testsToRun: ['shell-render-test'],
@@ -2041,6 +2132,23 @@ export function createProjectImplementationPlan(
   });
 
   // Stage: Core Workflows & Page States
+  let coreFiles: string[];
+  switch (stack) {
+    case 'LARAVEL_BLADE':
+      coreFiles = ['resources/views/directory/index.blade.php', 'resources/views/directory/detail.blade.php', 'app/Http/Controllers/DirectoryController.php'];
+      break;
+    case 'ASPNET_RAZOR':
+      coreFiles = ['Pages/Directory/Index.cshtml', 'Pages/Directory/Detail.cshtml', 'Pages/Directory/Index.cshtml.cs'];
+      break;
+    case 'PLAIN_HTML_CSS_JS':
+      coreFiles = ['pages/directory.html', 'pages/detail.html', 'js/pages/directory.js'];
+      break;
+    case 'REACT_TYPESCRIPT':
+    default:
+      coreFiles = ['src/pages/DirectoryView.tsx', 'src/pages/DetailView.tsx', 'src/components/DataTable.tsx'];
+      break;
+  }
+
   const coreDeps = [shellStageId];
   if (apiStageId) coreDeps.push(apiStageId);
   const coreStageId = `STAGE_${stageOrder}_CORE_WORKFLOW`;
@@ -2050,7 +2158,7 @@ export function createProjectImplementationPlan(
     type: 'CORE_WORKFLOW',
     name: 'Primary Directory Grid & Detail Workflow',
     objective: 'Implement primary listing table, search/filter controls, and multi-state detail view (LOADING, EMPTY, SUCCESS, ERROR).',
-    filesToCreate: ['pages/DirectoryView.tsx', 'pages/DetailView.tsx', 'components/DataTable.tsx'],
+    filesToCreate: coreFiles,
     dependencies: coreDeps,
     requirementsSatisfied: ['REQ-F-001', 'REQ-F-SEARCH', 'JOURNEY-001'],
     testsToRun: ['workflow-browser-test'],
@@ -2062,6 +2170,23 @@ export function createProjectImplementationPlan(
   const hasSecondary = blueprint.productProfile?.reportingNeeds || blueprint.productProfile?.realtimeNeeds || (blueprint.productProfile?.integrationNeeds && blueprint.productProfile.integrationNeeds.length > 0);
   let secondaryStageId: string | undefined;
   if (hasSecondary) {
+    let secondaryFiles: string[];
+    switch (stack) {
+      case 'LARAVEL_BLADE':
+        secondaryFiles = ['resources/views/reporting/dashboard.blade.php', 'app/Http/Controllers/ReportingController.php'];
+        break;
+      case 'ASPNET_RAZOR':
+        secondaryFiles = ['Pages/Reporting/Dashboard.cshtml', 'Pages/Reporting/Dashboard.cshtml.cs'];
+        break;
+      case 'PLAIN_HTML_CSS_JS':
+        secondaryFiles = ['pages/reporting.html', 'js/pages/reporting.js'];
+        break;
+      case 'REACT_TYPESCRIPT':
+      default:
+        secondaryFiles = ['src/pages/ReportingDashboard.tsx', 'src/components/DataExportDrawer.tsx'];
+        break;
+    }
+
     secondaryStageId = `STAGE_${stageOrder}_SECONDARY_WORKFLOW`;
     stages.push({
       stageId: secondaryStageId,
@@ -2069,7 +2194,7 @@ export function createProjectImplementationPlan(
       type: 'SECONDARY_WORKFLOW',
       name: 'Secondary Workflows, Reporting & Realtime Sync',
       objective: 'Scaffold analytical reporting views, export services, and real-time state synchronization.',
-      filesToCreate: ['pages/ReportingDashboard.tsx', 'components/DataExportDrawer.tsx'],
+      filesToCreate: secondaryFiles,
       dependencies: [coreStageId],
       requirementsSatisfied: ['REQ-F-SECONDARY'],
       testsToRun: ['reporting-unit-tests'],
@@ -2079,6 +2204,23 @@ export function createProjectImplementationPlan(
   }
 
   // Final Stage: QA & Hardening (always needed)
+  let hardeningFiles: string[];
+  switch (stack) {
+    case 'LARAVEL_BLADE':
+      hardeningFiles = ['app/Http/Middleware/SecurityHeadersMiddleware.php'];
+      break;
+    case 'ASPNET_RAZOR':
+      hardeningFiles = ['Middleware/SecurityHeadersMiddleware.cs'];
+      break;
+    case 'PLAIN_HTML_CSS_JS':
+      hardeningFiles = ['js/security/security-headers.js'];
+      break;
+    case 'REACT_TYPESCRIPT':
+    default:
+      hardeningFiles = ['src/security/security-headers.ts'];
+      break;
+  }
+
   const hardeningDeps = [secondaryStageId || coreStageId];
   stages.push({
     stageId: `STAGE_${stageOrder}_QA_HARDENING`,
@@ -2086,7 +2228,7 @@ export function createProjectImplementationPlan(
     type: 'HARDENING',
     name: 'Truthful UI Audit & Security Hardening',
     objective: 'Verify zero fake telemetry, enforce strict CSP headers, input validation, and WCAG AA contrast.',
-    filesToCreate: ['security/security-headers.ts'],
+    filesToCreate: hardeningFiles,
     dependencies: hardeningDeps,
     requirementsSatisfied: ['REQ-NFR-SEC', 'REQ-NFR-A11Y'],
     testsToRun: ['truthful-ui-audit', 'a11y-audit'],
@@ -2109,19 +2251,34 @@ export function createProjectImplementationPlan(
 
 export function createRequirementBoundaryContract(
   profileOrBlueprint: any,
-  bundleOrRequirements?: any
+  bundleOrRequirements?: any,
+  architectureOrConstraints?: any
 ): any {
   let profile: GreenfieldProjectProfile;
   let bundle: GreenfieldRequirementsBundle | undefined;
+  let architecture: ArchitectureRecommendation | undefined;
 
   if (profileOrBlueprint && profileOrBlueprint.productProfile && profileOrBlueprint.requirements) {
     profile = profileOrBlueprint.productProfile;
     bundle = profileOrBlueprint.requirements;
+    architecture = profileOrBlueprint.architecture;
   } else if (profileOrBlueprint && profileOrBlueprint.productName) {
     profile = profileOrBlueprint;
     bundle = bundleOrRequirements;
+    if (architectureOrConstraints && (architectureOrConstraints.style || architectureOrConstraints.selectedStyle)) {
+      architecture = architectureOrConstraints;
+    }
   } else {
     profile = profileOrBlueprint;
+  }
+
+  // If architecture was not explicitly supplied, attempt to evaluate recommendation from profile
+  if (!architecture && profile && profile.expectedScale) {
+    try {
+      architecture = recommendArchitecture(profile);
+    } catch {
+      // ignore
+    }
   }
 
   const allowedRequirementIds = bundle
@@ -2152,7 +2309,27 @@ export function createRequirementBoundaryContract(
     'Fabricated KPIs or Fake Telemetry Dashboards'
   ];
 
-  const forbiddenTechnologies = ['KAFKA', 'KUBERNETES', 'MICROSERVICES'];
+  // Derive forbidden technologies from architecture, complexity budget, and anti-overengineering
+  let forbiddenTechnologies: string[] = [];
+  const archStyle = architecture?.selectedStyle || architecture?.style;
+
+  if (architecture?.complexityBudget?.prohibitedTechnologies && architecture.complexityBudget.prohibitedTechnologies.length > 0) {
+    forbiddenTechnologies = [...architecture.complexityBudget.prohibitedTechnologies];
+  } else if (archStyle === 'MICROSERVICES') {
+    // If microservices architecture is explicitly selected/justified, do not forbid microservices
+    forbiddenTechnologies = [];
+  } else if (archStyle === 'MONOLITH' || architecture?.antiOverengineeringRulesTriggered) {
+    // Anti-overengineering for small monoliths forbids unnecessary distributed complexity
+    forbiddenTechnologies = ['KAFKA', 'KUBERNETES', 'MICROSERVICES'];
+  } else {
+    // Default anti-overengineering: prevent unsolicited microservices
+    forbiddenTechnologies = ['MICROSERVICES'];
+  }
+
+  // Cross-layer consistency guarantee: architecture selected MICROSERVICES -> boundary contract cannot forbid MICROSERVICES!
+  if (archStyle === 'MICROSERVICES') {
+    forbiddenTechnologies = forbiddenTechnologies.filter(t => t !== 'MICROSERVICES');
+  }
 
   const contractObj = {
     contractId: `boundary-${profile.productName.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
@@ -2467,6 +2644,32 @@ export default defineConfig({
     writeFile(
       'src/vite-env.d.ts',
       `/// <reference types="vite/client" />
+
+declare module 'react' {
+  const React: any;
+  export default React;
+  export const StrictMode: any;
+  export type ReactNode = any;
+  export type FC<P = {}> = (props: P) => any;
+}
+
+declare module 'react/jsx-runtime' {
+  export const jsx: any;
+  export const jsxs: any;
+  export const Fragment: any;
+}
+
+declare module 'react-dom/client' {
+  export function createRoot(container: any): {
+    render(children: any): void;
+  };
+}
+
+declare namespace JSX {
+  interface IntrinsicElements {
+    [elem: string]: any;
+  }
+}
 `
     );
 

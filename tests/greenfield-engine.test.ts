@@ -627,4 +627,79 @@ describe('ALPER DESIGN OS - FAZ 1G: New Project Generation Engine V1', () => {
     });
     expect(evalResult.isComplete).toBe(true);
   });
+
+  // 22. Architecture <-> Boundary Contract Alignment (Phase 1I Pre-Flight Issue A)
+  it('22. dynamically aligns boundary contract forbidden technologies with architecture style', () => {
+    // A) Small Internal CRUD: Monolith prohibits Kafka, Kubernetes, Microservices
+    const bench = loadBenchmark('small-internal-crud.json');
+    const smallProfile = createGreenfieldProjectProfile(bench.expectedProfile);
+    const smallBlueprint = createNewProjectBlueprint(smallProfile, { userPreferredStack: 'REACT_TYPESCRIPT' });
+    expect(smallBlueprint.architecture.style).toBe('MONOLITH');
+    expect(smallBlueprint.boundaryContract.forbiddenTechnologies).toContain('MICROSERVICES');
+    expect(smallBlueprint.boundaryContract.forbiddenTechnologies).toContain('KAFKA');
+    expect(smallBlueprint.boundaryContract.forbiddenTechnologies).toContain('KUBERNETES');
+
+    // B) Justified Internet-Scale Distributed System: Architecture selects MICROSERVICES
+    const distributedProfile = createGreenfieldProjectProfile({
+      ...bench.expectedProfile,
+      productName: 'GlobalScaleExchange',
+      expectedScale: 'INTERNET_SCALE',
+      concurrency: 'MASSIVE',
+      operationalConstraints: ['multi-team', 'microservices']
+    });
+    const distributedBlueprint = createNewProjectBlueprint(distributedProfile, { userPreferredStack: 'REACT_TYPESCRIPT' });
+    expect(distributedBlueprint.architecture.style).toBe('MICROSERVICES');
+    // Crucial Phase 1I guarantee: boundary contract must NOT forbid MICROSERVICES!
+    expect(distributedBlueprint.boundaryContract.forbiddenTechnologies).not.toContain('MICROSERVICES');
+  });
+
+  // 23. Stack-Native Implementation Plan (Phase 1I Pre-Flight Issue B)
+  it('23. generates framework-native stage paths across all four supported stacks', () => {
+    const bench = loadBenchmark('small-internal-crud.json');
+    const profile = createGreenfieldProjectProfile(bench.expectedProfile);
+
+    // 1. React + TypeScript
+    const reactBp = createNewProjectBlueprint(profile, { userPreferredStack: 'REACT_TYPESCRIPT' });
+    const reactPlan = createProjectImplementationPlan(reactBp);
+    const allReactFiles = reactPlan.stages.flatMap(s => s.filesToCreate);
+    expect(allReactFiles).toContain('src/styles/tokens.css');
+    expect(allReactFiles).toContain('src/models/entities.ts');
+    expect(allReactFiles).toContain('src/components/Shell.tsx');
+    expect(allReactFiles).toContain('src/pages/DirectoryView.tsx');
+    expect(allReactFiles).toContain('src/security/security-headers.ts');
+    expect(allReactFiles.some(f => f.endsWith('.blade.php') || f.endsWith('.cshtml'))).toBe(false);
+
+    // 2. Laravel Blade
+    const laravelBp = createNewProjectBlueprint(profile, { userPreferredStack: 'LARAVEL_BLADE' });
+    const laravelPlan = createProjectImplementationPlan(laravelBp);
+    const allLaravelFiles = laravelPlan.stages.flatMap(s => s.filesToCreate);
+    expect(allLaravelFiles).toContain('public/css/tokens.css');
+    expect(allLaravelFiles).toContain('app/Models/Entity.php');
+    expect(allLaravelFiles).toContain('resources/views/layouts/app.blade.php');
+    expect(allLaravelFiles).toContain('resources/views/directory/index.blade.php');
+    expect(allLaravelFiles).toContain('app/Http/Middleware/SecurityHeadersMiddleware.php');
+    expect(allLaravelFiles.some(f => f.endsWith('.tsx') || f.endsWith('.cshtml'))).toBe(false);
+
+    // 3. ASP.NET Razor
+    const aspnetBp = createNewProjectBlueprint(profile, { userPreferredStack: 'ASPNET_RAZOR' });
+    const aspnetPlan = createProjectImplementationPlan(aspnetBp);
+    const allAspnetFiles = aspnetPlan.stages.flatMap(s => s.filesToCreate);
+    expect(allAspnetFiles).toContain('wwwroot/css/tokens.css');
+    expect(allAspnetFiles).toContain('Models/Entities.cs');
+    expect(allAspnetFiles).toContain('Views/Shared/_Layout.cshtml');
+    expect(allAspnetFiles).toContain('Pages/Directory/Index.cshtml');
+    expect(allAspnetFiles).toContain('Middleware/SecurityHeadersMiddleware.cs');
+    expect(allAspnetFiles.some(f => f.endsWith('.tsx') || f.endsWith('.blade.php'))).toBe(false);
+
+    // 4. Plain Web (HTML/CSS/JS)
+    const plainBp = createNewProjectBlueprint(profile, { userPreferredStack: 'PLAIN_HTML_CSS_JS' });
+    const plainPlan = createProjectImplementationPlan(plainBp);
+    const allPlainFiles = plainPlan.stages.flatMap(s => s.filesToCreate);
+    expect(allPlainFiles).toContain('css/tokens.css');
+    expect(allPlainFiles).toContain('js/models/entities.js');
+    expect(allPlainFiles).toContain('templates/shell.html');
+    expect(allPlainFiles).toContain('pages/directory.html');
+    expect(allPlainFiles).toContain('js/security/security-headers.js');
+    expect(allPlainFiles.some(f => f.endsWith('.tsx') || f.endsWith('.blade.php') || f.endsWith('.cshtml'))).toBe(false);
+  });
 });

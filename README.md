@@ -2,11 +2,12 @@
 
 > **"Arayüzü tasarlamadan önce ürünü, alanı ve operasyonel bağlamı anla."**
 
-[![License: MIT](https://img.shields.io/badge/Lisans-MIT-blue.svg)](LICENSE_POLICY.md)
+[![License: MIT](https://img.shields.io/badge/Lisans-MIT-blue.svg)](LICENSE)
 [![TypeScript: Strict](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](tsconfig.json)
 [![Antigravity Plugin Ready](https://img.shields.io/badge/Antigravity-74%20Skills%20(55%20Active)-emerald.svg)](plugin.json)
-[![Tests: 491 Passed](https://img.shields.io/badge/Tests-491%20Passed%20(21%20Suites)-brightgreen.svg)](tests/)
+[![Tests: 503 Passed](https://img.shields.io/badge/Tests-503%20Passed%20(22%20Suites)-brightgreen.svg)](tests/)
 [![MCP Server: 124 Tools](https://img.shields.io/badge/MCP%20Server-124%20Tools-purple.svg)](packages/mcp-server/)
+[![CI: Multi-Platform](https://img.shields.io/badge/CI-Ubuntu%20%7C%20Windows%20%7C%20macOS-blue.svg)](.github/workflows/ci.yml)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](scripts/)
 
 **ALPER DESIGN OS**, sıradan bir bileşen veya UI kütüphanesi değildir. Yazılım alanlarını (domain) derinlemesine anlayan, kullanıcı iş akışlarını ve ergonomisini analiz eden, kurumsal seviyede mimari ve UX/UI kararları alan, sıfırdan ürün tasarlayan veya mevcut devasa sistemleri cerrahi/aşamalı olarak modernize eden **AI-Native, Teknoloji Bağımsız Tasarım ve UX Geliştirme İşletim Sistemi**'dir.
@@ -337,47 +338,56 @@ alper-design-os/
 
 ---
 
-## 🚀 Kurulum (Adım Adım)
+## 🚀 Kurulum (Tek Komutla Hızlı Başlangıç)
 
-Proje tamamen taşınabilir (portable) olarak tasarlanmıştır. Hiçbir yerde sabit kullanıcı adı veya işletim sistemine bağımlı mutlak yol bulunmaz.
+Proje tamamen taşınabilir (portable) olarak tasarlanmıştır. Hiçbir yerde makineye özel mutlak yol veya sabit ortam bilgisi bulunmaz. Ayrıntılı kurulum belgeleri için [INSTALL.md](INSTALL.md) ve AI ajan kurulum sözleşmesi için [INSTALL_AGENT.md](INSTALL_AGENT.md) dosyalarını inceleyebilirsiniz.
 
 ### 1. Ön Koşullar
 * **İşletim Sistemi:** Windows 10/11, macOS veya Linux
-* **Node.js:** `v20.x` veya `v24.x LTS` ([nodejs.org](https://nodejs.org/))
-* **Git:** [git-scm.com](https://git-scm.com/)
-* *(İsteğe Bağlı)* Docker Desktop & Microsoft Edge (Playwright E2E testleri için)
+* **Node.js:** `>= 20.0.0` (Önerilen: `v22.x LTS`) ([nodejs.org](https://nodejs.org/))
+* **Git:** `>= 2.30.0` ([git-scm.com](https://git-scm.com/))
+* *(İsteğe Bağlı)* .NET SDK 8+, PHP 8.2+ & Composer, Docker, Playwright
 
-### 2. Projeyi Klonlayın
+### 2. Projeyi Klonlayın ve Bootstrap Edin
+
+#### **Linux / macOS / Git Bash:**
 ```bash
 git clone https://github.com/alperates58/alper-design-os.git
 cd alper-design-os
+./scripts/bootstrap.sh
 ```
 
-### 3. Bağımlılıkları Yükleyin ve Derleyin
-```bash
-npm install
-npm run build
+#### **Windows (PowerShell):**
+```powershell
+git clone https://github.com/alperates58/alper-design-os.git
+cd alper-design-os
+.\scripts\bootstrap.ps1
 ```
-*(Bu komut 19 monorepo paketini sırayla TypeScript ile derler ve `dist/` klasörlerini oluşturur).*
+*(Bootstrap işlemi dondurulmuş paket bağımlılıklarını çözer, tüm 18 monorepo paketini derler ve Doctor V2 sağlık taramasını çalıştırır).*
 
-### 4. MCP Sunucusunu IDE / Asistanınıza Kaydedin
+### 3. MCP Sunucusunu IDE / Antigravity'ye Kaydedin
 Antigravity veya MCP destekli araçlarınıza tek komutla bağlayın:
 ```bash
 node scripts/register-mcp.js
 ```
-*(Windows kullanıcıları alternatif olarak `.\scripts\install-windows.ps1` dosyasını da çalıştırabilir).*
 
-### 5. Sistem Sağlık Taraması (Doctor)
-Tüm bileşenlerin, derleme çıktılarının ve araçların eksiksiz olduğunu doğrulamak için:
+### 4. Sistem Sağlık Taraması (Doctor V2)
+Tüm bileşenlerin, derleme çıktılarının, 124 MCP aracının ve 74 yeteneğin eksiksiz olduğunu doğrulamak için:
 ```bash
 npm run doctor
 ```
 
-### 6. Tüm Testleri Çalıştırın
+### 5. Tüm Testleri Çalıştırın
 ```bash
 npm test
 ```
-Tüm 16 test dosyasında **326 testin tamamının eksiksiz geçtiğini** görmelisiniz.
+Tüm 22 test dosyasında **503 testin tamamının eksiksiz geçtiğini** görmelisiniz.
+
+### 6. Güvenli Güncelleme (Safe Update)
+```bash
+npm run update
+```
+*(Alper Design OS asla yerel değişiklikleri silmez (`git reset --hard` çalıştırmaz); kirli çalışma alanlarında otomatik olarak durur ve kontrol noktası oluşturur).*
 
 ---
 

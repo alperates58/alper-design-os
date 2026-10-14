@@ -4,6 +4,7 @@ node_modules/
 
 # Build artifacts
 dist/
+dist-release/
 build/
 *.tsbuildinfo
 
@@ -26,7 +27,8 @@ yarn-debug.log*
 .env.local
 .env.*.local
 
-# Local run journals and scratch
-.alper-design-os/
+# Local run journals, cache, and scratch
+.alper-design-os/*
+!.alper-design-os/project/
 scratch/
 tests/workspaces/
