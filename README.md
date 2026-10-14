@@ -5,14 +5,15 @@
 [![License: MIT](https://img.shields.io/badge/Lisans-MIT-blue.svg)](LICENSE)
 [![TypeScript: Strict](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](tsconfig.json)
 [![Antigravity Plugin Ready](https://img.shields.io/badge/Antigravity-74%20Skills%20(55%20Active)-emerald.svg)](plugin.json)
-[![Tests: 503 Passed](https://img.shields.io/badge/Tests-503%20Passed%20(22%20Suites)-brightgreen.svg)](tests/)
+[![Tests: 506 Passed](https://img.shields.io/badge/Tests-506%20Passed%20(22%20Suites)-brightgreen.svg)](tests/)
 [![MCP Server: 124 Tools](https://img.shields.io/badge/MCP%20Server-124%20Tools-purple.svg)](packages/mcp-server/)
-[![CI: Multi-Platform](https://img.shields.io/badge/CI-Ubuntu%20%7C%20Windows%20%7C%20macOS-blue.svg)](.github/workflows/ci.yml)
+[![CI: Passing](https://img.shields.io/badge/CI-Passing%20(7%2F7%20Jobs%20Green)-brightgreen.svg)](.github/workflows/ci.yml)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](scripts/)
+[![Package Manager: pnpm](https://img.shields.io/badge/Package%20Manager-pnpm%209.15.4-orange.svg)](pnpm-lock.yaml)
 
 **ALPER DESIGN OS**, sıradan bir bileşen veya UI kütüphanesi değildir. Yazılım alanlarını (domain) derinlemesine anlayan, kullanıcı iş akışlarını ve ergonomisini analiz eden, kurumsal seviyede mimari ve UX/UI kararları alan, sıfırdan ürün tasarlayan veya mevcut devasa sistemleri cerrahi/aşamalı olarak modernize eden **AI-Native, Teknoloji Bağımsız Tasarım ve UX Geliştirme İşletim Sistemi**'dir.
 
-Bünyesinde **72 adet Antigravity Yeteneği (Skill)**, **124 adet tip güvenli MCP Aracı**, **8 farklı frontend/backend adaptörü**, **Mevcut Proje Modernizasyon Motoru (Phase 1F)**, **Sıfırdan Proje Üretim Motoru (Phase 1G)**, **Kalıcı Proje İstihbarat Motoru (Phase 1H Project Intelligence)** ve **Mimari Doğruluk & Evrensel Kanıt Katmanı (Phase 1H.1 Architecture Integrity Remediation)** barındırır.
+Bünyesinde **72 adet Antigravity Yeteneği (Skill)**, **124 adet tip güvenli MCP Aracı**, **8 farklı frontend/backend adaptörü**, **Mevcut Proje Modernizasyon Motoru (Phase 1F)**, **Sıfırdan Proje Üretim Motoru (Phase 1G)**, **Kalıcı Proje İstihbarat Motoru (Phase 1H Project Intelligence)**, **Mimari Doğruluk & Evrensel Kanıt Katmanı (Phase 1H.1)** ve **Taşınabilirlik, CI/CD & Dağıtım Motoru (Phase 1I)** barındırır.
 
 
 ---
@@ -103,6 +104,16 @@ Bünyesinde **72 adet Antigravity Yeteneği (Skill)**, **124 adet tip güvenli M
     * **RTM Doğruluğu & Sıfır Sahte Hedef:** Eksik mimari ve veritabanı artefaktlarında sahte string (`DECISION_MONOLITH`, `users`, `/api/v1/health` vb.) uydurma davranışı silindi; bulunamayan hedefler `undefined` ve `UNRESOLVED` ile izlenemeyen gereksinimler doğru şekilde `ORPHAN` olarak işaretlendi.
     * **Mimari Yetenek Uyumu:** `alper-architecture` yeteneği `recommendArchitecture()` motoruna uygun şekilde güncellendi; küçük CRUD projelerinde modüler monolit önceliği korunurken mikroservis mimarisine aşırı ölçek durumlarında izin veren gerçekçi kural seti sağlandı.
     * **Taşınan Doğrulama Borcu:** `GENERATED_PROJECT_REAL_BUILDS = NOT_VERIFIED` statüsü korunarak Phase 1I öncesi dürüst kanıt temeli sağlandı.
+
+15. **Taşınabilirlik, CI/CD, Bootstrap & Dağıtım Motoru (Phase 1I & Phase 1I Closure Hotfix):**
+    * **Kanonik Paket Yöneticisi:** `pnpm@9.15.4` ve `pnpm-lock.yaml` dondurulmuş kilit dosyasıyla (`--frozen-lockfile`) tam deterministik bağımlılık yönetimi; plansız/sessiz npm fallback'leri kaldırılmıştır.
+    * **Çift Modlu Doctor Teşhisi:** `node scripts/doctor.js --preflight` ile kurulum öncesi gereksinim ve gizli veri (secret) taraması; kurulum sonrası tam kapsamlı mimari bütünlük ve MCP doğrulaması.
+    * **Kapsamlı CI/CD Mimarisi:** GitHub Actions üzerinde ikiye ayrılmış güvenli pipeline:
+      - **Job A (Core Portability Matrix):** Ubuntu, Windows, macOS × Node 20.x, 22.x üzerinde 6 çapraz platform işinin tamamı (%100) başarıyla yeşildir.
+      - **Job B (Generated Project Native Build Certification & Packaging):** .NET 8 SDK ve PHP 8.2 + Composer ile donatılmış ortamda 4 stack'in (`REACT_TYPESCRIPT`, `LARAVEL_BLADE`, `ASPNET_RAZOR`, `PLAIN_HTML_CSS_JS`) gerçek derleyici, CLI ve sözdizimi doğrulaması.
+    * **Taşınan Doğrulama Borcunun Kapatılması:** `GENERATED_PROJECT_REAL_BUILDS = VERIFIED` statüsüne resmi olarak yükseltilmiştir (Gerçek GitHub Actions Çalışma ID: `38569682373`, Sonuç: `success`).
+    * **Antigravity MCP Kapsamı & Sürüm Sabitleme:** `node scripts/register-mcp.js` varsayılan olarak yalnızca projeye özel `.agents/mcp_config.json` içine `alper-design-os` sunucusunu kaydeder; isteğe bağlı tarayıcı MCP sunucuları (`chrome-devtools-mcp@0.12.0`, `@playwright/mcp@0.0.6`) kesin sürümlerle (`@latest` yasak) kaydedilir.
+    * **Pre-v1 Dağıtım Paketleme:** `dist-release/alper-design-os-0.1.0.tar.gz`, `release-manifest.json` ve SHA-256 sağlama toplamları otomatik üretilir ve CI artefaktı olarak depolanır.
 
 ---
 
