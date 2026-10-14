@@ -36,7 +36,9 @@ export function scanSecrets(projectRoot = '.') {
     // Ignore test suites (which test secret redaction with dummy tokens) and scanner itself
     if (
       relFile.startsWith('tests/') ||
+      relFile.startsWith('scripts/scan-') ||
       relFile === 'scripts/scan-secrets.js' ||
+      relFile === 'scripts/scan-repository-secrets.js' ||
       relFile === 'scripts/doctor.js'
     ) {
       continue;
