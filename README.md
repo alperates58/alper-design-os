@@ -5,13 +5,13 @@
 [![License: MIT](https://img.shields.io/badge/Lisans-MIT-blue.svg)](LICENSE_POLICY.md)
 [![TypeScript: Strict](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](tsconfig.json)
 [![Antigravity Plugin Ready](https://img.shields.io/badge/Antigravity-72%20Skills%20Registered-emerald.svg)](plugin.json)
-[![Tests: 430+ Passed](https://img.shields.io/badge/Tests-430%2B%20Passed%20(19%20Suites)-brightgreen.svg)](tests/)
+[![Tests: 447 Passed](https://img.shields.io/badge/Tests-447%20Passed%20(20%20Suites)-brightgreen.svg)](tests/)
 [![MCP Server: 124 Tools](https://img.shields.io/badge/MCP%20Server-124%20Tools-purple.svg)](packages/mcp-server/)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](scripts/)
 
 **ALPER DESIGN OS**, sıradan bir bileşen veya UI kütüphanesi değildir. Yazılım alanlarını (domain) derinlemesine anlayan, kullanıcı iş akışlarını ve ergonomisini analiz eden, kurumsal seviyede mimari ve UX/UI kararları alan, sıfırdan ürün tasarlayan veya mevcut devasa sistemleri cerrahi/aşamalı olarak modernize eden **AI-Native, Teknoloji Bağımsız Tasarım ve UX Geliştirme İşletim Sistemi**'dir.
 
-Bünyesinde **72 adet Antigravity Yeteneği (Skill)**, **124 adet tip güvenli MCP Aracı**, **8 farklı frontend/backend adaptörü**, **Mevcut Proje Modernizasyon Motoru (Phase 1F)**, **Sıfırdan Proje Üretim Motoru (Phase 1G)** ve **Kalıcı Proje İstihbarat Motoru (Phase 1H Project Intelligence)** barındırır.
+Bünyesinde **72 adet Antigravity Yeteneği (Skill)**, **124 adet tip güvenli MCP Aracı**, **8 farklı frontend/backend adaptörü**, **Mevcut Proje Modernizasyon Motoru (Phase 1F)**, **Sıfırdan Proje Üretim Motoru (Phase 1G)**, **Kalıcı Proje İstihbarat Motoru (Phase 1H Project Intelligence)** ve **Mimari Doğruluk & Evrensel Kanıt Katmanı (Phase 1H.1 Architecture Integrity Remediation)** barındırır.
 
 
 ---
@@ -75,6 +75,15 @@ Bünyesinde **72 adet Antigravity Yeteneği (Skill)**, **124 adet tip güvenli M
     * **Mimari Bağımlılık Grafiği & Snapshot:** Gerçek kod analizinden üretilen `ProjectArchitectureGraph`, fingerprint snapshot'ları ve otomatik drift tespiti.
     * **Değişiklik Etki Analizi (Blast Radius):** Kod değişikliği öncesinde etkilenen modül, endpoint, sayfa ve testleri hesaplar; risk puanı çıkarır.
     * **Sürekli İyileştirme & Çapraz Proje İzolasyonu:** Proje içi öğrenilen dersler (`LessonLearnedRecord`), insan yönetişim onayı olmadan genel kurala dönüştürülemez.
+
+12. **Mimari Doğruluk & Evrensel Kanıt İlkeleri (Phase 1H.1 Architecture Integrity Remediation):**
+    A1 Bağımsız Denetimi bulgularını kalıcı olarak kapatan ve sistem geneline yayılan evrensel ilke:
+    * **NO CLAIM WITHOUT EVIDENCE (Kanıtsız İddia Yasaktır):** Türetilmiş gereksinimler (`deriveRequirements`) asla baştan `VERIFIED` kabul edilmez; ilk durumları `DEFINED / NOT_VERIFIED` olmak zorundadır. Eksik kanıt daima `NOT_VERIFIED` döner, asla `PASS` veya `VERIFIED HIGH` olamaz.
+    * **Üretilen Kod $\neq$ Derlenebilir Kod:** Scaffolding çıktısı (`scaffoldNewProject`), somut bir derleyici veya test yürütmesi gerçekleşmedikçe `buildStatus: 'NOT_VERIFIED'`, `buildable: false` bildirmek zorundadır.
+    * **Domain Grounding & Sahte Varlık Yasağı:** Fiil kelimelerinden ("manages", "reviews") veya jenerik takılardan (`PrimaryEntity`, `inventory_items`) veritabanı tablosu uydurulması kesinlikle yasaktır. Grounded iş nesneleri türetilemiyorsa sistem durur (`DiscoveryReadiness: NEEDS_CLARIFICATION`) ve 3–5 odaklı soru sorar.
+    * **Boş Repolarda Sıfır Halüsinasyon:** Kod bulunmayan klasörlerde `AppCore`, `DataModule`, `inventory_items` gibi sahte modüller veya sahte `%90 EXCELLENT` sağlık skorları üretilemez (`INSUFFICIENT_DATA / 0%`).
+    * **MCP Tek Doğruluk Kaynağı (Single Source of Truth):** 124 MCP aracı tekil `canonicalToolRegistry` (`packages/mcp-server/src/tools/definitions.ts`) üzerinden dinamik sunulur; elle tutulan switch yapısı silinmiştir ve `dist/` sürekli güncel tutulur.
+    * **Sektörel Tarafsızlık (Non-APS Domain Neutrality):** Çekirdek tasarım ve layout motorlarından sabit fabrika/APS terimleri kaldırılmış, her sektöre (Saas, Finans, Sağlık, Eğitim vb.) tarafsız istihbarat sağlanmıştır.
 
 ---
 
@@ -277,10 +286,11 @@ alper-design-os/
 │   ├── software-intelligence/  # Mimari Stil Tespiti, DB Migrasyon Riski, ADR Üretimi
 │   └── mcp-server/             # 124 Tipli Araç İçeren Resmi MCP Sunucusu
 │
-├── tests/                      # 19 Test Süiti, 430+ Otomatik Vitest Testi
-│   ├── project-intelligence.test.ts # Faz 1H Proje İstihbaratı & Kalıcı Bellek Süiti
-│   ├── greenfield-engine.test.ts    # Faz 1G Sıfırdan Proje Üretim Motoru Süiti
-│   ├── modernization-engine.test.ts # Faz 1F Modernizasyon Motoru Süiti
+├── tests/                      # 20 Test Süiti, 447 Otomatik Vitest Testi
+│   ├── semantic-integrity-1h1.test.ts # Faz 1H.1 Mimari Doğruluk & Adversarial Doğrulama
+│   ├── project-intelligence.test.ts   # Faz 1H Proje İstihbaratı & Kalıcı Bellek Süiti
+│   ├── greenfield-engine.test.ts      # Faz 1G Sıfırdan Proje Üretim Motoru Süiti
+│   ├── modernization-engine.test.ts   # Faz 1F Modernizasyon Motoru Süiti
 │   ├── domain-benchmark-15.test.ts
 │   ├── design-language.test.ts
 │   ├── truthful-ui-governance.test.ts
@@ -289,6 +299,7 @@ alper-design-os/
 │   └── ...
 │
 └── docs/                       # Mimari & Kullanım Dokümantasyonu
+    ├── architecture-integrity-remediation.md # Faz 1H.1 Kanıt İlkeleri & Audit Kapanışları
     ├── project-intelligence.md
     ├── decision-lifecycle.md
     ├── change-impact-analysis.md
