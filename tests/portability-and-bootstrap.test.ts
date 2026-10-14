@@ -158,7 +158,11 @@ describe('Phase 1I: Portability, CI/CD, Bootstrap & Distribution V1', () => {
   });
 
   // 9. Release Manifest & Distribution Artifact
-  it('9. verifies distribution packaging generates valid release-manifest and SHA256 checksums', () => {
+  it('9. verifies distribution packaging generates valid release-manifest and SHA256 checksums', async () => {
+    const { packageDistribution } = await import('../scripts/package-distribution.js');
+    const packResult = await packageDistribution({ repoRoot });
+    expect(packResult.success).toBe(true);
+
     const manifestPath = path.join(repoRoot, 'dist-release', 'release-manifest.json');
     const checksumsPath = path.join(repoRoot, 'dist-release', 'checksums.txt');
 

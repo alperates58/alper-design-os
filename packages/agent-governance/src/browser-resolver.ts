@@ -69,7 +69,11 @@ export function resolveBrowserRuntime(options?: BrowserResolverOptions): Browser
       ? [options.overrideEdgePath].filter(Boolean) as string[]
       : [
           'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
-          'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe'
+          'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
+          '/usr/bin/microsoft-edge',
+          '/usr/bin/microsoft-edge-stable',
+          '/usr/bin/msedge',
+          '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'
         ];
 
     let foundEdgePath: string | undefined;
@@ -106,7 +110,12 @@ export function resolveBrowserRuntime(options?: BrowserResolverOptions): Browser
       ? [options.overrideChromePath].filter(Boolean) as string[]
       : [
           'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-          'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'
+          'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+          '/usr/bin/google-chrome',
+          '/usr/bin/google-chrome-stable',
+          '/usr/bin/chromium',
+          '/usr/bin/chromium-browser',
+          '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
         ];
 
     let foundChromePath: string | undefined;
