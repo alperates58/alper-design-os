@@ -31,7 +31,11 @@ export type RequestComplexityClassification = z.infer<typeof RequestComplexityCl
 export const AssumptionCategorySchema = z.enum([
   'LOW_IMPACT_DEFAULT',
   'REVERSIBLE_ASSUMPTION',
-  'HIGH_IMPACT_UNKNOWN'
+  'HIGH_IMPACT_UNKNOWN',
+  'EXPLICIT_REQUIREMENT',
+  'POLICY_REQUIREMENT',
+  'DOMAIN_INFERENCE',
+  'NOT_APPLICABLE'
 ]);
 export type AssumptionCategory = z.infer<typeof AssumptionCategorySchema>;
 
@@ -116,7 +120,10 @@ export const GreenfieldProjectProfileSchema = z.object({
   integrationNeeds: z.array(z.string()).default([]),
   reportingNeeds: z.union([z.boolean(), z.array(z.string())]).default(false),
   localizationNeeds: z.array(z.string()).default(['en']),
-  accessibilityNeeds: z.union([z.enum(['WCAG_2_1_AA', 'WCAG_2_1_AAA', 'STANDARD']), z.array(z.string())]).default('WCAG_2_1_AA'),
+  accessibilityNeeds: z.union([
+    z.enum(['WCAG_2_2_AA', 'WCAG_2_2_AAA', 'WCAG_2_1_AA', 'WCAG_2_1_AAA', 'STANDARD']),
+    z.array(z.string())
+  ]).default('WCAG_2_2_AA'),
   deploymentEnvironment: z.enum([
     'LOCAL_ONLY',
     'SINGLE_SERVER',
@@ -216,10 +223,20 @@ export const GreenfieldUserJourneySchema = z.object({
 });
 export type GreenfieldUserJourney = z.infer<typeof GreenfieldUserJourneySchema>;
 
+export const BusinessRuleProvenanceSchema = z.enum([
+  'EXPLICIT_REQUIREMENT',
+  'POLICY_REQUIREMENT',
+  'REVERSIBLE_ASSUMPTION',
+  'DOMAIN_INFERENCE',
+  'NOT_APPLICABLE'
+]);
+export type BusinessRuleProvenance = z.infer<typeof BusinessRuleProvenanceSchema>;
+
 export const BusinessRuleSchema = z.object({
   id: z.string(),
   statement: z.string(),
   source: z.string().describe('Must be verifiable user or domain source; cannot be fabricated!'),
+  provenance: BusinessRuleProvenanceSchema.optional().default('DOMAIN_INFERENCE'),
   enforcement: z.enum(['BLOCK', 'WARN', 'VALIDATE']).default('BLOCK'),
   affectedEntities: z.array(z.string()).default([])
 });

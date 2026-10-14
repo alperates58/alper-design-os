@@ -81,9 +81,12 @@ ${relatedList}
     : `- No human approval checkpoints required for routine execution of this capability.`;
 
   // Evidence Requirements text
-  const evidenceText = skill.evidenceRequirements && skill.evidenceRequirements.length > 0
+  let evidenceText = skill.evidenceRequirements && skill.evidenceRequirements.length > 0
     ? `- Canonical Evidence Kinds: ${skill.evidenceRequirements.map(e => `\`${e}\``).join(', ')}.\n- Missing evidence strictly resolves to \`VerificationStatus: NOT_VERIFIED\`. Never emit fake PASS assertion.`
     : `- Standard static analysis or inspection log recorded in execution journal.`;
+  if (skill.evidenceArtifacts && skill.evidenceArtifacts.length > 0) {
+    evidenceText += `\n- Expected Artifact Evidence: ${skill.evidenceArtifacts.map(a => `\`${a}\``).join(', ')}.`;
+  }
 
   // Related skills text
   const handoffText = skill.relatedSkills && skill.relatedSkills.length > 0
@@ -108,7 +111,7 @@ DATA / API / AUTH (3NF Blueprint & OpenAPI 3.1)
    ↓
 UX BLUEPRINT (Technology-Neutral Page DSL)
    ↓
-IMPLEMENTATION PLAN (7-Phase Staged Plan)
+IMPLEMENTATION PLAN (Dynamic Dependency-Driven Staged Plan)
    ↓
 SCAFFOLDING (Buildable Files on Disk)
    ↓
@@ -199,10 +202,25 @@ VERIFICATION (Evidence Taxonomy Validation)
     deepSpecialSection = `
 ## ARCHITECTURAL DECISION DISCIPLINE & COMPLEXITY BUDGET
 - **Architecture Decision Records (ADRs)**: Every foundational structural choice must be recorded as an ADR documenting context, options, decision, and consequences.
-- **Complexity Budget Invariant**: Enforces a strict complexity budget (maximum score <= 3 for initial phase); rejects premature microservice or distributed decomposition.
-- **Modular Monolith Baseline**: Defaults to clean modular monolith architecture with strict package/module boundaries before evaluating distributed services.
-- **Backward Compatibility**: API changes must maintain backward compatibility; breaking changes require versioned migration paths.`;
+- **Anti-Overengineering Principle**: System topology must select the least complex pattern that satisfies constraints. Defaults to Monolith or Modular Monolith for small/medium scale.
+- **Distributed Architecture Boundary**: Microservices and distributed service meshes are justified ONLY when extreme scale or internet-distributed boundaries require independent operational partitioning.
+- **Backward Compatibility**: API and schema changes must maintain backward compatibility; breaking changes require versioned migration paths.`;
   }
+
+  // Tailored stop conditions
+  const stopConditions = [
+    '- Required context or prerequisite artifacts are missing.'
+  ];
+  if (skill.discoveryBehavior === 'CLARIFY_AMBIGUITY' || skill.discoveryBehavior === 'STRICT_BLOCK') {
+    stopConditions.push('- Discovery readiness evaluation returns `NEEDS_CLARIFICATION` or `BLOCKED_BY_AMBIGUITY`.');
+  }
+  stopConditions.push('- Tool execution reports critical validation or gate failure.');
+  if (skill.capabilityFamily === 'SECURITY') {
+    stopConditions.push('- Active penetration or intrusive actions attempted without explicit operator authorization.');
+  } else if (skill.capabilityFamily === 'DATA_ENGINEERING') {
+    stopConditions.push('- Unsafe table locks or non-reversible destructive schema migrations detected.');
+  }
+  const stopConditionsText = stopConditions.join('\n');
 
   const markdown = `${frontmatter}
 
@@ -253,9 +271,7 @@ ${toolStrategyText}
 ${checkpointsText}
 
 ## STOP CONDITIONS
-- Required context or prerequisite artifacts are missing.
-- Discovery readiness evaluation returns \`NEEDS_CLARIFICATION\` (for discovery-gated skills).
-- Tool execution reports critical validation or gate failure.
+${stopConditionsText}
 
 ## FAILURE HANDLING
 - On schema failure: Log exact validation error, preserve rollback checkpoint, and return non-zero exit code.

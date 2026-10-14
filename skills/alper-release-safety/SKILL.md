@@ -74,7 +74,6 @@ Operates on concrete, localized technical artifacts (e.g. query plans, code diff
 
 ## STOP CONDITIONS
 - Required context or prerequisite artifacts are missing.
-- Discovery readiness evaluation returns `NEEDS_CLARIFICATION` (for discovery-gated skills).
 - Tool execution reports critical validation or gate failure.
 
 ## FAILURE HANDLING

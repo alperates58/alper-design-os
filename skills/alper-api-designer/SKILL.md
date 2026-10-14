@@ -83,7 +83,7 @@ If input requirements are incomplete, contradictory, or underspecified, formulat
 
 ## STOP CONDITIONS
 - Required context or prerequisite artifacts are missing.
-- Discovery readiness evaluation returns `NEEDS_CLARIFICATION` (for discovery-gated skills).
+- Discovery readiness evaluation returns `NEEDS_CLARIFICATION` or `BLOCKED_BY_AMBIGUITY`.
 - Tool execution reports critical validation or gate failure.
 
 ## FAILURE HANDLING
@@ -92,8 +92,9 @@ If input requirements are incomplete, contradictory, or underspecified, formulat
 - Never report simulated success or fake PASS results.
 
 ## EVIDENCE REQUIREMENTS
-- Canonical Evidence Kinds: `API_CONTRACT_RESULT`, `STATIC_ANALYSIS`.
+- Canonical Evidence Kinds: `STATIC_ANALYSIS`.
 - Missing evidence strictly resolves to `VerificationStatus: NOT_VERIFIED`. Never emit fake PASS assertion.
+- Expected Artifact Evidence: `openapi-3-1-spec-diff`, `api-contract-validation-report`.
 
 ## OUTPUT CONTRACT
 - OpenAPI 3.1.0 Specification (ApiBlueprint) and AuthModelSpecification.

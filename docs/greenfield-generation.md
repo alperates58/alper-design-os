@@ -61,6 +61,6 @@ flowchart TD
 | `create_auth_model` | Configures authentication and RBAC authorization rules. |
 | `create_page_inventory` | Builds 8-state page inventory from grounded entities or returns `NEEDS_CLARIFICATION`. |
 | `create_project_blueprint` | Synthesizes master `NewProjectBlueprint` (enforces Downstream Discovery Guard). |
-| `create_project_implementation_plan` | Produces 7-stage implementation plan with checkpoints. |
+| `create_project_implementation_plan` | Produces dynamic dependency-driven implementation plan with checkpoints. |
 | `scaffold_new_project` | Emits stack-native buildable files with truthful `buildStatus: 'NOT_VERIFIED'`. |
 | `evaluate_new_project_completion` | Evaluates completion gates strictly against qualifying `evidenceRecords`. |

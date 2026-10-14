@@ -91,7 +91,6 @@ Operates on concrete, localized technical artifacts (e.g. query plans, code diff
 
 ## STOP CONDITIONS
 - Required context or prerequisite artifacts are missing.
-- Discovery readiness evaluation returns `NEEDS_CLARIFICATION` (for discovery-gated skills).
 - Tool execution reports critical validation or gate failure.
 
 ## FAILURE HANDLING
@@ -100,8 +99,9 @@ Operates on concrete, localized technical artifacts (e.g. query plans, code diff
 - Never report simulated success or fake PASS results.
 
 ## EVIDENCE REQUIREMENTS
-- Canonical Evidence Kinds: `ACCESSIBILITY_REPORT`, `BROWSER_TEST`, `STATIC_ANALYSIS`.
+- Canonical Evidence Kinds: `STATIC_ANALYSIS`, `BROWSER_TEST`.
 - Missing evidence strictly resolves to `VerificationStatus: NOT_VERIFIED`. Never emit fake PASS assertion.
+- Expected Artifact Evidence: `axe-core-violations-json`, `wcag-2-2-aa-audit-report`, `aria-tree-snapshot`.
 
 ## OUTPUT CONTRACT
 - AccessibilityAuditReport (WCAG 2.2 AA) with violation locations and code remedies.

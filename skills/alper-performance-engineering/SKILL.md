@@ -77,7 +77,6 @@ Operates on concrete, localized technical artifacts (e.g. query plans, code diff
 
 ## STOP CONDITIONS
 - Required context or prerequisite artifacts are missing.
-- Discovery readiness evaluation returns `NEEDS_CLARIFICATION` (for discovery-gated skills).
 - Tool execution reports critical validation or gate failure.
 
 ## FAILURE HANDLING
@@ -86,8 +85,9 @@ Operates on concrete, localized technical artifacts (e.g. query plans, code diff
 - Never report simulated success or fake PASS results.
 
 ## EVIDENCE REQUIREMENTS
-- Canonical Evidence Kinds: `PERFORMANCE_TRACE`, `BROWSER_TEST`.
+- Canonical Evidence Kinds: `RUNTIME_CHECK`, `BROWSER_TEST`.
 - Missing evidence strictly resolves to `VerificationStatus: NOT_VERIFIED`. Never emit fake PASS assertion.
+- Expected Artifact Evidence: `core-web-vitals-metrics`, `lighthouse-performance-json`, `profiler-flamegraph`.
 
 ## OUTPUT CONTRACT
 - PerformanceAuditReport with Core Web Vitals breakdown and optimization recommendations.

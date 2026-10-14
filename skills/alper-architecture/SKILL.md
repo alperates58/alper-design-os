@@ -41,9 +41,9 @@ Discovers existing architecture, classifies architectural styles (Monolith, Modu
 
 ## ARCHITECTURAL DECISION DISCIPLINE & COMPLEXITY BUDGET
 - **Architecture Decision Records (ADRs)**: Every foundational structural choice must be recorded as an ADR documenting context, options, decision, and consequences.
-- **Complexity Budget Invariant**: Enforces a strict complexity budget (maximum score <= 3 for initial phase); rejects premature microservice or distributed decomposition.
-- **Modular Monolith Baseline**: Defaults to clean modular monolith architecture with strict package/module boundaries before evaluating distributed services.
-- **Backward Compatibility**: API changes must maintain backward compatibility; breaking changes require versioned migration paths.
+- **Anti-Overengineering Principle**: System topology must select the least complex pattern that satisfies constraints. Defaults to Monolith or Modular Monolith for small/medium scale.
+- **Distributed Architecture Boundary**: Microservices and distributed service meshes are justified ONLY when extreme scale or internet-distributed boundaries require independent operational partitioning.
+- **Backward Compatibility**: API and schema changes must maintain backward compatibility; breaking changes require versioned migration paths.
 
 ## REQUIRED CONTEXT
 - Workspace root path and active git branch.
@@ -66,7 +66,8 @@ If input requirements are incomplete, contradictory, or underspecified, formulat
 5. Record decisions in an Architecture Decision Record.
 
 ## DECISION RULES
-- Anti-Overengineering Rule: Prohibit microservices, event streaming, and Kubernetes for small-to-medium CRUD tools.
+- Anti-Overengineering Rule: Favor Monolith or Modular Monolith for small/medium scale or standard products; avoid premature distributed decomposition.
+- Distributed architecture (e.g. Microservices) is justified only when high-scale or internet-distributed boundaries require independent operational partitioning.
 - All architectural choices without explicit user constraints must be tagged as REVERSIBLE_ASSUMPTION.
 
 ## MCP TOOL STRATEGY
@@ -89,7 +90,7 @@ If input requirements are incomplete, contradictory, or underspecified, formulat
 
 ## STOP CONDITIONS
 - Required context or prerequisite artifacts are missing.
-- Discovery readiness evaluation returns `NEEDS_CLARIFICATION` (for discovery-gated skills).
+- Discovery readiness evaluation returns `NEEDS_CLARIFICATION` or `BLOCKED_BY_AMBIGUITY`.
 - Tool execution reports critical validation or gate failure.
 
 ## FAILURE HANDLING

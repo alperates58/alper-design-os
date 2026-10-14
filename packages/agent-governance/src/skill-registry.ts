@@ -1,3 +1,4 @@
+import type { EvidenceKind } from './types.js';
 /**
  * CANONICAL SKILL REGISTRY (Phase 1H.2B)
  * Single Source of Truth for all 74 Skills in ALPER DESIGN OS.
@@ -46,7 +47,8 @@ export interface CanonicalSkillDefinition {
   discoveryBehavior: DiscoveryBehavior;
   humanCheckpoints: string[];
   sourceStrategy: string;
-  evidenceRequirements: string[];
+  evidenceRequirements: EvidenceKind[];
+  evidenceArtifacts?: string[];
   mcpTools: string[];
   relatedSkills: string[];
   reason: string;
@@ -224,7 +226,8 @@ export const CANONICAL_SKILL_CATALOG: Record<string, CanonicalSkillDefinition> =
       'Stack selection confirmation when unrequested choices are marked as REVERSIBLE_ASSUMPTION.'
     ],
     sourceStrategy: 'Official production stack templates (Vite React-TS strict, Laravel 11 Blade, ASP.NET Core 8/9 Razor, Plain HTML5).',
-    evidenceRequirements: ['BUILD_OUTPUT', 'STATIC_ANALYSIS', 'UNIT_TEST'],
+    evidenceRequirements: ['STATIC_ANALYSIS', 'UNIT_TEST'],
+    evidenceArtifacts: ['compiler-stdout', 'build-diagnostics-log', 'scaffold-tree-manifest'],
     mcpTools: ['create_project_blueprint', 'create_project_implementation_plan', 'scaffold_new_project', 'evaluate_new_project_completion', 'recommend_stack'],
     relatedSkills: ['alper-requirements-engineering', 'alper-greenfield-product-analysis', 'alper-database-designer', 'alper-api-designer'],
     reason: 'Master greenfield orchestrator enforcing Discovery Gate, scaffold correctness, and completion contract.',
@@ -242,7 +245,7 @@ export const CANONICAL_SKILL_CATALOG: Record<string, CanonicalSkillDefinition> =
     keyWorkflow: [
       '1. Verify DiscoveryReadiness === READY; if not, halt and return clarifying questions.',
       '2. Assemble master ProjectBlueprint integrating stack, architecture, entities, APIs, and pages.',
-      '3. Formulate staged 7-phase ImplementationPlan.',
+      '3. Formulate dynamic dependency-driven ImplementationPlan.',
       '4. Scaffold genuine, buildable project directory structure.',
       '5. Report files generated with buildStatus: NOT_VERIFIED until authentic build evidence is captured.'
     ],
@@ -959,7 +962,8 @@ export const CANONICAL_SKILL_CATALOG: Record<string, CanonicalSkillDefinition> =
       '5. Record decisions in an Architecture Decision Record.'
     ],
     decisionRules: [
-      'Anti-Overengineering Rule: Prohibit microservices, event streaming, and Kubernetes for small-to-medium CRUD tools.',
+      'Anti-Overengineering Rule: Favor Monolith or Modular Monolith for small/medium scale or standard products; avoid premature distributed decomposition.',
+      'Distributed architecture (e.g. Microservices) is justified only when high-scale or internet-distributed boundaries require independent operational partitioning.',
       'All architectural choices without explicit user constraints must be tagged as REVERSIBLE_ASSUMPTION.'
     ],
     outputContract: ['ArchitectureRecommendationReport, SubsystemBoundaryMap, and initial ADR.']
@@ -977,7 +981,8 @@ export const CANONICAL_SKILL_CATALOG: Record<string, CanonicalSkillDefinition> =
     discoveryBehavior: 'CLARIFY_AMBIGUITY',
     humanCheckpoints: ['DBA / operator review of relational schema, primary key types, and foreign key onDelete policies.'],
     sourceStrategy: 'Relational database theory (3NF normalization), ACID transaction standards, and PostgreSQL/MySQL docs.',
-    evidenceRequirements: ['STATIC_ANALYSIS', 'DATABASE_ANALYSIS'],
+    evidenceRequirements: ['STATIC_ANALYSIS'],
+    evidenceArtifacts: ['database-query-plan', 'ddl-schema-ast', 'foreign-key-graph'],
     mcpTools: ['analyze_database_schema', 'create_database_blueprint'],
     relatedSkills: ['alper-migration-safety', 'alper-sql-performance', 'alper-api-designer'],
     reason: 'Grounded business entity derivation, schema normalization, relationships, and ACID data integrity.',
@@ -1018,7 +1023,8 @@ export const CANONICAL_SKILL_CATALOG: Record<string, CanonicalSkillDefinition> =
     discoveryBehavior: 'NOT_APPLICABLE',
     humanCheckpoints: ['Mandatory operator / DBA authorization before running DANGEROUS or irreversible DDL migrations.'],
     sourceStrategy: 'Zero-downtime database deployment patterns (Expand/Contract pattern) and engine-specific DDL locks.',
-    evidenceRequirements: ['STATIC_ANALYSIS', 'DATABASE_ANALYSIS'],
+    evidenceRequirements: ['STATIC_ANALYSIS'],
+    evidenceArtifacts: ['ddl-lock-analysis', 'migration-rollback-plan', 'expand-contract-spec'],
     mcpTools: ['analyze_database_schema'],
     relatedSkills: ['alper-database-designer', 'alper-sql-performance', 'alper-git-safety'],
     reason: 'Classifies DDL migration risk (SAFE/REVIEW/DANGEROUS) and enforces expand/contract zero-downtime evolution.',
@@ -1059,7 +1065,8 @@ export const CANONICAL_SKILL_CATALOG: Record<string, CanonicalSkillDefinition> =
     discoveryBehavior: 'NOT_APPLICABLE',
     humanCheckpoints: ['Operator review before adding indexes to write-heavy tables (balancing read vs write overhead).'],
     sourceStrategy: 'Database execution plans (EXPLAIN ANALYZE), index cardinality statistics, and engine documentation (PostgreSQL, MySQL, SQL Server).',
-    evidenceRequirements: ['DATABASE_ANALYSIS', 'PERFORMANCE_TRACE'],
+    evidenceRequirements: ['STATIC_ANALYSIS', 'RUNTIME_CHECK'],
+    evidenceArtifacts: ['explain-analyze-buffers-json', 'query-execution-plan', 'index-hit-ratio-log'],
     mcpTools: ['analyze_database_schema'],
     relatedSkills: ['alper-database-designer', 'alper-migration-safety'],
     reason: 'Diagnoses N+1 query loops, missing foreign key indexes, and enforces keyset pagination over offset.',
@@ -1101,7 +1108,8 @@ export const CANONICAL_SKILL_CATALOG: Record<string, CanonicalSkillDefinition> =
     discoveryBehavior: 'CLARIFY_AMBIGUITY',
     humanCheckpoints: ['Operator review of breaking API contract changes or auth model revisions.'],
     sourceStrategy: 'OpenAPI 3.1.0 specifications, RFC 9457 Problem Details, and RFC 6749 OAuth 2.0 / JWT standards.',
-    evidenceRequirements: ['API_CONTRACT_RESULT', 'STATIC_ANALYSIS'],
+    evidenceRequirements: ['STATIC_ANALYSIS'],
+    evidenceArtifacts: ['openapi-3-1-spec-diff', 'api-contract-validation-report'],
     mcpTools: ['create_api_blueprint', 'create_auth_model', 'evaluate_api_compatibility', 'search_public_apis'],
     relatedSkills: ['alper-api-security', 'alper-contract-testing', 'alper-database-designer'],
     reason: 'OpenAPI 3.1.0 REST API design, RFC 9457 Problem Details, pagination, and RBAC auth model.',
@@ -1608,7 +1616,8 @@ export const CANONICAL_SKILL_CATALOG: Record<string, CanonicalSkillDefinition> =
     discoveryBehavior: 'NOT_APPLICABLE',
     humanCheckpoints: ['MANDATORY written operator authorization before executing active penetration scans or live probing.'],
     sourceStrategy: 'OWASP Top 10 2025, STRIDE threat modeling methodology, CVE/NVD databases, and ASVS 5.0 verification rules.',
-    evidenceRequirements: ['SECURITY_REPORT', 'STATIC_ANALYSIS'],
+    evidenceRequirements: ['STATIC_ANALYSIS'],
+    evidenceArtifacts: ['security-sast-report', 'stride-threat-model', 'dependency-audit-json'],
     mcpTools: ['run_safe_security_scan', 'generate_threat_model', 'evaluate_release_gates', 'detect_tool_capabilities'],
     relatedSkills: ['alper-secure-coding', 'alper-api-security', 'alper-supply-chain-security', 'alper-secret-management'],
     reason: 'Passive security audits, STRIDE threat models, and release gate evaluation.',
@@ -1650,7 +1659,8 @@ export const CANONICAL_SKILL_CATALOG: Record<string, CanonicalSkillDefinition> =
     discoveryBehavior: 'NOT_APPLICABLE',
     humanCheckpoints: ['Security review on rate limiting exceptions or tenant boundary logic changes.'],
     sourceStrategy: 'OWASP API Security Top 10 2023 (BOLA, Broken Auth, BOPLA, Resource Exhaustion) and RFC 6750.',
-    evidenceRequirements: ['SECURITY_REPORT', 'STATIC_ANALYSIS'],
+    evidenceRequirements: ['STATIC_ANALYSIS'],
+    evidenceArtifacts: ['api-security-audit-report', 'bola-idor-matrix', 'cors-jwt-spec'],
     mcpTools: ['evaluate_release_gates'],
     relatedSkills: ['alper-api-designer', 'alper-secure-coding', 'alper-security-audit'],
     reason: 'OWASP API Top 10 defense, BOLA/IDOR prevention, rate limiting, and payload schema hardening.',
@@ -1691,7 +1701,8 @@ export const CANONICAL_SKILL_CATALOG: Record<string, CanonicalSkillDefinition> =
     discoveryBehavior: 'NOT_APPLICABLE',
     humanCheckpoints: ['Operator notification and key rotation protocol upon detecting committed secrets.'],
     sourceStrategy: 'Secret detection regex patterns, Shannon entropy analysis, and .env governance best practices.',
-    evidenceRequirements: ['SECURITY_REPORT', 'STATIC_ANALYSIS'],
+    evidenceRequirements: ['STATIC_ANALYSIS'],
+    evidenceArtifacts: ['trufflehog-gitleaks-log', 'entropy-scan-report', 'env-redaction-map'],
     mcpTools: ['run_safe_security_scan'],
     relatedSkills: ['alper-security-audit', 'alper-secure-coding', 'alper-git-safety'],
     reason: 'Zero-tolerance secret leak prevention, token/key scanning, and .env governance.',
@@ -1731,7 +1742,8 @@ export const CANONICAL_SKILL_CATALOG: Record<string, CanonicalSkillDefinition> =
     discoveryBehavior: 'NOT_APPLICABLE',
     humanCheckpoints: ['Operator approval for major dependency upgrades with breaking changes or known CVE trade-offs.'],
     sourceStrategy: 'NIST SSDF (SP 800-218), SLSA Framework, CycloneDX SBOM standard, and OSV / GitHub Advisory Database.',
-    evidenceRequirements: ['SECURITY_REPORT', 'STATIC_ANALYSIS'],
+    evidenceRequirements: ['STATIC_ANALYSIS'],
+    evidenceArtifacts: ['npm-audit-json', 'cyclonedx-spdx-sbom', 'permissive-license-audit'],
     mcpTools: ['evaluate_release_gates', 'run_safe_security_scan'],
     relatedSkills: ['alper-security-audit', 'alper-source-intelligence'],
     reason: 'NIST SSDF, SLSA provenance, CycloneDX SBOM generation, dependency CVE hygiene, and SemVer lifecycle.',
@@ -1771,7 +1783,8 @@ export const CANONICAL_SKILL_CATALOG: Record<string, CanonicalSkillDefinition> =
     discoveryBehavior: 'NOT_APPLICABLE',
     humanCheckpoints: ['Operator review before approving third-party AI skills with destructive tool permissions.'],
     sourceStrategy: 'OWASP Top 10 for LLM Applications (Prompt Injection, Insecure Tool Use) and skill metadata schemas.',
-    evidenceRequirements: ['SECURITY_REPORT', 'STATIC_ANALYSIS'],
+    evidenceRequirements: ['STATIC_ANALYSIS'],
+    evidenceArtifacts: ['prompt-injection-sast-report', 'skill-manifest-security-audit'],
     mcpTools: ['discover_ai_skills', 'inspect_ai_skill'],
     relatedSkills: ['alper-security-audit', 'alper-source-intelligence'],
     reason: 'Audits third-party AI design skills for prompt injection hazards and unauthorized tool invocations.',
@@ -1855,7 +1868,8 @@ export const CANONICAL_SKILL_CATALOG: Record<string, CanonicalSkillDefinition> =
     discoveryBehavior: 'NOT_APPLICABLE',
     humanCheckpoints: ['Human review of visual discrepancy reports or E2E failure video recordings.'],
     sourceStrategy: 'Playwright automation APIs, Chrome DevTools Protocol, and W3C accessible locator practices.',
-    evidenceRequirements: ['BROWSER_TEST', 'VISUAL_DIFF', 'CONSOLE_LOG', 'NETWORK_TRACE'],
+    evidenceRequirements: ['BROWSER_TEST', 'VISUAL_DIFF', 'RUNTIME_CHECK'],
+    evidenceArtifacts: ['browser-console-log', 'network-har-trace', 'playwright-test-trace'],
     mcpTools: ['generate_playwright_test', 'generate_qa_report'],
     relatedSkills: ['alper-visual-regression', 'alper-accessibility-testing', 'alper-testing-strategy'],
     reason: 'Orchestrates Playwright E2E and Chrome DevTools runtime inspection, console errors, and cross-browser testing.',
@@ -1896,7 +1910,8 @@ export const CANONICAL_SKILL_CATALOG: Record<string, CanonicalSkillDefinition> =
     discoveryBehavior: 'NOT_APPLICABLE',
     humanCheckpoints: ['MANDATORY human visual approval on any detected pixel diff exceeding tolerance threshold.'],
     sourceStrategy: 'Pixelmatch / Playwright visual snapshot comparison, DOM tree diffing, and CSS media query matrices.',
-    evidenceRequirements: ['VISUAL_DIFF', 'SCREENSHOT'],
+    evidenceRequirements: ['VISUAL_DIFF'],
+    evidenceArtifacts: ['viewport-screenshot-png', 'pixel-difference-map', 'percy-playwright-diff'],
     mcpTools: ['generate_qa_report'],
     relatedSkills: ['alper-browser-qa', 'alper-design-critic', 'alper-design-repair'],
     reason: 'Evaluates pixel and DOM visual diffs across 4 responsive viewports and light/dark themes.',
@@ -1937,7 +1952,8 @@ export const CANONICAL_SKILL_CATALOG: Record<string, CanonicalSkillDefinition> =
     discoveryBehavior: 'NOT_APPLICABLE',
     humanCheckpoints: ['Operator review of manual keyboard navigation verification and screen reader announcements.'],
     sourceStrategy: 'W3C Web Content Accessibility Guidelines (WCAG 2.2 AA canonical standard, WCAG 2.1 AA compatibility), WAI-ARIA 1.2, and axe-core rule set.',
-    evidenceRequirements: ['ACCESSIBILITY_REPORT', 'BROWSER_TEST', 'STATIC_ANALYSIS'],
+    evidenceRequirements: ['STATIC_ANALYSIS', 'BROWSER_TEST'],
+    evidenceArtifacts: ['axe-core-violations-json', 'wcag-2-2-aa-audit-report', 'aria-tree-snapshot'],
     mcpTools: ['audit_accessibility', 'generate_qa_report'],
     relatedSkills: ['alper-browser-qa', 'alper-design-language', 'alper-design-repair'],
     reason: 'Audits WCAG 2.2 AA compliance, keyboard navigation, contrast ratios, and aria attributes.',
@@ -2018,7 +2034,8 @@ export const CANONICAL_SKILL_CATALOG: Record<string, CanonicalSkillDefinition> =
     discoveryBehavior: 'NOT_APPLICABLE',
     humanCheckpoints: ['Operator / API provider review when breaking contract changes are detected.'],
     sourceStrategy: 'Pact consumer-driven contracts standard, OpenAPI schema validation, and JSON Schema draft 2020-12.',
-    evidenceRequirements: ['API_CONTRACT_RESULT', 'INTEGRATION_TEST'],
+    evidenceRequirements: ['INTEGRATION_TEST', 'STATIC_ANALYSIS'],
+    evidenceArtifacts: ['pact-contract-diff', 'api-schema-validation-result'],
     mcpTools: ['evaluate_api_compatibility'],
     relatedSkills: ['alper-api-designer', 'alper-behavior-preservation'],
     reason: 'Pact consumer-driven contracts, API contract validation, and breaking change prevention.',
@@ -2058,7 +2075,8 @@ export const CANONICAL_SKILL_CATALOG: Record<string, CanonicalSkillDefinition> =
     discoveryBehavior: 'NOT_APPLICABLE',
     humanCheckpoints: ['Operator sign-off if known non-critical regressions are temporarily waived.'],
     sourceStrategy: 'Regression test selection algorithms (RTS), affected module graphs, and smoke suite definitions.',
-    evidenceRequirements: ['TEST_RESULT', 'UNIT_TEST', 'INTEGRATION_TEST'],
+    evidenceRequirements: ['UNIT_TEST', 'INTEGRATION_TEST'],
+    evidenceArtifacts: ['vitest-junit-xml', 'test-coverage-summary-json'],
     mcpTools: ['generate_qa_report', 'detect_regression'],
     relatedSkills: ['alper-change-impact-analysis', 'alper-browser-qa', 'alper-behavior-preservation'],
     reason: 'Orchestrates selective smoke and regression test suites safeguarding critical business funnels.',
@@ -2101,7 +2119,8 @@ export const CANONICAL_SKILL_CATALOG: Record<string, CanonicalSkillDefinition> =
     discoveryBehavior: 'NOT_APPLICABLE',
     humanCheckpoints: ['Operator review of bundle budget exemptions or performance optimization trade-offs.'],
     sourceStrategy: 'Google Core Web Vitals (LCP, INP, CLS), Lighthouse performance audits, and Chrome DevTools traces.',
-    evidenceRequirements: ['PERFORMANCE_TRACE', 'BROWSER_TEST'],
+    evidenceRequirements: ['RUNTIME_CHECK', 'BROWSER_TEST'],
+    evidenceArtifacts: ['core-web-vitals-metrics', 'lighthouse-performance-json', 'profiler-flamegraph'],
     mcpTools: ['generate_qa_report'],
     relatedSkills: ['alper-browser-qa', 'alper-sql-performance'],
     reason: 'Enforces Core Web Vitals (LCP, INP, CLS), asset budgets, pagination, and DevTools trace analysis.',
@@ -2261,7 +2280,8 @@ export const CANONICAL_SKILL_CATALOG: Record<string, CanonicalSkillDefinition> =
     discoveryBehavior: 'NOT_APPLICABLE',
     humanCheckpoints: ['MANDATORY written operator authorization before executing stress or load tests against any environment.'],
     sourceStrategy: 'Grafana k6 load test scripting, stress/spike testing models, and throughput latency curves.',
-    evidenceRequirements: ['PERFORMANCE_TRACE'],
+    evidenceRequirements: ['RUNTIME_CHECK', 'INTEGRATION_TEST'],
+    evidenceArtifacts: ['k6-autocannon-summary-json', 'latency-histogram-p99', 'rps-throughput-log'],
     mcpTools: ['generate_qa_report'],
     relatedSkills: ['alper-performance-engineering', 'alper-reliability'],
     reason: 'Benchmarks throughput and latency under stress with Grafana k6 under explicit operator approval.',

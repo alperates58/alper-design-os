@@ -1375,7 +1375,7 @@ export const BUILTIN_TOOL_REGISTRY: Record<string, ToolMetadata> = {
   },
   "create_project_implementation_plan": {
     "name": "create_project_implementation_plan",
-    "capability": "Generates 7-stage implementation plan with checkpoints and verification criteria.",
+    "capability": "Generates dynamic dependency-driven implementation plan with checkpoints and verification criteria.",
     "cost": "FREE",
     "latency": "FAST",
     "risk": "LOW",

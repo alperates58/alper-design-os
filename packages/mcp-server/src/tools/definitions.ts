@@ -1759,7 +1759,7 @@ export function createCanonicalToolDefinitions(h: ToolHandlersMap): McpToolDefin
     },
     {
       name: 'create_project_implementation_plan',
-      description: 'Generates 7-stage implementation plan with checkpoints and verification criteria.',
+      description: 'Generates dynamic dependency-driven implementation plan with checkpoints and verification criteria.',
       inputSchema: {
         type: 'object',
         properties: {

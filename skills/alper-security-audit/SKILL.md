@@ -98,8 +98,8 @@ Operates on concrete, localized technical artifacts (e.g. query plans, code diff
 
 ## STOP CONDITIONS
 - Required context or prerequisite artifacts are missing.
-- Discovery readiness evaluation returns `NEEDS_CLARIFICATION` (for discovery-gated skills).
 - Tool execution reports critical validation or gate failure.
+- Active penetration or intrusive actions attempted without explicit operator authorization.
 
 ## FAILURE HANDLING
 - On schema failure: Log exact validation error, preserve rollback checkpoint, and return non-zero exit code.
@@ -107,8 +107,9 @@ Operates on concrete, localized technical artifacts (e.g. query plans, code diff
 - Never report simulated success or fake PASS results.
 
 ## EVIDENCE REQUIREMENTS
-- Canonical Evidence Kinds: `SECURITY_REPORT`, `STATIC_ANALYSIS`.
+- Canonical Evidence Kinds: `STATIC_ANALYSIS`.
 - Missing evidence strictly resolves to `VerificationStatus: NOT_VERIFIED`. Never emit fake PASS assertion.
+- Expected Artifact Evidence: `security-sast-report`, `stride-threat-model`, `dependency-audit-json`.
 
 ## OUTPUT CONTRACT
 - SecurityAuditReport, STRIDEThreatModel, and ReleaseGateEvaluationResult.

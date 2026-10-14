@@ -93,7 +93,7 @@ If input requirements are incomplete, contradictory, or underspecified, formulat
 
 ## STOP CONDITIONS
 - Required context or prerequisite artifacts are missing.
-- Discovery readiness evaluation returns `NEEDS_CLARIFICATION` (for discovery-gated skills).
+- Discovery readiness evaluation returns `NEEDS_CLARIFICATION` or `BLOCKED_BY_AMBIGUITY`.
 - Tool execution reports critical validation or gate failure.
 
 ## FAILURE HANDLING

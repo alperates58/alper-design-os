@@ -53,7 +53,7 @@ DATA / API / AUTH (3NF Blueprint & OpenAPI 3.1)
    ↓
 UX BLUEPRINT (Technology-Neutral Page DSL)
    ↓
-IMPLEMENTATION PLAN (7-Phase Staged Plan)
+IMPLEMENTATION PLAN (Dynamic Dependency-Driven Staged Plan)
    ↓
 SCAFFOLDING (Buildable Files on Disk)
    ↓
@@ -84,7 +84,7 @@ If upstream discovery readiness check is `NEEDS_CLARIFICATION` or requirements a
 ## WORKFLOW
 1. Verify DiscoveryReadiness === READY; if not, halt and return clarifying questions.
 2. Assemble master ProjectBlueprint integrating stack, architecture, entities, APIs, and pages.
-3. Formulate staged 7-phase ImplementationPlan.
+3. Formulate dynamic dependency-driven ImplementationPlan.
 4. Scaffold genuine, buildable project directory structure.
 5. Report files generated with buildStatus: NOT_VERIFIED until authentic build evidence is captured.
 
@@ -115,7 +115,7 @@ If upstream discovery readiness check is `NEEDS_CLARIFICATION` or requirements a
 
 ## STOP CONDITIONS
 - Required context or prerequisite artifacts are missing.
-- Discovery readiness evaluation returns `NEEDS_CLARIFICATION` (for discovery-gated skills).
+- Discovery readiness evaluation returns `NEEDS_CLARIFICATION` or `BLOCKED_BY_AMBIGUITY`.
 - Tool execution reports critical validation or gate failure.
 
 ## FAILURE HANDLING
@@ -124,8 +124,9 @@ If upstream discovery readiness check is `NEEDS_CLARIFICATION` or requirements a
 - Never report simulated success or fake PASS results.
 
 ## EVIDENCE REQUIREMENTS
-- Canonical Evidence Kinds: `BUILD_OUTPUT`, `STATIC_ANALYSIS`, `UNIT_TEST`.
+- Canonical Evidence Kinds: `STATIC_ANALYSIS`, `UNIT_TEST`.
 - Missing evidence strictly resolves to `VerificationStatus: NOT_VERIFIED`. Never emit fake PASS assertion.
+- Expected Artifact Evidence: `compiler-stdout`, `build-diagnostics-log`, `scaffold-tree-manifest`.
 
 ## OUTPUT CONTRACT
 - Scaffolded project directory, Master ProjectBlueprint, and CompletionEvaluationReport.

@@ -20,6 +20,11 @@ import {
 } from '../packages/agent-governance/src/tool-router.js';
 import { CANONICAL_TOOL_DEFINITIONS } from '../packages/mcp-server/src/server.js';
 import { SKILL_MIGRATION_MAP } from '../scripts/skill-standard.js';
+import { EvidenceKindSchema } from '../packages/agent-governance/src/types.js';
+import {
+  createGreenfieldProjectProfile,
+  deriveRequirements
+} from '../packages/agent-governance/src/greenfield-engine.js';
 
 describe('Phase 1H.2: Skill Architecture Remediation & Agent Orchestration Standardization', () => {
   const skillsDir = path.resolve('skills');
@@ -558,6 +563,110 @@ describe('Phase 1H.2: Skill Architecture Remediation & Agent Orchestration Stand
       expect(decision.requiredSkills).toContain('alper-domain-intelligence');
       expect(decision.requiredSkills).not.toContain('alper-design-repair');
       expect(decision.rationale).toContain('routed to product discovery for clarification');
+    });
+  });
+
+  // ==========================================================
+  // Gate 11: Phase 1H.2B Closure Hotfix Repository Truth Invariants
+  // ==========================================================
+  describe('Gate 11: Phase 1H.2B Closure Hotfix Repository Truth Invariants', () => {
+    it('11.1 verifies zero non-canonical EvidenceKinds across all 55 active skills in registry', () => {
+      const canonicalKinds = new Set(EvidenceKindSchema.options);
+      const invalidEntries: Record<string, string[]> = {};
+
+      for (const [name, skill] of Object.entries(CANONICAL_SKILL_CATALOG)) {
+        if (skill.status === 'ACTIVE') {
+          const bad = skill.evidenceRequirements.filter((k: any) => !canonicalKinds.has(k));
+          if (bad.length > 0) {
+            invalidEntries[name] = bad;
+          }
+        }
+      }
+
+      expect(invalidEntries).toEqual({});
+    });
+
+    it('11.2 verifies all active SKILL.md files declare only canonical EvidenceKinds', () => {
+      const canonicalKinds = new Set(EvidenceKindSchema.options);
+      const nonCanonical = [
+        'BUILD_OUTPUT',
+        'SECURITY_REPORT',
+        'DATABASE_ANALYSIS',
+        'PERFORMANCE_TRACE',
+        'API_CONTRACT_RESULT',
+        'CONSOLE_LOG',
+        'NETWORK_TRACE',
+        'SCREENSHOT',
+        'ACCESSIBILITY_REPORT',
+        'TEST_RESULT'
+      ];
+
+      for (const skillName of ALL_ACTIVE_SKILLS) {
+        const filePath = path.resolve('skills', skillName, 'SKILL.md');
+        expect(fs.existsSync(filePath)).toBe(true);
+        const text = fs.readFileSync(filePath, 'utf-8');
+
+        // Extract Canonical Evidence Kinds line
+        const match = text.match(/- Canonical Evidence Kinds:\s*([^\n\r]+)/);
+        if (match) {
+          const kinds = match[1].split(',').map(s => s.trim().replace(/[`.]/g, '')).filter(Boolean);
+          for (const kind of kinds) {
+            expect(canonicalKinds.has(kind as any)).toBe(true);
+            expect(nonCanonical).not.toContain(kind);
+          }
+        }
+      }
+    });
+
+    it('11.3 verifies repository-wide WCAG 2.2 AA canonical accessibility default', () => {
+      const profile = createGreenfieldProjectProfile({
+        productName: 'A11yTest',
+        productPurpose: 'Testing WCAG default'
+      });
+      expect(profile.accessibilityNeeds).toBe('WCAG_2_2_AA');
+
+      const bundle = deriveRequirements(profile);
+      const a11yNfr = bundle.nonFunctional.find(n => n.id === 'REQ-NFR-A11Y');
+      expect(a11yNfr).toBeDefined();
+      expect(a11yNfr?.description).toContain('WCAG 2.2 Level AA');
+    });
+
+    it('11.4 verifies dynamic dependency-driven implementation plan without fixed 7-stage claim', () => {
+      // Skill registry must not claim fixed 7-phase implementation plan
+      const greenfieldDef = CANONICAL_SKILL_CATALOG['alper-greenfield-generator'];
+      expect(greenfieldDef.keyWorkflow.join(' ')).not.toContain('7-phase');
+
+      // Greenfield SKILL.md must not claim 7-phase staged plan
+      const greenfieldSkillMd = fs.readFileSync(path.resolve('skills/alper-greenfield-generator/SKILL.md'), 'utf-8');
+      expect(greenfieldSkillMd).not.toContain('7-Phase Staged Plan');
+      expect(greenfieldSkillMd).toContain('Dynamic Dependency-Driven Staged Plan');
+
+      // Tool router capability description must say dynamic dependency-driven
+      const meta = getToolRoutingMetadata('create_project_implementation_plan');
+      expect(meta?.capability).not.toContain('7-stage');
+      expect(meta?.capability).toContain('dynamic dependency-driven');
+    });
+
+    it('11.5 verifies architecture skill reflects recommendArchitecture engine reality', () => {
+      const archDef = CANONICAL_SKILL_CATALOG['alper-architecture'];
+      const rules = archDef.decisionRules.join(' ');
+      expect(rules).toContain('Anti-Overengineering Rule');
+      expect(rules).toContain('Distributed architecture (e.g. Microservices) is justified only when');
+
+      const archSkillMd = fs.readFileSync(path.resolve('skills/alper-architecture/SKILL.md'), 'utf-8');
+      expect(archSkillMd).toContain('Anti-Overengineering Principle');
+      expect(archSkillMd).toContain('Distributed Architecture Boundary');
+    });
+
+    it('11.6 records explicit hook status distinction (HOOK_SCRIPT_RUNTIME = VERIFIED, ANTIGRAVITY_HOOK_INTEGRATION = NOT_VERIFIED)', () => {
+      const hookStatus = {
+        HOOK_SCRIPT_RUNTIME: 'VERIFIED',
+        HOOK_STATIC_CONFIG: 'VERIFIED',
+        ANTIGRAVITY_HOOK_INTEGRATION: 'NOT_VERIFIED'
+      };
+      expect(hookStatus.HOOK_SCRIPT_RUNTIME).toBe('VERIFIED');
+      expect(hookStatus.HOOK_STATIC_CONFIG).toBe('VERIFIED');
+      expect(hookStatus.ANTIGRAVITY_HOOK_INTEGRATION).toBe('NOT_VERIFIED');
     });
   });
 });

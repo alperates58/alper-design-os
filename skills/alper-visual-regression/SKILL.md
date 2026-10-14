@@ -78,7 +78,6 @@ Operates on concrete, localized technical artifacts (e.g. query plans, code diff
 
 ## STOP CONDITIONS
 - Required context or prerequisite artifacts are missing.
-- Discovery readiness evaluation returns `NEEDS_CLARIFICATION` (for discovery-gated skills).
 - Tool execution reports critical validation or gate failure.
 
 ## FAILURE HANDLING
@@ -87,8 +86,9 @@ Operates on concrete, localized technical artifacts (e.g. query plans, code diff
 - Never report simulated success or fake PASS results.
 
 ## EVIDENCE REQUIREMENTS
-- Canonical Evidence Kinds: `VISUAL_DIFF`, `SCREENSHOT`.
+- Canonical Evidence Kinds: `VISUAL_DIFF`.
 - Missing evidence strictly resolves to `VerificationStatus: NOT_VERIFIED`. Never emit fake PASS assertion.
+- Expected Artifact Evidence: `viewport-screenshot-png`, `pixel-difference-map`, `percy-playwright-diff`.
 
 ## OUTPUT CONTRACT
 - VisualDiffArtifactCollection and VisualRegressionAuditReport.

@@ -79,8 +79,9 @@ If input requirements are incomplete, contradictory, or underspecified, formulat
 
 ## STOP CONDITIONS
 - Required context or prerequisite artifacts are missing.
-- Discovery readiness evaluation returns `NEEDS_CLARIFICATION` (for discovery-gated skills).
+- Discovery readiness evaluation returns `NEEDS_CLARIFICATION` or `BLOCKED_BY_AMBIGUITY`.
 - Tool execution reports critical validation or gate failure.
+- Unsafe table locks or non-reversible destructive schema migrations detected.
 
 ## FAILURE HANDLING
 - On schema failure: Log exact validation error, preserve rollback checkpoint, and return non-zero exit code.
@@ -88,8 +89,9 @@ If input requirements are incomplete, contradictory, or underspecified, formulat
 - Never report simulated success or fake PASS results.
 
 ## EVIDENCE REQUIREMENTS
-- Canonical Evidence Kinds: `STATIC_ANALYSIS`, `DATABASE_ANALYSIS`.
+- Canonical Evidence Kinds: `STATIC_ANALYSIS`.
 - Missing evidence strictly resolves to `VerificationStatus: NOT_VERIFIED`. Never emit fake PASS assertion.
+- Expected Artifact Evidence: `database-query-plan`, `ddl-schema-ast`, `foreign-key-graph`.
 
 ## OUTPUT CONTRACT
 - DatabaseBlueprint containing table schemas, relations, and constraint definitions.

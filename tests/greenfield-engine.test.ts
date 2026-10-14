@@ -69,6 +69,16 @@ describe('ALPER DESIGN OS - FAZ 1G: New Project Generation Engine V1', () => {
       }
     }
 
+    // Canonical WCAG 2.2 AA default verification
+    const a11yReq = bundle.nonFunctional.find(n => n.id === 'REQ-NFR-A11Y');
+    expect(a11yReq).toBeDefined();
+    expect(a11yReq?.description).toContain('WCAG 2.2 Level AA');
+
+    // Business rules provenance verification
+    for (const br of bundle.businessRules) {
+      expect(['EXPLICIT_REQUIREMENT', 'POLICY_REQUIREMENT', 'REVERSIBLE_ASSUMPTION', 'DOMAIN_INFERENCE']).toContain(br.provenance);
+    }
+
     // Acceptance criteria must carry Gherkin format and initialize as DEFINED / NOT_VERIFIED
     for (const ac of bundle.acceptanceCriteria) {
       expect(ac.given).toBeDefined();
@@ -100,6 +110,34 @@ describe('ALPER DESIGN OS - FAZ 1G: New Project Generation Engine V1', () => {
     expect(rtm.untraceableCount).toBeDefined();
     expect(Array.isArray(rtm.orphanRequirements)).toBe(true);
     expect(Array.isArray(rtm.unexpectedFeatures)).toBe(true);
+  });
+
+  // 3b. Requirement Traceability Never Invents Targets
+  it('3b. requirement traceability matrix never invents targets when artifacts are absent', () => {
+    const bench = loadBenchmark('small-internal-crud.json');
+    const profile = createGreenfieldProjectProfile(bench.expectedProfile);
+    const bundle = deriveRequirements(profile, bench.userBrief);
+
+    // Call RTM with empty artifacts object
+    const rtm = createRequirementTraceability(bundle.functional, {});
+
+    // Must NOT contain hallucinated strings
+    for (const item of rtm.items) {
+      for (const edge of item.edges) {
+        if (edge.applicability === 'APPLICABLE') {
+          expect(edge.targetId).toBeUndefined();
+          expect(edge.reason).toContain('UNRESOLVED');
+          expect(edge.targetId).not.toBe('DECISION_MONOLITH');
+          expect(edge.targetId).not.toBe('users');
+          expect(edge.targetId).not.toBe('/api/v1/health');
+          expect(edge.targetId).not.toBe('PAGE_DASHBOARD');
+          expect(edge.targetId).not.toBe('test_suite');
+        }
+      }
+      expect(item.status).toBe('ORPHAN');
+    }
+    expect(rtm.orphanRequirements.length).toBe(bundle.functional.length);
+    expect(rtm.coveragePercentage).toBe(0);
   });
 
   // 4. Anti-Overengineering Architecture Selection (Small CRUD)
@@ -289,23 +327,46 @@ describe('ALPER DESIGN OS - FAZ 1G: New Project Generation Engine V1', () => {
     expect(blueprint.boundaryContract.allowedFeatureIds.length).toBeGreaterThan(0);
   });
 
-  // 14. Implementation Plan Generation
-  it('14. generates staged project implementation plan with checkpoints and verification points', () => {
+  // 14. Implementation Plan Generation (Dynamic Dependency-Driven Stages)
+  it('14. derives implementation stages dynamically from dependencies and project features', () => {
     const bench = loadBenchmark('small-internal-crud.json');
     const profile = createGreenfieldProjectProfile(bench.expectedProfile);
     const blueprint = createNewProjectBlueprint(profile, { userPreferredStack: 'REACT_TYPESCRIPT' });
 
-    const plan = createProjectImplementationPlan(blueprint);
+    // 1. Standard CRUD has 7 stages
+    const planStandard = createProjectImplementationPlan(blueprint);
+    expect(planStandard.stages.length).toBe(7);
+    expect(planStandard.stages.map(s => s.type)).toEqual([
+      'FOUNDATION',
+      'DATA',
+      'API',
+      'AUTH',
+      'SHELL',
+      'CORE_WORKFLOW',
+      'HARDENING'
+    ]);
+    expect(planStandard.estimatedDays).toBeGreaterThan(0);
 
-    expect(plan.stages.length).toBe(7);
-    expect(plan.stages[0].stageId).toBe('STAGE_1_FOUNDATION');
-    expect(plan.stages[1].stageId).toBe('STAGE_2_DATA_MODEL');
-    expect(plan.stages[2].stageId).toBe('STAGE_3_API_SURFACE');
-    expect(plan.stages[3].stageId).toBe('STAGE_4_AUTH');
-    expect(plan.stages[4].stageId).toBe('STAGE_5_APP_SHELL');
-    expect(plan.stages[5].stageId).toBe('STAGE_6_CORE_WORKFLOW');
-    expect(plan.stages[6].stageId).toBe('STAGE_7_QA_HARDENING');
-    expect(plan.estimatedDays).toBeGreaterThan(0);
+    // 2. Project with reporting needs dynamically generates 8 stages (adding SECONDARY_WORKFLOW)
+    const profileWithReporting = createGreenfieldProjectProfile({
+      ...bench.expectedProfile,
+      reportingNeeds: true
+    });
+    const blueprintWithReporting = createNewProjectBlueprint(profileWithReporting, { userPreferredStack: 'REACT_TYPESCRIPT' });
+    const planWithReporting = createProjectImplementationPlan(blueprintWithReporting);
+    expect(planWithReporting.stages.length).toBe(8);
+    expect(planWithReporting.stages.some(s => s.type === 'SECONDARY_WORKFLOW')).toBe(true);
+
+    // 3. Project without database/api dynamically produces fewer stages
+    const blueprintMinimal = {
+      ...blueprint,
+      database: { ...blueprint.database, entities: [], tables: [] },
+      api: { ...blueprint.api, endpoints: [] }
+    };
+    const planMinimal = createProjectImplementationPlan(blueprintMinimal);
+    expect(planMinimal.stages.length).toBeLessThan(7);
+    expect(planMinimal.stages.map(s => s.type)).not.toContain('DATA');
+    expect(planMinimal.stages.map(s => s.type)).not.toContain('API');
   });
 
   // 15. Concrete Buildable Scaffolding: React + TypeScript

@@ -4,8 +4,8 @@
 
 [![License: MIT](https://img.shields.io/badge/Lisans-MIT-blue.svg)](LICENSE_POLICY.md)
 [![TypeScript: Strict](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](tsconfig.json)
-[![Antigravity Plugin Ready](https://img.shields.io/badge/Antigravity-72%20Skills%20Registered-emerald.svg)](plugin.json)
-[![Tests: 447 Passed](https://img.shields.io/badge/Tests-447%20Passed%20(20%20Suites)-brightgreen.svg)](tests/)
+[![Antigravity Plugin Ready](https://img.shields.io/badge/Antigravity-74%20Skills%20(55%20Active)-emerald.svg)](plugin.json)
+[![Tests: 491 Passed](https://img.shields.io/badge/Tests-491%20Passed%20(21%20Suites)-brightgreen.svg)](tests/)
 [![MCP Server: 124 Tools](https://img.shields.io/badge/MCP%20Server-124%20Tools-purple.svg)](packages/mcp-server/)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](scripts/)
 
@@ -93,6 +93,15 @@ Bünyesinde **72 adet Antigravity Yeteneği (Skill)**, **124 adet tip güvenli M
     * **Kademeli İfşa (Progressive Disclosure):** Karmaşık yetenekler (`stack-templates.md`, `preservation-checklist.md`, vb.) `references/` dizinleri altında derinleştirildi.
     * **6 Ajan Personası Standardizasyonu:** `agents/*.md` dosyaları rol, girdiler, çıktılar, araç sınırları ve el sıkışma (handoff) protokolü ile tipikleştirildi.
     * **Yıkıcı Komut Koruması:** `hooks.json` ve `scripts/guard-destructive-command.js` ile `git reset --hard` / `git push --force` gibi operasyonlar engellendi.
+    * **Kanıt Ayrımı:** `HOOK_SCRIPT_RUNTIME = VERIFIED`, `HOOK_STATIC_CONFIG = VERIFIED`, `ANTIGRAVITY_HOOK_INTEGRATION = NOT_VERIFIED` statüleri açıkça belgelendi.
+
+14. **Phase 1H.2B Kapanış Düzeltmesi (Evidence Taxonomy, Traceability & WCAG 2.2 AA Truth):**
+    * **Kanonik Kanıt Taksonomisi:** Tüm 55 aktif yetenekten sahte `EvidenceKind` değerleri (`BUILD_OUTPUT`, `SECURITY_REPORT`, `DATABASE_ANALYSIS`, `PERFORMANCE_TRACE` vb.) temizlendi; production `EvidenceKind` enum'ına (`STATIC_ANALYSIS`, `RUNTIME_CHECK`, vb.) bağlandı ve somut artefaktlar `evidenceArtifacts` olarak modellendi.
+    * **WCAG 2.2 AA Kanonik Standart:** Tüm yeşil alan (greenfield) motorları ve mimari profilleri için kanonik erişilebilirlik varsayılanı `WCAG_2_2_AA` olarak eşitlendi; geriye dönük WCAG 2.1 AA uyumluluğu korundu.
+    * **Dinamik Bağımlılık Güdümlü Fazlandırma:** Sabit "7-Aşamalı Plan" iddiası kaldırıldı; projenin veritabanı, API, kimlik doğrulama ve raporlama ihtiyaçlarına göre dinamik aşama türetimi sağlandı.
+    * **RTM Doğruluğu & Sıfır Sahte Hedef:** Eksik mimari ve veritabanı artefaktlarında sahte string (`DECISION_MONOLITH`, `users`, `/api/v1/health` vb.) uydurma davranışı silindi; bulunamayan hedefler `undefined` ve `UNRESOLVED` ile izlenemeyen gereksinimler doğru şekilde `ORPHAN` olarak işaretlendi.
+    * **Mimari Yetenek Uyumu:** `alper-architecture` yeteneği `recommendArchitecture()` motoruna uygun şekilde güncellendi; küçük CRUD projelerinde modüler monolit önceliği korunurken mikroservis mimarisine aşırı ölçek durumlarında izin veren gerçekçi kural seti sağlandı.
+    * **Taşınan Doğrulama Borcu:** `GENERATED_PROJECT_REAL_BUILDS = NOT_VERIFIED` statüsü korunarak Phase 1I öncesi dürüst kanıt temeli sağlandı.
 
 ---
 

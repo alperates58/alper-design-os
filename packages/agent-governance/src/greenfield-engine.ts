@@ -446,8 +446,8 @@ export function evaluateDiscoveryReadiness(
   if (!profileObj.accessibilityNeeds) {
     assumptions.push({
       id: 'ASSUMP-A11Y-DEFAULT',
-      statement: 'Applying WCAG 2.1 AA accessibility baseline as reversible platform default.',
-      category: 'LOW_IMPACT_DEFAULT',
+      statement: 'Applying WCAG 2.2 AA accessibility baseline as canonical platform default.',
+      category: 'POLICY_REQUIREMENT',
       reversible: true,
       impactArea: 'ACCESSIBILITY'
     });
@@ -510,7 +510,7 @@ export function createGreenfieldProjectProfile(
     integrationNeeds: input.integrationNeeds || [],
     reportingNeeds: Boolean(input.reportingNeeds),
     localizationNeeds: input.localizationNeeds && input.localizationNeeds.length > 0 ? input.localizationNeeds : ['en'],
-    accessibilityNeeds: input.accessibilityNeeds || 'WCAG_2_1_AA',
+    accessibilityNeeds: input.accessibilityNeeds || 'WCAG_2_2_AA',
     deploymentEnvironment: input.deploymentEnvironment || 'DOCKER',
     operationalConstraints: input.operationalConstraints || ['Standard enterprise network environment'],
     unknowns: input.unknowns || ['Exact peak concurrent users during launch week'],
@@ -626,12 +626,19 @@ export function deriveRequirements(
     verificationStatus: 'NOT_VERIFIED'
   });
 
+  const a11yStandard = Array.isArray(profile.accessibilityNeeds)
+    ? profile.accessibilityNeeds.join(', ')
+    : String(profile.accessibilityNeeds || 'WCAG_2_2_AA');
+  const a11yDesc = a11yStandard.includes('2_1')
+    ? 'The interface shall comply with WCAG 2.1 Level AA contrast and keyboard accessibility.'
+    : 'The interface shall comply with WCAG 2.2 Level AA contrast and keyboard accessibility.';
+
   nonFunctional.push({
     id: 'REQ-NFR-A11Y',
     category: 'ACCESSIBILITY',
-    description: 'The interface shall comply with WCAG 2.1 Level AA contrast and keyboard accessibility.',
+    description: a11yDesc,
     targetMetric: 'Contrast >= 4.5:1, Full keyboard focus cycle, ARIA live alerts',
-    source: Array.isArray(profile.accessibilityNeeds) ? profile.accessibilityNeeds.join(', ') : String(profile.accessibilityNeeds),
+    source: a11yStandard,
     priority: 'MUST_HAVE',
     confidence: 1.0,
     verificationMethod: 'A11Y_AUDIT',
@@ -675,6 +682,7 @@ export function deriveRequirements(
     id: 'BR-001',
     statement: 'Domain entities cannot be permanently deleted if referenced by active operational workflows.',
     source: 'Domain Data Integrity Specification',
+    provenance: 'DOMAIN_INFERENCE',
     enforcement: 'BLOCK',
     affectedEntities: groundedEntityNames
   });
@@ -683,6 +691,7 @@ export function deriveRequirements(
     id: 'BR-002',
     statement: 'Sensitive PII and credentials must never appear in unmasked log statements.',
     source: 'Data Privacy Standard',
+    provenance: 'POLICY_REQUIREMENT',
     enforcement: 'BLOCK',
     affectedEntities: ['User']
   });
@@ -780,20 +789,21 @@ export function createRequirementTraceability(
     const isAccessibility = req.id.includes('A11Y') || req.title?.toLowerCase().includes('accessibility');
     const isPerformance = req.id.includes('PERF') || req.title?.toLowerCase().includes('performance');
 
-    const mappedPages = pageIds.filter(p => p.toLowerCase().includes(req.id.toLowerCase().replace('req-f-', '')) || p.includes('PAGE_') || p.includes('Asset') || p.includes('Inventory'));
-    const mappedEntities = entityIds.filter(e => req.title.toLowerCase().includes(e.toLowerCase()) || entityIds.length > 0);
-    const mappedRoutes = routeIds.filter(r => req.title.toLowerCase().includes(r.toLowerCase()) || routeIds.length > 0);
-    const mappedFiles = files.filter(f => f.includes('src/') || f.includes('app/') || f.includes('Pages/') || files.length > 0);
-    const mappedTests = testIds.filter(t => t.includes(req.id) || testIds.length > 0);
+    const mappedPages = pageIds.filter(p => p.toLowerCase().includes(req.id.toLowerCase().replace('req-f-', '')) || (pageIds.length > 0 && (p.includes('Asset') || p.includes('PAGE_'))));
+    const mappedEntities = entityIds.filter(e => req.title?.toLowerCase().includes(e.toLowerCase()));
+    const mappedRoutes = routeIds.filter(r => req.title?.toLowerCase().includes(r.toLowerCase()));
+    const mappedFiles = files.filter(f => f.includes('src/') || f.includes('app/') || f.includes('Pages/'));
+    const mappedTests = testIds.filter(t => t.includes(req.id));
 
     const edges: RequirementTraceabilityEdge[] = [];
 
     // 1. Architecture edge
+    const archTarget = archIds[0] || undefined;
     edges.push({
       targetType: 'ARCHITECTURE',
-      targetId: archIds[0] || 'DECISION_MONOLITH',
+      targetId: archTarget,
       applicability: 'APPLICABLE',
-      reason: 'Architecture decision establishes system boundaries'
+      reason: archTarget ? 'Architecture decision establishes system boundaries' : 'UNRESOLVED: Target artifact not supplied'
     });
 
     // 2. Database edge
@@ -804,45 +814,49 @@ export function createRequirementTraceability(
         reason: 'Accessibility and performance requirements do not require persistent database entities'
       });
     } else {
+      const dbTarget = mappedEntities[0] || entityIds[0] || undefined;
       edges.push({
         targetType: 'DATABASE',
-        targetId: mappedEntities[0] || entityIds[0] || 'users',
+        targetId: dbTarget,
         applicability: 'APPLICABLE',
-        reason: 'Persists domain state required for functionality'
+        reason: dbTarget ? 'Persists domain state required for functionality' : 'UNRESOLVED: Target artifact not supplied'
       });
     }
 
     // 3. API edge
+    const apiTarget = mappedRoutes[0] || routeIds[0] || undefined;
     edges.push({
       targetType: 'API',
-      targetId: mappedRoutes[0] || routeIds[0] || '/api/v1/health',
+      targetId: apiTarget,
       applicability: 'APPLICABLE',
-      reason: 'Exposes interface operations for clients'
+      reason: apiTarget ? 'Exposes interface operations for clients' : 'UNRESOLVED: Target artifact not supplied'
     });
 
     // 4. UI edge
+    const uiTarget = mappedPages[0] || pageIds[0] || undefined;
     edges.push({
       targetType: 'UI',
-      targetId: mappedPages[0] || pageIds[0] || 'PAGE_DASHBOARD',
+      targetId: uiTarget,
       applicability: 'APPLICABLE',
-      reason: 'Renders visual interaction elements'
+      reason: uiTarget ? 'Renders visual interaction elements' : 'UNRESOLVED: Target artifact not supplied'
     });
 
     // 5. Test edge
+    const testTarget = mappedTests[0] || testIds[0] || undefined;
     edges.push({
       targetType: 'TEST',
-      targetId: mappedTests[0] || testIds[0] || 'test_suite',
+      targetId: testTarget,
       applicability: 'APPLICABLE',
-      reason: 'Automated verification test contract'
+      reason: testTarget ? 'Automated verification test contract' : 'UNRESOLVED: Target artifact not supplied'
     });
-
-    const isCovered = mappedPages.length > 0 || mappedEntities.length > 0 || mappedRoutes.length > 0 || mappedFiles.length > 0;
 
     // Only flag orphan if applicable targets are genuinely missing
     const hasMissingApplicableTarget = edges.some(e => e.applicability === 'APPLICABLE' && !e.targetId);
-    if (!isCovered && hasMissingApplicableTarget) {
+    if (hasMissingApplicableTarget) {
       orphanRequirements.push(req.id);
     }
+
+    const isCovered = !hasMissingApplicableTarget;
 
     items.push({
       requirementId: req.id,
@@ -851,9 +865,9 @@ export function createRequirementTraceability(
       apiRouteIds: mappedRoutes.length > 0 ? mappedRoutes.slice(0, 3) : routeIds.slice(0, 2),
       pageIds: mappedPages.length > 0 ? mappedPages.slice(0, 2) : pageIds.slice(0, 2),
       implementationFiles: mappedFiles.slice(0, 3),
-      testIds: mappedTests.slice(0, 2),
+      testIds: mappedTests.length > 0 ? mappedTests.slice(0, 2) : testIds.slice(0, 2),
       edges,
-      status: isCovered ? (mappedTests.length > 0 ? 'TESTED' : 'IMPLEMENTED') : 'ORPHAN'
+      status: isCovered ? (testIds.length > 0 ? 'TESTED' : 'IMPLEMENTED') : 'ORPHAN'
     });
   }
 
@@ -1927,10 +1941,13 @@ export function createProjectImplementationPlan(
     ? ['tokens.css', 'Dockerfile', 'docker-compose.yml', '.env.example', 'README.md']
     : ['tokens.css', '.env.example', 'README.md'];
 
-  // Stage 1: Foundation
+  let stageOrder = 1;
+
+  // Stage 1: Foundation (always needed)
+  const foundationStageId = `STAGE_${stageOrder}_FOUNDATION`;
   stages.push({
-    stageId: 'STAGE_1_FOUNDATION',
-    order: 1,
+    stageId: foundationStageId,
+    order: stageOrder++,
     type: 'FOUNDATION',
     name: 'Base Scaffolding & Design Token Architecture',
     objective: 'Initialize repo structure, compiler configs, DTCG tokens, environment configuration, and README.',
@@ -1942,90 +1959,135 @@ export function createProjectImplementationPlan(
     rollbackSteps: ['Purge generated root files and reset repository directory']
   });
 
-  // Stage 2: Data Model
-  stages.push({
-    stageId: 'STAGE_2_DATA_MODEL',
-    order: 2,
-    type: 'DATA',
-    name: 'Database Entities & Migrations',
-    objective: 'Scaffold database entities, relationships, constraints, and initial SQL migration.',
-    filesToCreate: ['migrations/001_initial_schema.sql', 'models/entities.ts'],
-    dependencies: ['STAGE_1_FOUNDATION'],
-    requirementsSatisfied: ['BR-001', 'REQ-F-001'],
-    testsToRun: ['sql-schema-validation'],
-    verificationKind: 'STATIC_ANALYSIS',
-    rollbackSteps: ['Drop generated tables and revert migration files']
-  });
+  // Stage: Data Model (conditional on database blueprint having entities/tables)
+  const hasDatabase = blueprint.database && (
+    (blueprint.database.entities && blueprint.database.entities.length > 0) ||
+    (blueprint.database.tables && blueprint.database.tables.length > 0)
+  );
+  let dataStageId: string | undefined;
+  if (hasDatabase) {
+    dataStageId = `STAGE_${stageOrder}_DATA_MODEL`;
+    stages.push({
+      stageId: dataStageId,
+      order: stageOrder++,
+      type: 'DATA',
+      name: 'Database Entities & Migrations',
+      objective: 'Scaffold database entities, relationships, constraints, and initial SQL migration.',
+      filesToCreate: ['migrations/001_initial_schema.sql', 'models/entities.ts'],
+      dependencies: [foundationStageId],
+      requirementsSatisfied: ['BR-001', 'REQ-F-001'],
+      testsToRun: ['sql-schema-validation'],
+      verificationKind: 'STATIC_ANALYSIS',
+      rollbackSteps: ['Drop generated tables and revert migration files']
+    });
+  }
 
-  // Stage 3: API Surface
-  stages.push({
-    stageId: 'STAGE_3_API_SURFACE',
-    order: 3,
-    type: 'API',
-    name: 'REST API Contracts & Endpoints',
-    objective: 'Implement API router, endpoint request/response schemas, and health endpoint.',
-    filesToCreate: ['api/routes.ts', 'api/health.ts', 'api/openapi.json'],
-    dependencies: ['STAGE_2_DATA_MODEL'],
-    requirementsSatisfied: ['REQ-F-001', 'REQ-F-SEARCH'],
-    testsToRun: ['api-contract-tests'],
-    verificationKind: 'INTEGRATION_TEST',
-    rollbackSteps: ['Remove API routes']
-  });
+  // Stage: API Surface (conditional on API blueprint or endpoints)
+  const hasApi = blueprint.api && blueprint.api.endpoints && blueprint.api.endpoints.length > 0;
+  let apiStageId: string | undefined;
+  if (hasApi) {
+    apiStageId = `STAGE_${stageOrder}_API_SURFACE`;
+    stages.push({
+      stageId: apiStageId,
+      order: stageOrder++,
+      type: 'API',
+      name: 'REST API Contracts & Endpoints',
+      objective: 'Implement API router, endpoint request/response schemas, and health endpoint.',
+      filesToCreate: ['api/routes.ts', 'api/health.ts', 'api/openapi.json'],
+      dependencies: dataStageId ? [dataStageId] : [foundationStageId],
+      requirementsSatisfied: ['REQ-F-001', 'REQ-F-SEARCH'],
+      testsToRun: ['api-contract-tests'],
+      verificationKind: 'INTEGRATION_TEST',
+      rollbackSteps: ['Remove API routes']
+    });
+  }
 
-  // Stage 4: Authentication & Authorization
-  stages.push({
-    stageId: 'STAGE_4_AUTH',
-    order: 4,
-    type: 'AUTH',
-    name: 'Security, Session & RBAC Middleware',
-    objective: 'Implement credential verification, secure cookie issuance, and RBAC guard middleware.',
-    filesToCreate: ['auth/auth-controller.ts', 'auth/rbac-middleware.ts'],
-    dependencies: ['STAGE_3_API_SURFACE'],
-    requirementsSatisfied: ['REQ-F-AUTH', 'REQ-NFR-SEC', 'BR-002'],
-    testsToRun: ['auth-unit-tests'],
-    verificationKind: 'UNIT_TEST',
-    rollbackSteps: ['Revert auth controllers and restore open routes']
-  });
+  // Stage: Authentication & Authorization (conditional on auth requirements or auth model)
+  const hasAuth = blueprint.authN || blueprint.authZ || blueprint.requirements?.functional?.some((f: any) => f.id.includes('AUTH'));
+  let authStageId: string | undefined;
+  if (hasAuth) {
+    authStageId = `STAGE_${stageOrder}_AUTH`;
+    stages.push({
+      stageId: authStageId,
+      order: stageOrder++,
+      type: 'AUTH',
+      name: 'Security, Session & RBAC Middleware',
+      objective: 'Implement credential verification, secure cookie issuance, and RBAC guard middleware.',
+      filesToCreate: ['auth/auth-controller.ts', 'auth/rbac-middleware.ts'],
+      dependencies: apiStageId ? [apiStageId] : [foundationStageId],
+      requirementsSatisfied: ['REQ-F-AUTH', 'REQ-NFR-SEC', 'BR-002'],
+      testsToRun: ['auth-unit-tests'],
+      verificationKind: 'UNIT_TEST',
+      rollbackSteps: ['Revert auth controllers and restore open routes']
+    });
+  }
 
-  // Stage 5: Application Shell
+  // Stage: Application Shell (layout, header, navigation)
+  const shellStageId = `STAGE_${stageOrder}_APP_SHELL`;
+  const shellDeps = [foundationStageId];
+  if (authStageId) shellDeps.push(authStageId);
   stages.push({
-    stageId: 'STAGE_5_APP_SHELL',
-    order: 5,
+    stageId: shellStageId,
+    order: stageOrder++,
     type: 'SHELL',
     name: 'Layout Shell & Master Navigation',
     objective: 'Scaffold responsive application header, sidebar navigation, and main content area.',
     filesToCreate: ['components/Shell.tsx', 'components/Navbar.tsx', 'components/Sidebar.tsx'],
-    dependencies: ['STAGE_1_FOUNDATION', 'STAGE_4_AUTH'],
+    dependencies: shellDeps,
     requirementsSatisfied: ['REQ-NFR-A11Y'],
     testsToRun: ['shell-render-test'],
     verificationKind: 'STATIC_ANALYSIS',
     rollbackSteps: ['Restore empty root container']
   });
 
-  // Stage 6: Core Workflows & Page States
+  // Stage: Core Workflows & Page States
+  const coreDeps = [shellStageId];
+  if (apiStageId) coreDeps.push(apiStageId);
+  const coreStageId = `STAGE_${stageOrder}_CORE_WORKFLOW`;
   stages.push({
-    stageId: 'STAGE_6_CORE_WORKFLOW',
-    order: 6,
+    stageId: coreStageId,
+    order: stageOrder++,
     type: 'CORE_WORKFLOW',
     name: 'Primary Directory Grid & Detail Workflow',
     objective: 'Implement primary listing table, search/filter controls, and multi-state detail view (LOADING, EMPTY, SUCCESS, ERROR).',
     filesToCreate: ['pages/DirectoryView.tsx', 'pages/DetailView.tsx', 'components/DataTable.tsx'],
-    dependencies: ['STAGE_5_APP_SHELL', 'STAGE_3_API_SURFACE'],
+    dependencies: coreDeps,
     requirementsSatisfied: ['REQ-F-001', 'REQ-F-SEARCH', 'JOURNEY-001'],
     testsToRun: ['workflow-browser-test'],
     verificationKind: 'INTEGRATION_TEST',
     rollbackSteps: ['Revert workflow page components']
   });
 
-  // Stage 7: QA & Hardening
+  // Stage: Secondary Workflows (Reporting / Realtime / Integrations) - conditional!
+  const hasSecondary = blueprint.productProfile?.reportingNeeds || blueprint.productProfile?.realtimeNeeds || (blueprint.productProfile?.integrationNeeds && blueprint.productProfile.integrationNeeds.length > 0);
+  let secondaryStageId: string | undefined;
+  if (hasSecondary) {
+    secondaryStageId = `STAGE_${stageOrder}_SECONDARY_WORKFLOW`;
+    stages.push({
+      stageId: secondaryStageId,
+      order: stageOrder++,
+      type: 'SECONDARY_WORKFLOW',
+      name: 'Secondary Workflows, Reporting & Realtime Sync',
+      objective: 'Scaffold analytical reporting views, export services, and real-time state synchronization.',
+      filesToCreate: ['pages/ReportingDashboard.tsx', 'components/DataExportDrawer.tsx'],
+      dependencies: [coreStageId],
+      requirementsSatisfied: ['REQ-F-SECONDARY'],
+      testsToRun: ['reporting-unit-tests'],
+      verificationKind: 'UNIT_TEST',
+      rollbackSteps: ['Revert secondary workflow components']
+    });
+  }
+
+  // Final Stage: QA & Hardening (always needed)
+  const hardeningDeps = [secondaryStageId || coreStageId];
   stages.push({
-    stageId: 'STAGE_7_QA_HARDENING',
-    order: 7,
+    stageId: `STAGE_${stageOrder}_QA_HARDENING`,
+    order: stageOrder++,
     type: 'HARDENING',
     name: 'Truthful UI Audit & Security Hardening',
     objective: 'Verify zero fake telemetry, enforce strict CSP headers, input validation, and WCAG AA contrast.',
     filesToCreate: ['security/security-headers.ts'],
-    dependencies: ['STAGE_6_CORE_WORKFLOW'],
+    dependencies: hardeningDeps,
     requirementsSatisfied: ['REQ-NFR-SEC', 'REQ-NFR-A11Y'],
     testsToRun: ['truthful-ui-audit', 'a11y-audit'],
     verificationKind: 'STATIC_ANALYSIS',
@@ -2037,7 +2099,7 @@ export function createProjectImplementationPlan(
     blueprintId: blueprint.blueprintId,
     stages,
     estimatedStages: stages.length,
-    estimatedDays: 14
+    estimatedDays: Math.ceil(stages.length * 2)
   });
 }
 
