@@ -74,7 +74,7 @@ describe('Phase 1I: Portability, CI/CD, Bootstrap & Distribution V1', () => {
   // 5. Safe Update Dirty-Worktree Protection
   it('5. strictly prevents non-destructive updates when dirty workspace files are detected', async () => {
     // Test safe update dirty check guard
-    const fakeDirtyFile = path.join(repoRoot, 'temp-dirty-test-file.txt');
+    const fakeDirtyFile = path.join(repoRoot, 'uncommitted-dirty-test-file.tmp');
     fs.writeFileSync(fakeDirtyFile, 'dirty content', 'utf-8');
 
     try {
