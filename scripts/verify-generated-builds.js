@@ -89,26 +89,36 @@ export async function verifyGeneratedBuilds(options = {}) {
       } else if (stack === 'REACT_TYPESCRIPT') {
         // React + TS: Real production build via Vite & TypeScript
         let logs = 'Executing React + TypeScript qualification contract...\n';
-        const installCmd = process.platform === 'win32'
-          ? 'npm.cmd install --no-audit --no-fund --prefer-offline'
-          : 'npm install --no-audit --no-fund --prefer-offline';
-        const buildCmd = process.platform === 'win32' ? 'npm.cmd run build' : 'npm run build';
+        let pm = 'npm';
+        try {
+          execSync(process.platform === 'win32' ? 'pnpm.cmd --version' : 'pnpm --version', { stdio: 'pipe' });
+          pm = 'pnpm';
+        } catch {}
+
+        const installCmd = pm === 'pnpm'
+          ? (process.platform === 'win32' ? 'pnpm.cmd install --no-frozen-lockfile' : 'pnpm install --no-frozen-lockfile')
+          : (process.platform === 'win32' ? 'npm.cmd install --no-audit --no-fund --prefer-offline' : 'npm install --no-audit --no-fund --prefer-offline');
+
+        const buildCmd = pm === 'pnpm'
+          ? (process.platform === 'win32' ? 'pnpm.cmd run build' : 'pnpm run build')
+          : (process.platform === 'win32' ? 'npm.cmd run build' : 'npm run build');
+
         let tscPath = path.join(repoRoot, 'node_modules', 'typescript', 'bin', 'tsc');
 
         try {
           // 1. Dependency Install
-          const installOut = execSync(installCmd, { cwd: stackDir, encoding: 'utf-8', shell: true, timeout: 180000 });
+          const installOut = execSync(installCmd, { cwd: stackDir, encoding: 'utf-8', shell: true, timeout: 120000, stdio: ['ignore', 'pipe', 'pipe'] });
           logs += `[1/3] Install:\n${installOut}\n`;
           qualificationContract.dimensions.dependencyInstall = { status: 'VERIFIED', command: installCmd };
 
           // 2. TypeScript Strict Compilation
           const tscCmd = `node "${tscPath}" --noEmit -p "${path.join(stackDir, 'tsconfig.json')}"`;
-          const tscOut = execSync(tscCmd, { cwd: stackDir, encoding: 'utf-8' });
+          const tscOut = execSync(tscCmd, { cwd: stackDir, encoding: 'utf-8', timeout: 120000, stdio: ['ignore', 'pipe', 'pipe'] });
           logs += `[2/3] TypeScript Compile:\n${tscOut || 'OK'}\n`;
           qualificationContract.dimensions.typeScriptCompile = { status: 'VERIFIED', command: 'tsc --noEmit' };
 
           // 3. Vite Production Build
-          const buildOut = execSync(buildCmd, { cwd: stackDir, encoding: 'utf-8', shell: true });
+          const buildOut = execSync(buildCmd, { cwd: stackDir, encoding: 'utf-8', shell: true, timeout: 120000, stdio: ['ignore', 'pipe', 'pipe'] });
           logs += `[3/3] Vite Build:\n${buildOut}\n`;
           qualificationContract.dimensions.viteProductionBuild = { status: 'VERIFIED', command: buildCmd };
 
@@ -298,13 +308,13 @@ export async function verifyGeneratedBuilds(options = {}) {
 
           // Restore
           const restoreCmd = 'dotnet restore App.csproj';
-          const restoreOut = execSync(restoreCmd, { cwd: stackDir, encoding: 'utf-8' });
+          const restoreOut = execSync(restoreCmd, { cwd: stackDir, encoding: 'utf-8', timeout: 120000, stdio: ['ignore', 'pipe', 'pipe'] });
           logs += `dotnet restore: OK\n${restoreOut}\n`;
           qualificationContract.dimensions.dotnetRestore = { status: 'VERIFIED', command: restoreCmd };
 
           // Build
           const buildCmd = 'dotnet build App.csproj --verbosity minimal';
-          const buildOut = execSync(buildCmd, { cwd: stackDir, encoding: 'utf-8' });
+          const buildOut = execSync(buildCmd, { cwd: stackDir, encoding: 'utf-8', timeout: 120000, stdio: ['ignore', 'pipe', 'pipe'] });
           logs += `dotnet build: OK\n${buildOut}\n`;
           qualificationContract.dimensions.dotnetBuild = { status: 'VERIFIED', command: buildCmd };
 
