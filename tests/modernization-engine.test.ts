@@ -1000,8 +1000,8 @@ describe('ALPER DESIGN OS - FAZ 1F.0.2: Evidence Provenance Hardening & Multi-St
     expect(drill.dependencyAudit.hasCreep).toBe(false);
 
     // Verify pristine baseline was NOT modified
-    const originalMaster = fs.readFileSync(path.join(fixturesDir, 'legacy-blade/resources/views/layouts/master.blade.php'), 'utf-8');
-    expect(originalMaster).toContain('bootstrap/4.5.2');
+    const originalMaster = fs.readFileSync(path.join(fixturesDir, 'legacy-blade/resources/views/layouts/app.blade.php'), 'utf-8');
+    expect(originalMaster).toContain('bootstrap-3.css');
   });
 
   // 9. Razor modernization preserves anti-forgery token and ASP.NET MVC architecture
@@ -1020,7 +1020,7 @@ describe('ALPER DESIGN OS - FAZ 1F.0.2: Evidence Provenance Hardening & Multi-St
 
     // Verify pristine baseline was NOT modified
     const originalLayout = fs.readFileSync(path.join(fixturesDir, 'legacy-razor/Views/Shared/_Layout.cshtml'), 'utf-8');
-    expect(originalLayout).toContain('bootstrap.min.css');
+    expect(originalLayout).toContain('~/css/site.css');
   });
 
   // 10. Plain Web modernization preserves forms and adds zero npm packages
@@ -1039,7 +1039,7 @@ describe('ALPER DESIGN OS - FAZ 1F.0.2: Evidence Provenance Hardening & Multi-St
 
     // Verify pristine baseline was NOT modified
     const originalIndex = fs.readFileSync(path.join(fixturesDir, 'legacy-plain-web/index.html'), 'utf-8');
-    expect(originalIndex).toContain('bootstrap.min.css');
+    expect(originalIndex).toContain('styles.css');
   });
 
   // 11. Multi-stack end-to-end modernization orchestration passes across all 4 stacks

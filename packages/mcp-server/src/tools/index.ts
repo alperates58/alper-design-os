@@ -83,7 +83,20 @@ import {
   createModernizationPlan,
   selectModernizationStrategy,
   createModernizationStages,
-  evaluateModernizationCompletion
+  evaluateModernizationCompletion,
+  createGreenfieldProjectProfile,
+  deriveRequirements,
+  createRequirementTraceability,
+  recommendArchitecture,
+  recommendStack,
+  createDatabaseBlueprint,
+  createApiBlueprint,
+  createAuthModel,
+  createPageInventory,
+  createNewProjectBlueprint,
+  createProjectImplementationPlan,
+  scaffoldNewProject,
+  evaluateNewProjectCompletion
 } from '@alper-design-os/agent-governance';
 import {
   createDesignIntent,
@@ -1347,7 +1360,7 @@ export function handleCreateModernizationPlan(input: T.CreateModernizationPlanIn
     targetName: input.scopeTarget,
     allowedPaths: [input.scopeTarget.toLowerCase()],
     prohibitedPaths: ['**/migrations/**', '**/schema.sql'],
-    canModifySharedComponents: input.scopeLevel === 'MODULE' || input.scopeLevel === 'APPLICATION',
+    canModifySharedComponents: input.scopeLevel === 'PAGE' || input.scopeLevel === 'MODULE' || input.scopeLevel === 'APPLICATION',
     canModifyGlobalShell: input.scopeLevel === 'SHELL' || input.scopeLevel === 'APPLICATION',
     canModifyBackend: false,
     canModifyDatabase: false
@@ -1410,6 +1423,85 @@ export function handleCreateModernizationStages(input: T.CreateModernizationStag
 // 97. evaluate_modernization_completion
 export function handleEvaluateModernizationCompletion(input: T.EvaluateModernizationCompletionInput) {
   return evaluateModernizationCompletion(input);
+}
+
+// ==========================================
+// FAZ 1G: Greenfield Project Generation MCP Handlers
+// ==========================================
+
+// 98. create_greenfield_project_profile
+export function handleCreateGreenfieldProjectProfile(input: T.CreateGreenfieldProjectProfileInput) {
+  return createGreenfieldProjectProfile(input);
+}
+
+// 99. derive_requirements
+export function handleDeriveRequirements(input: T.DeriveRequirementsInput) {
+  return deriveRequirements(input.profile, input.explicitUserBrief);
+}
+
+// 100. create_requirement_traceability
+export function handleCreateRequirementTraceability(input: T.CreateRequirementTraceabilityInput) {
+  return createRequirementTraceability(input.requirements, {
+    architecturalDecisions: input.architecturalDecisions,
+    databaseEntities: input.databaseEntities,
+    apiEndpoints: input.apiEndpoints,
+    pages: input.pages,
+    implementationFiles: input.implementationFiles,
+    verificationTests: input.verificationTests
+  });
+}
+
+// 101. recommend_architecture
+export function handleRecommendArchitecture(input: T.RecommendArchitectureInput) {
+  return recommendArchitecture(input.profile, input.requirements);
+}
+
+// 102. recommend_stack
+export function handleRecommendStack(input: T.RecommendStackInput) {
+  return recommendStack(input.profile, input.architecture, input.userPreferredStack);
+}
+
+// 103. create_database_blueprint
+export function handleCreateDatabaseBlueprint(input: T.CreateDatabaseBlueprintInput) {
+  return createDatabaseBlueprint(input.profile, input.requirements, input.stack, input.architecture);
+}
+
+// 104. create_api_blueprint
+export function handleCreateApiBlueprint(input: T.CreateApiBlueprintInput) {
+  return createApiBlueprint(input.profile, input.requirements, input.database, input.architecture);
+}
+
+// 105. create_auth_model
+export function handleCreateAuthModel(input: T.CreateAuthModelInput) {
+  return createAuthModel(input.profile, input.requirements);
+}
+
+// 106. create_page_inventory
+export function handleCreatePageInventory(input: T.CreatePageInventoryInput) {
+  return createPageInventory(input.profile, input.requirements, input.database, input.api);
+}
+
+// 107. create_project_blueprint
+export function handleCreateProjectBlueprint(input: T.CreateProjectBlueprintInput) {
+  return createNewProjectBlueprint(input.profile, {
+    requirementsBundle: input.requirementsBundle,
+    userPreferredStack: input.userPreferredStack
+  });
+}
+
+// 108. create_project_implementation_plan
+export function handleCreateProjectImplementationPlan(input: T.CreateProjectImplementationPlanInput) {
+  return createProjectImplementationPlan(input.blueprint);
+}
+
+// 109. scaffold_new_project
+export function handleScaffoldNewProject(input: T.ScaffoldNewProjectInput) {
+  return scaffoldNewProject(input.blueprint, input.targetDirectory);
+}
+
+// 110. evaluate_new_project_completion
+export function handleEvaluateNewProjectCompletion(input: T.EvaluateNewProjectCompletionInput) {
+  return evaluateNewProjectCompletion(input);
 }
 
 /**
@@ -1513,7 +1605,20 @@ export const toolRegistry = new Map<string, Function>([
   ['create_modernization_plan', handleCreateModernizationPlan],
   ['select_modernization_strategy', handleSelectModernizationStrategy],
   ['create_modernization_stages', handleCreateModernizationStages],
-  ['evaluate_modernization_completion', handleEvaluateModernizationCompletion]
+  ['evaluate_modernization_completion', handleEvaluateModernizationCompletion],
+  ['create_greenfield_project_profile', handleCreateGreenfieldProjectProfile],
+  ['derive_requirements', handleDeriveRequirements],
+  ['create_requirement_traceability', handleCreateRequirementTraceability],
+  ['recommend_architecture', handleRecommendArchitecture],
+  ['recommend_stack', handleRecommendStack],
+  ['create_database_blueprint', handleCreateDatabaseBlueprint],
+  ['create_api_blueprint', handleCreateApiBlueprint],
+  ['create_auth_model', handleCreateAuthModel],
+  ['create_page_inventory', handleCreatePageInventory],
+  ['create_project_blueprint', handleCreateProjectBlueprint],
+  ['create_project_implementation_plan', handleCreateProjectImplementationPlan],
+  ['scaffold_new_project', handleScaffoldNewProject],
+  ['evaluate_new_project_completion', handleEvaluateNewProjectCompletion]
 ]);
 
 

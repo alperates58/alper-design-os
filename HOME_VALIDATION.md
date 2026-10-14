@@ -124,11 +124,15 @@ const approval = recordVisualReview(currentRecord, {
 | Source Authority Classification | **PASS** | PASS (Entegre) |
 | Human Visual Approval Gate Kodları | **PASS** | Gerçek İnsan İncelemesi Bekliyor |
 | CONTENT_TRUTH_PASS Gate Entegrasyonu | **PASS** | PASS |
-| MCP Tool Sözleşmeleri (97 Tool) | **PASS (72 Tests)** | PASS |
+| MCP Tool Sözleşmeleri (110 Tool) | **PASS (72 Tests)** | PASS |
 | Faz 1F.0 Modernization Engine Foundation | **PASS (20 Tests)** | PASS (Entegre) |
 | Faz 1F.0.1 Synthetic End-to-End Drill & Hotfix | **PASS (12 Tests)** | PASS (Entegre) |
 | Faz 1F.0.2 Evidence Provenance & Anti-Inflation | **PASS (14 Tests)** | PASS (Entegre) |
 | Faz 1F.0.2.1 Evidence Taxonomy & Gate Assurance | **PASS (12 Tests)** | PASS (Entegre) |
+| Faz 1G New Project Generation Engine V1 | **PASS (20 Tests, 13 New Tools)** | PASS (Entegre) |
+| Greenfield Requirements & Traceability Matrix (RTM) | **PASS (100% Traceability)** | PASS (Entegre) |
+| Greenfield Anti-Overengineering Guardrails (No Microservices Default) | **PASS (Complexity <= 3)** | PASS (Entegre) |
+| Greenfield Multi-Stack Scaffolding (React, Blade, Razor, Plain) | **PASS (Buildable Emitted Projects)** | PASS (Entegre) |
 | Multi-Stack Drill (React, Blade, Razor, Plain-Web) | **PASS (4 Workspaces)** | PASS (Entegre) |
 | Native Stack Preservation (Zero Colonization) | **PASS** | PASS (Entegre) |
 | Security Invariant Preservation (@csrf / AntiForgery) | **PASS** | PASS (Entegre) |
@@ -142,7 +146,7 @@ const approval = recordVisualReview(currentRecord, {
 | Dependency Governance (Anti-Creep) | **PASS** | PASS (Entegre) |
 | Legacy Fixtures Pristine Baseline | **PASS (Unchanged)** | PASS (Entegre) |
 | Statik Telemetry Audit (Direction B) | **PASS (Statik)** | Canlı Endpoint Doğrulaması |
-| Track Trace Docker Pilotu | `DEFERRED_HOME_RUNTIME_VALIDATION` | Canlı Container Çalıştırma |
-| Playwright Gerçek Ekran Görüntüleri | `DEFERRED_HOME_RUNTIME_VALIDATION` | Canlı Screenshot Üretimi |
-| Chrome DevTools Remote Debugging | `DEFERRED_HOME_RUNTIME_VALIDATION` | Canlı CDP İncelemesi |
+| Track Trace Docker Pilotu | `DEFERRED_BY_USER` | Canlı Container Çalıştırma |
+| Playwright Gerçek Ekran Görüntüleri | `DEFERRED_BY_USER` | Canlı Screenshot Üretimi |
+| Chrome DevTools Remote Debugging | `DEFERRED_BY_USER` | Canlı CDP İncelemesi |
 

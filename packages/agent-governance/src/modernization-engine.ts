@@ -480,6 +480,20 @@ export function createBehavioralBaseline(
       }
     }
 
+    // React / Client Link routes (<a href="/...", <Route path="/...", <Link to="/...")
+    const linkMatches = content.matchAll(/(?:href|to|path)=['"](\/[a-zA-Z0-9_\-/]+)['"]/gi);
+    for (const m of linkMatches) {
+      if (m[1] && !routes.some(r => r.path === m[1])) {
+        routes.push({
+          method: 'GET',
+          path: m[1],
+          handler: `Client Route/Link in ${file.path}`,
+          authRequired: m[1].includes('admin') || m[1].includes('dashboard') || m[1].includes('settings') || m[1].includes('users'),
+          parameters: []
+        });
+      }
+    }
+
     // 2. Auth Flow detection
     if (/login|authenticate|signin/i.test(content) && (/password/i.test(content) || /token/i.test(content))) {
       authFlows.push({
@@ -508,7 +522,7 @@ export function createBehavioralBaseline(
       forms.push({
         formId: `FORM_${norm.split('/').pop()?.replace(/[^a-zA-Z0-9]/g, '_') || 'GENERIC'}`,
         routeOrAction: norm,
-        fields: fieldMatches.length > 0 ? Array.from(new Set(fieldMatches)) : ['username', 'password'],
+        fields: fieldMatches.length > 0 ? Array.from(new Set(fieldMatches)) : [],
         validationRules: ['Required fields non-empty', 'Format validation before submission'],
         submissionMethod: content.includes('post') ? 'POST' : 'GET'
       });
@@ -687,11 +701,22 @@ export function compareBehavioralBaselines(
     }
   }
 
+  const authPreserved = !regressions.some(r => r.category.includes('AUTH'));
+  const routesPreserved = !regressions.some(r => r.category.includes('ROUT'));
+  const csrfPreserved = !regressions.some(r => r.category.includes('CSRF') || r.category.includes('AUTH'));
+  const antiforgeryPreserved = !regressions.some(r => r.category.includes('CSRF') || r.category.includes('ANTIFORGERY'));
+  const formActionPreserved = !regressions.some(r => r.category.includes('FORM'));
+
   return {
     passed: regressions.length === 0,
     regressionsDetected: regressions,
     preservedCount,
-    additions
+    additions,
+    authPreserved,
+    routesPreserved,
+    csrfPreserved,
+    antiforgeryPreserved,
+    formActionPreserved
   };
 }
 
@@ -1070,12 +1095,17 @@ export function createModernizationIntent(
 
   if (isTrivial) {
     // If projectProfile is provided, can we supplement it?
-    if (projectProfile && projectProfile.technicalDebt.length > 0) {
+    if (projectProfile && (projectProfile.technicalDebt.length > 0 || projectProfile.visualDebt.length > 0 || projectProfile.legacyCharacteristics.length > 0 || projectProfile.projectIdentity?.name)) {
       // Auto-supplement with project analysis findings
+      const debtProblems = projectProfile.technicalDebt.map(d => d.description);
+      const visualProblems = projectProfile.visualDebt.map(d => d.description);
+      const legacyProblems = projectProfile.legacyCharacteristics;
+      const combinedProblems = [...debtProblems, ...visualProblems, ...legacyProblems];
+
       const supplementedIntent: ModernizationIntent = {
-        why: `Modernize legacy presentation layer to resolve identified technical and visual debts in ${projectProfile.projectIdentity.name}.`,
+        why: `Modernize legacy presentation layer to resolve identified technical and visual debts in ${projectProfile.projectIdentity?.name || 'legacy project'}.`,
         targetOutcome: `Refactor user interface to modern DTCG design tokens, responsive layout, and accessible interaction patterns while strictly preserving backend logic.`,
-        primaryProblems: projectProfile.technicalDebt.map(d => d.description).slice(0, 3),
+        primaryProblems: combinedProblems.length > 0 ? combinedProblems.slice(0, 3) : ['Legacy layout architecture', 'Deprecated UI styling patterns'],
         userPainPoints: [
           'High cognitive load and inconsistent visual hierarchy',
           'Poor responsive adaptation on smaller viewports'
@@ -1392,7 +1422,13 @@ export function generateDesignCandidates(
   const primaryStack = profile.detectedStack.primaryStack || 'Web Application';
   const styling = profile.stylingSystem.primary || 'Custom CSS';
   const layoutDesc = options?.currentLayout || profile.legacyCharacteristics[0] || 'Legacy markup structure';
-  const personality = options?.designPersonality || (primaryStack.includes('React') ? 'Precision Functional' : 'Enterprise Utility');
+  const personality = options?.designPersonality || (
+    primaryStack.includes('React') ? 'Precision Functional' :
+    primaryStack.includes('Razor') || primaryStack.includes('ASP.NET') ? 'Enterprise Workflow' :
+    primaryStack.includes('Blade') || primaryStack.includes('Laravel') ? 'Operational Productivity' :
+    primaryStack.includes('HTML') || primaryStack.includes('Plain') ? 'Minimal Utility' :
+    'Enterprise Utility'
+  );
   const archetype = options?.productUXProfile?.archetype || 'Data-Intensive Operational Surface';
   const qualityComposite = options?.baselineQuality?.compositeHeuristicScore ?? 65;
   const primaryDebt = profile.visualDebt[0]?.issue || profile.technicalDebt[0]?.description || 'coupled layout and styling debt';
@@ -1406,6 +1442,7 @@ export function generateDesignCandidates(
     {
       candidateId: 'CANDIDATE_A',
       title: `Candidate A: ${personality} - Optimized Dense Flow`,
+      name: `Candidate A: ${personality} - Optimized Dense Flow`,
       composition: `Refactors ${layoutDesc} into a modern tokenized CSS grid container with integrated header and contextual action toolbar adapted for ${archetype} utilizing ${sourcePatternA}.`,
       hierarchy: `Primary focal area prioritized for critical business flows (${profile.criticalBusinessFlows.map(f => f.name).join('; ') || 'core operations'}), reducing visual friction identified in baseline (${primaryDebt}).`,
       density: 'COMPACT (4px-8px baseline tokens derived from design bridge, optimized for information density without viewport overflow).',
@@ -1421,6 +1458,7 @@ export function generateDesignCandidates(
     {
       candidateId: 'CANDIDATE_B',
       title: `Candidate B: ${personality} - Modular Surface Hierarchy`,
+      name: `Candidate B: ${personality} - Modular Surface Hierarchy`,
       composition: `Chunked card-based layout restructuring ${layoutDesc} into responsive modular sections, resolving "${primaryProblem}" via ${sourcePatternB}.`,
       hierarchy: `Prominent KPI/metric summary cards above segregated operational panels, providing clear visual hierarchy for ${options?.productUXProfile?.targetRole || 'system operators'}.`,
       density: 'BALANCED (8px-16px token spacing with spacious touch targets meeting 44x44px minimum).',
@@ -1436,6 +1474,7 @@ export function generateDesignCandidates(
     {
       candidateId: 'CANDIDATE_C',
       title: `Candidate C: ${personality} - Streamlined Linear Journey`,
+      name: `Candidate C: ${personality} - Streamlined Linear Journey`,
       composition: `Step-oriented progressive disclosure layout isolating key interactions in ${primaryStack}, eliminating cognitive overload identified in "${userPainPoint}" using ${sourcePatternC}.`,
       hierarchy: `Sequential workflow cards with progressive disclosure of advanced controls, directly fulfilling intent: "${intent.uxGoals[0] || 'streamlined workflow'}".`,
       density: `COMFORTABLE (16px-24px padding and typography scales calibrated against baseline quality score ${qualityComposite}/100).`,
@@ -1851,8 +1890,13 @@ export function createModernizationPlan(input: CreateModernizationPlanInput): Mo
   const implementationStages = createModernizationStages(input.scope, strategyDecision, changeClassifications);
 
   const defaultCheckpoint: CheckpointPlan = input.checkpointPlan || {
-    planId: `chk-${Date.now()}`,
-    baseCommit: 'HEAD',
+    checkpointId: `chk-${Date.now()}`,
+    branchName: 'refactor/modernization-baseline',
+    commitMessage: 'Pre-modernization behavioral baseline',
+    safeToProceed: true,
+    requiresApproval: false,
+    warnings: [],
+    rollbackScript: ['git reset --hard baseline-pre-modernization'],
     checkpoints: [
       {
         id: 'chk-01-baseline',
@@ -1863,9 +1907,7 @@ export function createModernizationPlan(input: CreateModernizationPlanInput): Mo
         requiresCleanWorkingTree: true,
         automated: true
       }
-    ],
-    rollbackStrategy: 'STASH_AND_CHECKOUT',
-    recoveryCommands: ['git reset --hard baseline-pre-modernization']
+    ]
   };
 
   const plan: ModernizationPlan = {
@@ -2237,12 +2279,12 @@ export function validateEvidenceLevelIntegrity(
   }
 
   // 3. Unit test cannot masquerade as BROWSER
-  if (audit.hasUnitTestExecution && !audit.hasBrowserExecution) {
+  if ((audit.hasUnitTestExecution || audit.isUnitTestOnly) && !audit.hasBrowserExecution) {
     if (declaredLevel === 'BROWSER' || declaredLevel === 'BROWSER_TEST') {
       return {
         valid: false,
         inflationDetected: true,
-        reason: `Evidence Inflation: Gate '${gate}' executed unit tests but declared inflated evidenceLevel '${declaredLevel}'. Unit tests cannot stand in for real browser execution.`
+        reason: `Evidence Inflation: Gate '${gate}' executed unit tests but declared inflated evidenceLevel '${declaredLevel}'. Unit test cannot masquerade as live browser execution.`
       };
     }
   }

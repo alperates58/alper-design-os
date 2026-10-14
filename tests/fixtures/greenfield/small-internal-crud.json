@@ -1,0 +1,26 @@
+{
+  "benchmarkId": "BENCH_01_SMALL_INTERNAL_CRUD",
+  "name": "Office Asset & Inventory Registry",
+  "description": "Internal tracking tool for departmental hardware, office equipment, and allocation requests.",
+  "userBrief": "We need a simple internal tool for our IT and operations staff to track laptops, monitors, and desk assignments across 3 offices. About 25 active users. Simple CRUD with export and approval status.",
+  "expectedProfile": {
+    "productName": "AssetTrack Internal",
+    "productPurpose": "Track departmental hardware assets and employee assignments across office locations.",
+    "targetUsers": ["IT Support Staff", "Office Operations Manager"],
+    "primaryJobs": ["Register new physical assets", "Assign assets to employees", "Update asset status and condition"],
+    "secondaryJobs": ["Export CSV audit report", "Flag broken equipment"],
+    "domain": "Internal IT Asset Management",
+    "businessCriticality": "LOW",
+    "dataSensitivity": "INTERNAL",
+    "expectedScale": "SMALL_INTERNAL",
+    "concurrency": "LOW",
+    "deviceTargets": ["DESKTOP"],
+    "deploymentEnvironment": "DOCKER"
+  },
+  "expectedArchitecture": {
+    "style": "MONOLITH",
+    "maxComplexityBudget": 3,
+    "prohibitedTechnologies": ["KAFKA", "KUBERNETES", "MICROSERVICES", "EVENT_SOURCING", "DISTRIBUTED_CACHE"]
+  },
+  "preferredStack": "PLAIN_HTML_CSS_JS"
+}

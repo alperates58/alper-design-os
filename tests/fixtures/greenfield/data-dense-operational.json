@@ -1,0 +1,26 @@
+{
+  "benchmarkId": "BENCH_02_DATA_DENSE_OPERATIONAL",
+  "name": "Fleet Dispatch Command Console",
+  "description": "High-density real-time dispatch and shipment allocation console for logistics controllers.",
+  "userBrief": "Build an operational workbench for 150 fleet dispatchers managing hundreds of ongoing shipments, carrier routes, and emergency delays simultaneously. Compact layout, heavy keyboard navigation, instant filtering, and audit trail.",
+  "expectedProfile": {
+    "productName": "FleetCommand Workbench",
+    "productPurpose": "High-density dispatching, route monitoring, and carrier task allocation.",
+    "targetUsers": ["Logistics Dispatchers", "Operations Supervisors"],
+    "primaryJobs": ["Allocate carrier routes", "Monitor shipment delivery statuses", "Handle dispatch exception alerts"],
+    "secondaryJobs": ["Generate carrier performance summaries", "Audit dispatcher actions"],
+    "domain": "Logistics & Freight Transport",
+    "businessCriticality": "MISSION_CRITICAL",
+    "dataSensitivity": "CONFIDENTIAL",
+    "expectedScale": "ENTERPRISE_INTERNAL",
+    "concurrency": "MODERATE",
+    "deviceTargets": ["DESKTOP"],
+    "deploymentEnvironment": "DOCKER"
+  },
+  "expectedArchitecture": {
+    "style": "MODULAR_MONOLITH",
+    "maxComplexityBudget": 6,
+    "prohibitedTechnologies": ["KAFKA", "KUBERNETES", "MICROSERVICES"]
+  },
+  "preferredStack": "REACT_TYPESCRIPT"
+}

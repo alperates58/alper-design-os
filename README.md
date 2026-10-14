@@ -4,14 +4,14 @@
 
 [![License: MIT](https://img.shields.io/badge/Lisans-MIT-blue.svg)](LICENSE_POLICY.md)
 [![TypeScript: Strict](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](tsconfig.json)
-[![Antigravity Plugin Ready](https://img.shields.io/badge/Antigravity-61%20Skills%20Registered-emerald.svg)](plugin.json)
-[![Tests: 345+ Passed](https://img.shields.io/badge/Tests-345%2B%20Passed%20(17%20Suites)-brightgreen.svg)](tests/)
-[![MCP Server: 97 Tools](https://img.shields.io/badge/MCP%20Server-97%20Tools-purple.svg)](packages/mcp-server/)
+[![Antigravity Plugin Ready](https://img.shields.io/badge/Antigravity-67%20Skills%20Registered-emerald.svg)](plugin.json)
+[![Tests: 413+ Passed](https://img.shields.io/badge/Tests-413%2B%20Passed%20(18%20Suites)-brightgreen.svg)](tests/)
+[![MCP Server: 110 Tools](https://img.shields.io/badge/MCP%20Server-110%20Tools-purple.svg)](packages/mcp-server/)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](scripts/)
 
 **ALPER DESIGN OS**, sıradan bir bileşen veya UI kütüphanesi değildir. Yazılım alanlarını (domain) derinlemesine anlayan, kullanıcı iş akışlarını ve ergonomisini analiz eden, kurumsal seviyede mimari ve UX/UI kararları alan, sıfırdan ürün tasarlayan veya mevcut devasa sistemleri cerrahi/aşamalı olarak modernize eden **AI-Native, Teknoloji Bağımsız Tasarım ve UX Geliştirme İşletim Sistemi**'dir.
 
-Bünyesinde **61 adet Antigravity Yeteneği (Skill)**, **97 adet tip güvenli MCP Aracı**, **8 farklı frontend/backend adaptörü** ve **Mevcut Proje Modernizasyon Motoru (Phase 1F.0)** barındırır.
+Bünyesinde **67 adet Antigravity Yeteneği (Skill)**, **110 adet tip güvenli MCP Aracı**, **8 farklı frontend/backend adaptörü**, **Mevcut Proje Modernizasyon Motoru (Phase 1F)** ve **Sıfırdan Proje Üretim Motoru (Phase 1G Greenfield Engine)** barındırır.
 
 
 ---
@@ -60,16 +60,24 @@ Bünyesinde **61 adet Antigravity Yeteneği (Skill)**, **97 adet tip güvenli MC
    * **Scope Guard:** Sayfa seviyesi görevler asla sessizce uygulama geneline veya veritabanına genişleyemez.
    * **Human Visual Approval:** Tasarım yönü adayları (A: High-Density Workbench, B: Modular Cards, C: Streamlined Stepper) insan görsel onayı olmadan yayına alınamaz.
 
+10. **Sıfırdan Proje Üretim Motoru (Phase 1G Greenfield Generation Engine V1):**
+    Kullanıcı brifinginden tam çalışan projeye giden uçtan uca üretim motoru:
+    `BRIEF -> PRODUCT UNDERSTANDING -> DOMAIN RESEARCH -> REQUIREMENTS (RTM) -> ARCHITECTURE -> DATA MODEL -> API MODEL -> UX MODEL -> DESIGN SYSTEM -> PLAN -> SCAFFOLD -> VERIFY`
+    * **Anti-Overengineering & Karmaşıklık Bütçesi:** Küçük CRUD ve dahili araçlar için mikroservis, Kafka ve Kubernetes kesinlikle varsayılan değildir; `MONOLITH` veya `MODULAR_MONOLITH` (karmaşıklık puanı $\le 3$) zorunludur.
+    * **Gereksinim İzlenebilirlik Matrisi (RTM):** %100 fonksiyonel gereksinim mimari karara, veritabanı modeline, API uç noktasına, UI sayfasına ve otomatik teste bağlanır.
+    * **8 Durumlu Eksiksiz Sayfa Modeli:** Her sayfa için `LOADING`, `EMPTY`, `SUCCESS`, `ERROR`, `PARTIAL`, `UNAUTHORIZED`, `FORBIDDEN`, `OFFLINE` durumları zorunludur.
+    * **Çoklu Stack Desteği:** React+TypeScript (Strict), Laravel+Blade, ASP.NET Core+Razor ve Plain HTML/CSS/JS için derlenebilir proje scaffolding'i.
+
 ---
 
-## 🧠 61 Uzmanlaşmış Yetenek (Antigravity Skills)
+## 🧠 67 Uzmanlaşmış Yetenek (Antigravity Skills)
 
 ### Yetenek (Skill) Nedir ve Nasıl Çalışır?
 Alper Design OS içerisindeki **Skill'ler**, yapay zeka ajanının sıradan bir metin tamamlayıcı gibi değil; **kıdemli bir baş mimar, güvenlik denetçisi veya UX araştırmacısı** gibi hareket etmesini sağlayan kurallar, kılavuzlar ve iş akışları paketidir.
 
-Bir istekte bulunduğunuzda (örneğin *"bu projeyi modernize et"* veya *"veritabanı migrasyon riskini denetle"*), yapay zeka ajanı ilgili yeteneği otomatik olarak yükler, o alana özgü katı mühendislik kurallarını (`SKILL.md`) okur ve 88 MCP aracı arasından gerekenleri disiplinli bir sırayla çalıştırır.
+Bir istekte bulunduğunuzda (örneğin *"bu projeyi modernize et"* veya *"veritabanı migrasyon riskini denetle"*), yapay zeka ajanı ilgili yeteneği otomatik olarak yükler, o alana özgü katı mühendislik kurallarını (`SKILL.md`) okur ve 110 MCP aracı arasından gerekenleri disiplinli bir sırayla çalıştırır.
 
-57 yetenek **8 ana uzmanlık alanında** organize edilmiştir:
+67 yetenek **10 ana uzmanlık alanında** organize edilmiştir:
 
 ```mermaid
 graph TD
@@ -170,13 +178,23 @@ graph TD
 | `alper-contract-testing` | **Sözleşme Testi:** Servisler arası API entegrasyonlarını Pact tüketici odaklı sözleşmelerle kilitler. |
 | `alper-load-testing` | **Yük & Stres Testi:** Grafana k6 kullanarak kontrollü eşzamanlı kullanıcı trafiği altında verimlilik testi yapar. |
 
-### 9. Mevcut Proje Modernizasyonu (Modernization Engine Foundation — Phase 1F.0)
+### 9. Mevcut Proje Modernizasyonu (Modernization Engine — Phase 1F)
 | Yetenek | Rolü ve Açıklaması |
 | :--- | :--- |
 | `alper-existing-project-analysis` | **Mevcut Proje Analizi:** Stack, mimari stil, teknik/görsel/UX borç heuristiği ve kritik iş akışlarını çıkarır. |
-| `alper-modernization-planner` | **Modernizasyon Planlayıcı:** Aşamalı plan (Stage 1-5), KEEP/IMPROVE/REPLACE/DEFER/REMOVE sınıflandırması ve tasarım adayları (A/B/C) üretir. |
+| `alper-modernization-planner` | **Modernizasyon Planlayıcı:** Aşamalı plan (Stage 1-5), KEEP/IMPROVE/REPLACE/DEFER/REMOVE sınıflandırması ve tasarım adayları üretir. |
 | `alper-behavior-preservation` | **Davranış Koruma & Sözleşme:** Rotaları, API sözleşmelerini, DB invariantlarını ve auth mekanizmalarını dondurur; regresyonu önler. |
 | `alper-modernization-review` | **Modernizasyon Gözden Geçirici:** Kapsam sadakati, gereksiz rewrite önleme, bağımlılık kontrolü ve görsel onay kapısını denetler. |
+
+### 10. Sıfırdan Proje Üretimi (Greenfield Generation Engine — Phase 1G)
+| Yetenek | Rolü ve Açıklaması |
+| :--- | :--- |
+| `alper-greenfield-product-analysis` | **Ürün Analizi & Profil:** Ham brifingden `GreenfieldProjectProfile`, risk, varsayım ve operasyonel kısıtları çıkarır. |
+| `alper-requirements-engineering` | **Gereksinim Mühendisliği & RTM:** Fonksiyonel/NF gereksinimler, Gherkin kabul kriterleri ve %100 izlenebilirlik matrisi oluşturur. |
+| `alper-architecture-planner` | **Mimarî Planlayıcı:** Karmaşıklık bütçesi hesabı, anti-overengineering guardrail (mikroservis/Kafka yasağı) ve stil seçimi yapar. |
+| `alper-database-designer` | **Veritabanı Tasarımcısı:** Normalizasyon, ilişkiler, indeksleme, migrasyonlar ve veri sınıflandırma/maskeleme tasarlar. |
+| `alper-api-designer` | **API Tasarımcısı:** OpenAPI 3.1.0 uyumlu REST API, standart hata/sayfalama zarfları ve oturum/RBAC güvenliği tasarlar. |
+| `alper-greenfield-generator` | **Uçtan Uca Yeşil Alan Üreticisi:** Master blueprint sentezi, 7 aşamalı uygulama planı ve 4 stack için derlenebilir scaffolding üretir. |
 
 ---
 
@@ -184,20 +202,21 @@ graph TD
 
 ```text
 alper-design-os/
-├── plugin.json                 # Antigravity Plugin Tanımı (61 Yetenek Kayıtlı)
+├── plugin.json                 # Antigravity Plugin Tanımı (67 Yetenek Kayıtlı)
 ├── mcp_config.json             # MCP Sunucu Konfigürasyonu
 ├── hooks.json                  # Yaşam Döngüsü Hook'ları
 ├── pnpm-workspace.yaml         # Monorepo Workspace Konfigürasyonu
 │
-├── skills/                     # 61 Uzmanlaşmış Antigravity Yeteneği
+├── skills/                     # 67 Uzmanlaşmış Antigravity Yeteneği
 │   ├── alper-design-new/       # Sıfırdan Ürün Tasarım Akışı
-│   ├── alper-design-repair/    # Cerrahi Arayüz Onarım Akışı
-│   ├── alper-design-modernize/ # 4 Aşamalı Modernizasyon Akışı
-│   ├── alper-existing-project-analysis/ # Mevcut Proje Analizi (Phase 1F.0)
-│   ├── alper-modernization-planner/     # Modernizasyon Planlayıcı (Phase 1F.0)
-│   ├── alper-behavior-preservation/     # Davranış Koruma Sözleşmesi (Phase 1F.0)
-│   ├── alper-modernization-review/      # Modernizasyon İnceleme Kapısı (Phase 1F.0)
-│   └── ...                     # (Toplam 61 adet yetenek klasörü)
+│   ├── alper-greenfield-generator/      # Uçtan Uca Greenfield Üretim (Phase 1G)
+│   ├── alper-requirements-engineering/  # Gereksinim ve RTM (Phase 1G)
+│   ├── alper-architecture-planner/      # Mimari ve Karmaşıklık Bütçesi (Phase 1G)
+│   ├── alper-database-designer/         # Veritabanı ve Migrasyon (Phase 1G)
+│   ├── alper-api-designer/              # OpenAPI ve REST API (Phase 1G)
+│   ├── alper-greenfield-product-analysis/# Ürün Anlama ve Profil (Phase 1G)
+│   ├── alper-existing-project-analysis/ # Mevcut Proje Analizi (Phase 1F)
+│   └── ...                     # (Toplam 67 adet yetenek klasörü)
 │
 ├── scripts/                    # Otomasyon ve Sistem Sağlık Araçları
 │   ├── install-windows.ps1     # Otomatik Windows Kurulum Scripti
@@ -231,10 +250,11 @@ alper-design-os/
 │   ├── engineering-guardrails/ # Kalite Profilleri, STRIDE Tehdit Modeli, Güvenli Tarama
 │   ├── qa-engine/              # Playwright, DevTools, Görsel Regresyon, QA Raporlayıcı
 │   ├── software-intelligence/  # Mimari Stil Tespiti, DB Migrasyon Riski, ADR Üretimi
-│   └── mcp-server/             # 97 Tipli Araç İçeren Resmi MCP Sunucusu
+│   └── mcp-server/             # 110 Tipli Araç İçeren Resmi MCP Sunucusu
 │
-├── tests/                      # 17 Test Süiti, 345+ Otomatik Vitest Testi
-│   ├── modernization-engine.test.ts # Faz 1F.0 Modernizasyon Motoru Süiti
+├── tests/                      # 18 Test Süiti, 413+ Otomatik Vitest Testi
+│   ├── greenfield-engine.test.ts    # Faz 1G Sıfırdan Proje Üretim Motoru Süiti
+│   ├── modernization-engine.test.ts # Faz 1F Modernizasyon Motoru Süiti
 │   ├── domain-benchmark-15.test.ts
 │   ├── design-language.test.ts
 │   ├── truthful-ui-governance.test.ts
@@ -243,7 +263,10 @@ alper-design-os/
 │   └── ...
 │
 └── docs/                       # Mimari & Kullanım Dokümantasyonu
-    ├── operator-assisted-execution.md
+    ├── greenfield-generation.md
+    ├── requirements-traceability.md
+    ├── architecture-selection.md
+    ├── project-blueprint.md
     ├── truthful-ui-policy.md
     ├── canonical-design-language.md
     └── product-ux-profile.md

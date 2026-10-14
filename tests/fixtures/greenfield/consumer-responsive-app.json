@@ -1,0 +1,26 @@
+{
+  "benchmarkId": "BENCH_03_CONSUMER_RESPONSIVE_APP",
+  "name": "Wellness Studio Booking Portal",
+  "description": "Customer-facing appointment scheduling and membership subscription management mobile/desktop web app.",
+  "userBrief": "Create a modern, clean customer booking website for wellness studio members. Users can browse studio schedules, book classes on mobile or desktop, manage memberships, and receive calendar invites.",
+  "expectedProfile": {
+    "productName": "AuraStudio Member Portal",
+    "productPurpose": "Consumer appointment booking, studio class reservations, and membership management.",
+    "targetUsers": ["Studio Members", "First-time Visitors"],
+    "primaryJobs": ["Browse class schedule", "Reserve studio session", "Manage membership plan"],
+    "secondaryJobs": ["Cancel reservation with credit refund", "Download attendance receipts"],
+    "domain": "Consumer Health & Wellness",
+    "businessCriticality": "HIGH",
+    "dataSensitivity": "CONFIDENTIAL",
+    "expectedScale": "PUBLIC_FACING_COMMERCIAL",
+    "concurrency": "HIGH",
+    "deviceTargets": ["MOBILE", "TABLET", "DESKTOP"],
+    "deploymentEnvironment": "CLOUD_CONTAINER"
+  },
+  "expectedArchitecture": {
+    "style": "CLIENT_SERVER",
+    "maxComplexityBudget": 6,
+    "prohibitedTechnologies": ["KAFKA", "KUBERNETES"]
+  },
+  "preferredStack": "LARAVEL_BLADE"
+}

@@ -1,0 +1,26 @@
+{
+  "benchmarkId": "BENCH_04_API_CENTRIC_SERVICE",
+  "name": "Integration Webhook Gateway & Ingestion Engine",
+  "description": "B2B integration middleware that accepts incoming partner events, validates HMAC signatures, queues jobs, and emits downstream webhook deliveries.",
+  "userBrief": "We need a secure webhook ingestion and relay engine for our B2B partners. Must validate incoming HMAC payloads, store raw delivery attempts in SQLite/PostgreSQL, allow developer API key auth, and offer an interactive API documentation portal.",
+  "expectedProfile": {
+    "productName": "RelayPoint Webhook Gateway",
+    "productPurpose": "Secure partner webhook ingestion, signature verification, and delivery dispatch.",
+    "targetUsers": ["Developer Integrators", "Systems Reliability Engineers"],
+    "primaryJobs": ["Receive incoming partner webhooks", "Verify HMAC signature", "Dispatch relay to target endpoints"],
+    "secondaryJobs": ["Retry failed deliveries", "Query audit logs via REST API"],
+    "domain": "B2B Integration Middleware",
+    "businessCriticality": "HIGH",
+    "dataSensitivity": "CONFIDENTIAL",
+    "expectedScale": "DEPARTMENTAL",
+    "concurrency": "HIGH",
+    "deviceTargets": ["DESKTOP"],
+    "deploymentEnvironment": "DOCKER"
+  },
+  "expectedArchitecture": {
+    "style": "CLIENT_SERVER",
+    "maxComplexityBudget": 5,
+    "prohibitedTechnologies": ["KUBERNETES"]
+  },
+  "preferredStack": "ASPNET_RAZOR"
+}

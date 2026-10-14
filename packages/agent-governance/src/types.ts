@@ -180,7 +180,8 @@ export const CheckpointPlanSchema = z.object({
   safeToProceed: z.boolean(),
   requiresApproval: z.boolean(),
   warnings: z.array(z.string()),
-  rollbackScript: z.array(z.string())
+  rollbackScript: z.array(z.string()),
+  checkpoints: z.array(z.any()).optional().default([])
 });
 export type CheckpointPlan = z.infer<typeof CheckpointPlanSchema>;
 
@@ -1205,7 +1206,7 @@ export const ChangeClassificationSchema = z.object({
   targetId: z.string(),
   name: z.string(),
   path: z.string(),
-  elementType: z.enum(['COMPONENT', 'STYLE', 'PAGE', 'ROUTE', 'API', 'DATA_ACCESS', 'STATE', 'DEPENDENCY', 'ASSET', 'CONFIG']),
+  elementType: z.enum(['COMPONENT', 'STYLE', 'PAGE', 'ROUTE', 'API', 'DATA_ACCESS', 'STATE', 'DEPENDENCY', 'ASSET', 'CONFIG', 'SHELL']),
   decision: ChangeDecisionSchema,
   reason: z.string(),
   risk: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
@@ -1478,6 +1479,7 @@ export type ModernizationPlan = z.infer<typeof ModernizationPlanSchema>;
 export const DesignDirectionCandidateSchema = z.object({
   candidateId: z.string(),
   title: z.string(),
+  name: z.string().optional(),
   composition: z.string(),
   hierarchy: z.string(),
   density: z.string(),

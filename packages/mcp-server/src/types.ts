@@ -865,7 +865,7 @@ export const ClassifyExistingElementsInputSchema = z.object({
       targetId: z.string(),
       name: z.string(),
       path: z.string(),
-      elementType: z.enum(['COMPONENT', 'STYLE', 'PAGE', 'ROUTE', 'API', 'DATA_ACCESS', 'STATE', 'DEPENDENCY', 'ASSET', 'CONFIG']),
+      elementType: z.enum(['COMPONENT', 'STYLE', 'PAGE', 'ROUTE', 'API', 'DATA_ACCESS', 'STATE', 'DEPENDENCY', 'ASSET', 'CONFIG', 'SHELL']),
       proposedDecision: z.enum(['KEEP', 'IMPROVE', 'REPLACE', 'DEFER', 'REMOVE']).optional(),
       reason: z.string().optional(),
       migrationCost: z.enum(['TRIVIAL', 'LOW', 'MEDIUM', 'HIGH', 'PROHIBITIVE']).optional()
@@ -951,6 +951,144 @@ export const EvaluateModernizationCompletionInputSchema = z.object({
   gatePolicies: z.record(z.any()).optional()
 });
 export type EvaluateModernizationCompletionInput = z.infer<typeof EvaluateModernizationCompletionInputSchema>;
+
+// ==========================================
+// FAZ 1G: Greenfield Project Generation MCP Schemas
+// ==========================================
+
+// 98. create_greenfield_project_profile
+export const CreateGreenfieldProjectProfileInputSchema = z.object({
+  productName: z.string().describe('Name of the new product/project'),
+  productPurpose: z.string().describe('Primary purpose and problem the product solves'),
+  targetUsers: z.array(z.string()).optional().default(['Internal Operators']),
+  primaryJobs: z.array(z.string()).optional().default(['Manage records', 'Perform daily workflows']),
+  secondaryJobs: z.array(z.string()).optional().default([]),
+  domain: z.string().optional().default('General Business Operations'),
+  businessCriticality: z.enum(['LOW', 'MEDIUM', 'HIGH', 'MISSION_CRITICAL']).optional().default('MEDIUM'),
+  dataSensitivity: z.enum(['PUBLIC', 'INTERNAL', 'CONFIDENTIAL', 'HIGHLY_SENSITIVE']).optional().default('INTERNAL'),
+  expectedScale: z.enum(['SMALL_INTERNAL', 'DEPARTMENTAL', 'ENTERPRISE_INTERNAL', 'PUBLIC_FACING_COMMERCIAL']).optional().default('SMALL_INTERNAL'),
+  concurrency: z.enum(['LOW', 'MODERATE', 'HIGH', 'MASSIVE']).optional().default('LOW'),
+  deviceTargets: z.array(z.enum(['DESKTOP', 'TABLET', 'MOBILE', 'EMBEDDED'])).optional().default(['DESKTOP']),
+  offlineNeeds: z.boolean().optional().default(false),
+  realtimeNeeds: z.boolean().optional().default(false),
+  integrationNeeds: z.array(z.string()).optional().default([]),
+  reportingNeeds: z.array(z.string()).optional().default([]),
+  localizationNeeds: z.array(z.string()).optional().default(['en-US']),
+  accessibilityNeeds: z.array(z.string()).optional().default(['WCAG_2_1_AA']),
+  deploymentEnvironment: z.enum(['DOCKER', 'STANDALONE_HOST', 'CLOUD_CONTAINER', 'SERVERLESS']).optional().default('DOCKER'),
+  operationalConstraints: z.array(z.string()).optional().default([]),
+  unknowns: z.array(z.string()).optional().default([]),
+  assumptions: z.array(z.string()).optional().default([]),
+  risks: z.array(z.string()).optional().default([])
+});
+export type CreateGreenfieldProjectProfileInput = z.infer<typeof CreateGreenfieldProjectProfileInputSchema>;
+
+// 99. derive_requirements
+export const DeriveRequirementsInputSchema = z.object({
+  profile: z.any().describe('GreenfieldProjectProfile object'),
+  explicitUserBrief: z.string().optional().describe('Optional raw user prompt/brief for requirement provenance')
+});
+export type DeriveRequirementsInput = z.infer<typeof DeriveRequirementsInputSchema>;
+
+// 100. create_requirement_traceability
+export const CreateRequirementTraceabilityInputSchema = z.object({
+  requirements: z.array(z.any()).describe('Array of FunctionalRequirement and NonFunctionalRequirement'),
+  architecturalDecisions: z.array(z.string()).optional().default([]),
+  databaseEntities: z.array(z.string()).optional().default([]),
+  apiEndpoints: z.array(z.string()).optional().default([]),
+  pages: z.array(z.string()).optional().default([]),
+  implementationFiles: z.array(z.string()).optional().default([]),
+  verificationTests: z.array(z.string()).optional().default([])
+});
+export type CreateRequirementTraceabilityInput = z.infer<typeof CreateRequirementTraceabilityInputSchema>;
+
+// 101. recommend_architecture
+export const RecommendArchitectureInputSchema = z.object({
+  profile: z.any().describe('GreenfieldProjectProfile object'),
+  requirements: z.any().optional().describe('Optional GreenfieldRequirementsBundle')
+});
+export type RecommendArchitectureInput = z.infer<typeof RecommendArchitectureInputSchema>;
+
+// 102. recommend_stack
+export const RecommendStackInputSchema = z.object({
+  profile: z.any().describe('GreenfieldProjectProfile object'),
+  architecture: z.any().optional().describe('Optional ArchitectureRecommendation'),
+  userPreferredStack: z.enum(['REACT_TYPESCRIPT', 'LARAVEL_BLADE', 'ASPNET_RAZOR', 'PLAIN_HTML_CSS_JS']).optional()
+});
+export type RecommendStackInput = z.infer<typeof RecommendStackInputSchema>;
+
+// 103. create_database_blueprint
+export const CreateDatabaseBlueprintInputSchema = z.object({
+  profile: z.any().describe('GreenfieldProjectProfile'),
+  requirements: z.any().describe('GreenfieldRequirementsBundle'),
+  stack: z.any().describe('StackRecommendation'),
+  architecture: z.any().optional()
+});
+export type CreateDatabaseBlueprintInput = z.infer<typeof CreateDatabaseBlueprintInputSchema>;
+
+// 104. create_api_blueprint
+export const CreateApiBlueprintInputSchema = z.object({
+  profile: z.any().describe('GreenfieldProjectProfile'),
+  requirements: z.any().describe('GreenfieldRequirementsBundle'),
+  database: z.any().describe('DatabaseBlueprint'),
+  architecture: z.any().optional()
+});
+export type CreateApiBlueprintInput = z.infer<typeof CreateApiBlueprintInputSchema>;
+
+// 105. create_auth_model
+export const CreateAuthModelInputSchema = z.object({
+  profile: z.any().describe('GreenfieldProjectProfile'),
+  requirements: z.any().describe('GreenfieldRequirementsBundle')
+});
+export type CreateAuthModelInput = z.infer<typeof CreateAuthModelInputSchema>;
+
+// 106. create_page_inventory
+export const CreatePageInventoryInputSchema = z.object({
+  profile: z.any().describe('GreenfieldProjectProfile'),
+  requirements: z.any().describe('GreenfieldRequirementsBundle'),
+  database: z.any().optional(),
+  api: z.any().optional()
+});
+export type CreatePageInventoryInput = z.infer<typeof CreatePageInventoryInputSchema>;
+
+// 107. create_project_blueprint
+export const CreateProjectBlueprintInputSchema = z.object({
+  profile: z.any().describe('GreenfieldProjectProfile or input for createGreenfieldProjectProfile'),
+  requirementsBundle: z.any().optional(),
+  userPreferredStack: z.enum(['REACT_TYPESCRIPT', 'LARAVEL_BLADE', 'ASPNET_RAZOR', 'PLAIN_HTML_CSS_JS']).optional()
+});
+export type CreateProjectBlueprintInput = z.infer<typeof CreateProjectBlueprintInputSchema>;
+
+// 108. create_project_implementation_plan
+export const CreateProjectImplementationPlanInputSchema = z.object({
+  blueprint: z.any().describe('NewProjectBlueprint')
+});
+export type CreateProjectImplementationPlanInput = z.infer<typeof CreateProjectImplementationPlanInputSchema>;
+
+// 109. scaffold_new_project
+export const ScaffoldNewProjectInputSchema = z.object({
+  blueprint: z.any().describe('NewProjectBlueprint'),
+  targetDirectory: z.string().describe('Target directory to scaffold files into')
+});
+export type ScaffoldNewProjectInput = z.infer<typeof ScaffoldNewProjectInputSchema>;
+
+// 110. evaluate_new_project_completion
+export const EvaluateNewProjectCompletionInputSchema = z.object({
+  technical: z.enum(['PASS', 'FAIL']).default('PASS'),
+  functional: z.enum(['PASS', 'FAIL']).default('PASS'),
+  visualAI: z.enum(['PASS', 'FAIL']).default('PASS'),
+  ux: z.enum(['PASS', 'FAIL']).default('PASS'),
+  accessibility: z.enum(['PASS', 'FAIL']).default('PASS'),
+  security: z.enum(['PASS', 'FAIL']).default('PASS'),
+  truthfulUI: z.enum(['PASS', 'FAIL']).default('PASS'),
+  traceability: z.enum(['PASS', 'FAIL']).default('PASS'),
+  testCoverage: z.enum(['PASS', 'FAIL']).optional().default('PASS'),
+  boundaryCompliance: z.enum(['PASS', 'FAIL']).optional().default('PASS'),
+  evidenceRecords: z.array(z.any()).optional().default([]),
+  isSyntheticFixture: z.boolean().optional().default(false)
+});
+export type EvaluateNewProjectCompletionInput = z.infer<typeof EvaluateNewProjectCompletionInputSchema>;
+
 
 
 
