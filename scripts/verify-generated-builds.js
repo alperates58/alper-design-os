@@ -406,7 +406,7 @@ if (isDirectRun || process.argv.includes('--run-direct')) {
     console.log('========================================================');
     console.log(`Global Status: ${res.globalDebtStatus} (${res.verifiedCount}/${res.totalStacks} verified)\n`);
     for (const r of res.results) {
-      const badge = r.verificationStatus === 'VERIFIED' ? '[VERIFIED] ' : '[FAILED]   ';
+      const badge = r.verificationStatus === 'VERIFIED' ? '[VERIFIED] ' : (r.verificationStatus === 'PARTIALLY_VERIFIED' ? '[PARTIAL]  ' : (r.verificationStatus === 'NOT_VERIFIED' ? '[NOT_VERIFIED] ' : '[FAILED]   '));
       console.log(`${badge} ${r.stack.padEnd(20)}: ${r.command} (Toolchain: ${r.toolchainVersion})`);
       if (r.verificationStatus === 'FAILED') {
         console.error(`       Error details: ${r.logs}`);

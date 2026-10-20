@@ -350,7 +350,7 @@ describe('ALPER DESIGN OS - Phase 1K: Installer Hardening, Windows Portability &
     });
 
     it('redacts tokens and keys and never outputs raw secret values', () => {
-      const dummySecret = 'ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
+      const dummySecret = 'ghp_abcdefghijklmnopqrstuvwxyz1234567890';
       const dummyAws = 'AKIAIOSFODNN7EXAMPLE';
       const content = `GitHub: ${dummySecret}, AWS: ${dummyAws}`;
 
