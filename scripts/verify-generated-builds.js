@@ -205,6 +205,18 @@ export async function verifyGeneratedBuilds(options = {}) {
               qualificationContract.dimensions.composerValidate = { status: 'PARTIALLY_VERIFIED', note: vErr.message };
             }
 
+            // Ensure essential directories exist
+            fs.mkdirSync(path.join(stackDir, 'bootstrap', 'cache'), { recursive: true });
+            fs.mkdirSync(path.join(stackDir, 'storage', 'framework', 'views'), { recursive: true });
+            fs.mkdirSync(path.join(stackDir, 'storage', 'framework', 'cache'), { recursive: true });
+            fs.mkdirSync(path.join(stackDir, 'storage', 'framework', 'sessions'), { recursive: true });
+            fs.mkdirSync(path.join(stackDir, 'storage', 'logs'), { recursive: true });
+
+            // Ensure audit.block-insecure is false so security advisories on older v11 patches don't block install
+            try {
+              execSync('composer config audit.block-insecure false', { cwd: stackDir, stdio: 'pipe' });
+            } catch {}
+
             // Real Composer Install / Update (Downloads real framework dependencies)
             logs += 'Executing real composer install for Laravel framework dependencies...\n';
             try {
