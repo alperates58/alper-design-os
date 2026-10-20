@@ -2,12 +2,40 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { execSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { runDoctor } from './doctor.js';
 
 /**
  * ALPER DESIGN OS - Canonical Bootstrap V1
  * Automated clean-room repository installer & validator.
  */
+
+export function verifyNodeModulesIntegrity(repoRoot) {
+  const rootNm = path.join(repoRoot, 'node_modules');
+  if (!fs.existsSync(rootNm)) return false;
+
+  const samplePkgs = [
+    path.join(rootNm, 'typescript'),
+    path.join(rootNm, 'vitest'),
+    path.join(rootNm, 'zod')
+  ];
+
+  for (const pkg of samplePkgs) {
+    if (!fs.existsSync(pkg)) return false;
+    try {
+      const real = fs.realpathSync(pkg);
+      const resolvedRoot = path.resolve(repoRoot).toLowerCase();
+      if (!real.toLowerCase().startsWith(resolvedRoot)) {
+        console.warn(`      Stale junction detected in node_modules pointing outside workspace: ${real}`);
+        return false;
+      }
+    } catch (e) {
+      console.warn(`      Broken junction detected in node_modules (${pkg}): ${e.message}`);
+      return false;
+    }
+  }
+  return true;
+}
 
 export async function bootstrapSystem(options = {}) {
   const repoRoot = options.repoRoot ? path.resolve(options.repoRoot) : path.resolve('.');
@@ -39,30 +67,43 @@ export async function bootstrapSystem(options = {}) {
 
   // 3. Package Manager Detection & Dependency State (Strict pnpm 9.15.4)
   console.log('[3/7] Package Manager & Dependency Verification...');
-  const hasInstalledDependencies =
-    fs.existsSync(path.join(repoRoot, 'node_modules', 'typescript')) &&
-    fs.existsSync(path.join(repoRoot, 'node_modules', 'vitest')) &&
-    fs.existsSync(path.join(repoRoot, 'node_modules', 'zod'));
+  const hasInstalledDependencies = verifyNodeModulesIntegrity(repoRoot);
 
   if (hasInstalledDependencies && !options.forceInstall) {
     console.log('      Existing dependencies verified intact in node_modules (idempotent step).');
   } else {
-    let pnpmCmd = 'pnpm';
+    // If broken junctions or stale links detected after repository move, purge stale node_modules
+    if (fs.existsSync(path.join(repoRoot, 'node_modules')) && !hasInstalledDependencies) {
+      console.log('      Repairing broken/stale node_modules junctions from repository move...');
+      try {
+        fs.rmSync(path.join(repoRoot, 'node_modules'), { recursive: true, force: true });
+      } catch (rmErr) {
+        console.warn(`      Could not cleanly remove node_modules: ${rmErr.message}`);
+      }
+    }
+
+    const pnpmCmd = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
     let isPnpmAvailable = false;
 
     // Check system pnpm
     try {
-      const pnpmV = execSync('pnpm -v', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
+      const pnpmV = execSync(`${pnpmCmd} -v`, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
       console.log(`      Found system pnpm: ${pnpmV}`);
       isPnpmAvailable = true;
-    } catch {}
+    } catch {
+      try {
+        const pnpmV = execSync('pnpm -v', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
+        console.log(`      Found system pnpm: ${pnpmV}`);
+        isPnpmAvailable = true;
+      } catch {}
+    }
 
     // If absent, attempt safe provisioning via Corepack
     if (!isPnpmAvailable) {
       console.log('      pnpm not found in PATH. Attempting Corepack provisioning...');
       try {
         execSync('corepack enable && corepack prepare pnpm@9.15.4 --activate', { stdio: 'inherit' });
-        const pnpmV = execSync('pnpm -v', { encoding: 'utf-8' }).trim();
+        const pnpmV = execSync(`${pnpmCmd} -v`, { encoding: 'utf-8' }).trim();
         console.log(`      Corepack provisioned pnpm: ${pnpmV}`);
         isPnpmAvailable = true;
       } catch (cpErr) {
@@ -94,7 +135,8 @@ export async function bootstrapSystem(options = {}) {
   // 4. Monorepo Build
   console.log('[4/7] Compiling Monorepo TypeScript Packages & Adapters...');
   try {
-    execSync('npm run build', { cwd: repoRoot, stdio: 'inherit' });
+    const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+    execSync(`${npmCmd} run build`, { cwd: repoRoot, stdio: 'inherit' });
     console.log('      Build completed successfully.');
   } catch (err) {
     console.error('FATAL: Monorepo build failed:', err.message);
@@ -144,7 +186,10 @@ export async function bootstrapSystem(options = {}) {
 }
 
 // CLI Execution Entrypoint
-const isDirectRun = process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname.replace(/^\/([a-zA-Z]:)/, '$1'));
+const isDirectRun = Boolean(
+  process.argv[1] &&
+  path.resolve(process.argv[1]).toLowerCase() === path.resolve(fileURLToPath(import.meta.url)).toLowerCase()
+);
 
 if (isDirectRun || process.argv.includes('--run-direct')) {
   bootstrapSystem().then(res => {

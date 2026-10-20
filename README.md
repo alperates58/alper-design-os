@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/Lisans-MIT-blue.svg)](LICENSE)
 [![TypeScript: Strict](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](tsconfig.json)
 [![Antigravity Plugin Ready](https://img.shields.io/badge/Antigravity-74%20Skills%20(55%20Active)-emerald.svg)](plugin.json)
-[![Tests: 506 Passed](https://img.shields.io/badge/Tests-506%20Passed%20(22%20Suites)-brightgreen.svg)](tests/)
+[![Tests: 538 Passed](https://img.shields.io/badge/Tests-538%20Passed%20(25%20Suites)-brightgreen.svg)](tests/)
 [![MCP Server: 124 Tools](https://img.shields.io/badge/MCP%20Server-124%20Tools-purple.svg)](packages/mcp-server/)
 [![CI: Passing](https://img.shields.io/badge/CI-Passing%20(7%2F7%20Jobs%20Green)-brightgreen.svg)](.github/workflows/ci.yml)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](scripts/)
@@ -13,7 +13,7 @@
 
 **ALPER DESIGN OS**, sıradan bir bileşen veya UI kütüphanesi değildir. Yazılım alanlarını (domain) derinlemesine anlayan, kullanıcı iş akışlarını ve ergonomisini analiz eden, kurumsal seviyede mimari ve UX/UI kararları alan, sıfırdan ürün tasarlayan veya mevcut devasa sistemleri cerrahi/aşamalı olarak modernize eden **AI-Native, Teknoloji Bağımsız Tasarım ve UX Geliştirme İşletim Sistemi**'dir.
 
-Bünyesinde **72 adet Antigravity Yeteneği (Skill)**, **124 adet tip güvenli MCP Aracı**, **8 farklı frontend/backend adaptörü**, **Mevcut Proje Modernizasyon Motoru (Phase 1F)**, **Sıfırdan Proje Üretim Motoru (Phase 1G)**, **Kalıcı Proje İstihbarat Motoru (Phase 1H Project Intelligence)**, **Mimari Doğruluk & Evrensel Kanıt Katmanı (Phase 1H.1)** ve **Taşınabilirlik, CI/CD & Dağıtım Motoru (Phase 1I)** barındırır.
+Bünyesinde **74 adet Antigravity Yeteneği (55 aktif, 19 deprecated)**, **124 adet tip güvenli MCP Aracı**, **8 farklı frontend/backend adaptörü**, **Mevcut Proje Modernizasyon Motoru (Phase 1F)**, **Sıfırdan Proje Üretim Motoru (Phase 1G)**, **Kalıcı Proje İstihbarat Motoru (Phase 1H Project Intelligence)**, **Mimari Doğruluk & Evrensel Kanıt Katmanı (Phase 1H.1)**, **Taşınabilirlik, CI/CD & Dağıtım Motoru (Phase 1I)** ve **Installer Sertleştirmesi & V1.0 Sürüm Hazırlığı (Phase 1K)** barındırır.
 
 
 ---
@@ -113,18 +113,26 @@ Bünyesinde **72 adet Antigravity Yeteneği (Skill)**, **124 adet tip güvenli M
       - **Job B (Generated Project Native Build Certification & Packaging):** .NET 8 SDK ve PHP 8.2 + Composer ile donatılmış ortamda 4 stack'in (`REACT_TYPESCRIPT`, `LARAVEL_BLADE`, `ASPNET_RAZOR`, `PLAIN_HTML_CSS_JS`) gerçek derleyici, CLI ve sözdizimi doğrulaması.
     * **Taşınan Doğrulama Borcunun Kapatılması:** `GENERATED_PROJECT_REAL_BUILDS = VERIFIED` statüsüne resmi olarak yükseltilmiştir (Gerçek GitHub Actions Çalışma ID: `38569682373`, Sonuç: `success`).
     * **Antigravity MCP Kapsamı & Sürüm Sabitleme:** `node scripts/register-mcp.js` varsayılan olarak yalnızca projeye özel `.agents/mcp_config.json` içine `alper-design-os` sunucusunu kaydeder; isteğe bağlı tarayıcı MCP sunucuları (`chrome-devtools-mcp@0.12.0`, `@playwright/mcp@0.0.6`) kesin sürümlerle (`@latest` yasak) kaydedilir.
-    * **Pre-v1 Dağıtım Paketleme:** `dist-release/alper-design-os-0.1.0.tar.gz`, `release-manifest.json` ve SHA-256 sağlama toplamları otomatik üretilir ve CI artefaktı olarak depolanır.
+    * **Pre-v1 Dağıtım Paketleme:** `dist-release/alper-design-os-1.0.0-rc.1.tar.gz`, `release-manifest.json` ve SHA-256 sağlama toplamları otomatik üretilir ve CI artefaktı olarak depolanır.
+
+16. **Stabilizasyon, Installer Sertleştirmesi & V1.0 Sürüm Hazırlığı (Phase 1K):**
+    * **Windows / Unicode Taşınabilirlik Sözleşmesi:** `fileURLToPath(import.meta.url)` standartlaştırılmasıyla Türkçe/Unicode (`KİŞİSEL PROJELER`) ve boşluk içeren klasörlerde CLI ve installer'ların sessizce sonlanma problemi kökten çözülmüştür.
+    * **PowerShell Kısıtlı Çalışma Ortamı Koruması:** `ExecutionPolicy` kısıtlamalarına karşı doğrudan `cmd.exe /c` ve Node.js `.cmd` alternatifleri (`bootstrap.cmd`, `doctor.cmd`, `scripts/*.cmd`) sağlanmıştır; hiçbir güvenlik politikası bypass edilmez.
+    * **Kanonik 10-Aşamalı Ajan Kurulum Sözleşmesi:** `INSPECT → SELECT DESTINATION → CLONE/UPDATE → BOOTSTRAP → BUILD → TEST → REGISTER → DOCTOR → MCP HANDSHAKE → REPORT` sözleşmesi Antigravity ajanları için net ve deterministik hale getirilmiştir.
+    * **Taşınan Workspace Junction Onarımı:** Yeniden konumlandırılan pnpm junction/symlink bağlantıları otomatik yakalanıp dondurulmuş kilit dosyasıyla onarılır.
+    * **MCP stdio JSON-RPC Doğrulaması:** 124 kanonik araç stdio handshake ve gerçek Antigravity IDE çağrılarıyla canlı doğrulanmıştır (`ANTIGRAVITY_MCP_RUNTIME = VERIFIED`).
+    * **538 Otomatik Test Güvencesi:** 25 test paketinde 538 test %100 yeşildir.
 
 ---
 
-## 🧠 72 Uzmanlaşmış Yetenek (Antigravity Skills)
+## 🧠 74 Uzmanlaşmış Yetenek (55 Aktif, 19 Deprecated)
 
 ### Yetenek (Skill) Nedir ve Nasıl Çalışır?
 Alper Design OS içerisindeki **Skill'ler**, yapay zeka ajanının sıradan bir metin tamamlayıcı gibi değil; **kıdemli bir baş mimar, güvenlik denetçisi veya UX araştırmacısı** gibi hareket etmesini sağlayan kurallar, kılavuzlar ve iş akışları paketidir.
 
 Bir istekte bulunduğunuzda (örneğin *"bu projeyi modernize et"* veya *"veritabanı migrasyon riskini denetle"*), yapay zeka ajanı ilgili yeteneği otomatik olarak yükler, o alana özgü katı mühendislik kurallarını (`SKILL.md`) okur ve 124 MCP aracı arasından gerekenleri disiplinli bir sırayla çalıştırır.
 
-72 yetenek **11 ana uzmanlık alanında** organize edilmiştir:
+74 yetenek (55 aktif, 19 deprecated) **17 sınırlandırılmış yetenek ailesinde** organize edilmiştir:
 
 ```mermaid
 graph TD
@@ -499,9 +507,9 @@ flowchart TD
 
 ---
 
-## 🛠️ MCP Sunucusu & 88 Güçlü Araç
+## 🛠️ MCP Sunucusu & 124 Güçlü Araç
 
-`alper-design-os` MCP sunucusu 10 temel kategoride **88 adet tip güvenli araç** sunar:
+`alper-design-os` MCP sunucusu 10 temel kategoride **124 adet tip güvenli araç** sunar:
 
 | Kategori | Araç Sayısı | Öne Çıkan Araçlar | İlgili Yetenekler (Skills) |
 | :--- | :---: | :--- | :--- |
@@ -525,7 +533,7 @@ Aşağıdaki hazır promptları Antigravity, Cursor veya Claude arayüzünde do�
 ### 👑 0. 10 Kategorili Uçtan Uca Sıfırdan Başlangıç Master Promptu (All-in-One 10-Tier Starter Prompt)
 *Tetiklenen Yetenekler:* 57 Yeteneğin tamamı ve 10 Temel MCP Kategorisi (`alper-domain-intelligence`, `alper-project-analyzer`, `alper-source-intelligence`, `alper-ui-blueprint`, `alper-secure-coding`, `alper-architecture`, `alper-database-engineering`, `alper-performance-engineering`, `alper-change-planner`, `alper-browser-qa`, `alper-evidence-review`)
 
-Yeni bir projeye başlarken geliştiricinin yapay zekaya tek tek *"şunu da kontrol et, bunu da ekle, şu aracı da çalıştır"* demesine gerek kalmaması için tasarlanmış **turn-key (anahtar teslim)** master prompttur. Bu tek komutla Alper Design OS'in **10 temel MCP kategorisinin tamamı (88 araçlık güç)** sırasıyla, katı bir disiplinle işletilir:
+Yeni bir projeye başlarken geliştiricinin yapay zekaya tek tek *"şunu da kontrol et, bunu da ekle, şu aracı da çalıştır"* demesine gerek kalmaması için tasarlanmış **turn-key (anahtar teslim)** master prompttur. Bu tek komutla Alper Design OS'in **10 temel MCP kategorisinin tamamı (124 araçlık güç)** sırasıyla, katı bir disiplinle işletilir:
 
 ```text
 Alper Design OS ile sıfırdan yeni ve üretime hazır bir yazılım projesi başlatıyorum.

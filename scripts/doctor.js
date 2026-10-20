@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { execSync } from 'node:child_process';
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL, fileURLToPath } from 'node:url';
 
 /**
  * ALPER DESIGN OS - Doctor V2
@@ -123,11 +123,17 @@ export async function runDoctor(options = {}) {
   // 3. Package Manager & Lockfile Consistency (Strict pnpm 9.x)
   let pnpmDetected = false;
   let pnpmVersion = 'none';
+  const pnpmCmd = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
   try {
-    pnpmVersion = execSync('pnpm -v', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
+    pnpmVersion = execSync(`${pnpmCmd} -v`, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
     pnpmDetected = true;
   } catch {
-    pnpmDetected = false;
+    try {
+      pnpmVersion = execSync('pnpm -v', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
+      pnpmDetected = true;
+    } catch {
+      pnpmDetected = false;
+    }
   }
 
   const lockfileExists = fs.existsSync(path.join(projectRoot, 'pnpm-lock.yaml'));
@@ -342,7 +348,10 @@ export async function runDoctor(options = {}) {
 }
 
 // CLI Execution Entrypoint
-const isDirectRun = process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname.replace(/^\/([a-zA-Z]:)/, '$1'));
+const isDirectRun = Boolean(
+  process.argv[1] &&
+  path.resolve(process.argv[1]).toLowerCase() === path.resolve(fileURLToPath(import.meta.url)).toLowerCase()
+);
 
 if (isDirectRun || process.argv.includes('--run-direct')) {
   runDoctor().then(res => {

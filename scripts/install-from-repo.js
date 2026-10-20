@@ -1,8 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { runDoctor } from './doctor.js';
 import { bootstrapSystem } from './bootstrap.js';
+import { registerMcp } from './register-mcp.js';
 
 /**
  * ALPER DESIGN OS - Install from Repository URL
@@ -101,6 +103,11 @@ export async function installFromRepository(options = {}) {
   console.log(`\n[3/3] Bootstrapping newly cloned repository...`);
   const bootstrapResult = await bootstrapSystem({ repoRoot: targetDir });
 
+  // 6. Optional MCP Registration
+  if (options.registerGlobal) {
+    registerMcp({ projectRoot: targetDir, global: true });
+  }
+
   return {
     success: bootstrapResult.success,
     status: bootstrapResult.status,
@@ -113,15 +120,19 @@ export async function installFromRepository(options = {}) {
 }
 
 // CLI Execution Entrypoint
-const isDirectRun = process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname.replace(/^\/([a-zA-Z]:)/, '$1'));
+const isDirectRun = Boolean(
+  process.argv[1] &&
+  path.resolve(process.argv[1]).toLowerCase() === path.resolve(fileURLToPath(import.meta.url)).toLowerCase()
+);
 
-if (isDirectRun) {
+if (isDirectRun || process.argv.includes('--run-direct')) {
   const args = process.argv.slice(2);
   const repoUrl = args[0] || 'https://github.com/alperates58/alper-design-os.git';
   const targetDir = args[1] ? path.resolve(args[1]) : path.resolve('alper-design-os');
   const ref = args[2] || 'main';
+  const registerGlobal = args.includes('--global');
 
-  installFromRepository({ repoUrl, targetDir, ref }).then(res => {
+  installFromRepository({ repoUrl, targetDir, ref, registerGlobal }).then(res => {
     console.log('\n========================================================');
     console.log(`INSTALLATION RESULT: ${res.status}`);
     console.log(`Message: ${res.message}`);

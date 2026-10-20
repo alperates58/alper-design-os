@@ -3,7 +3,8 @@
 **Target Audience**: Independent Frontier Model Auditors (e.g. Gemini 4 Argon, Claude 3.5 Sonnet, GPT-4o), Red Teams, and Enterprise Architecture Reviewers.  
 **Repository**: `https://github.com/alperates58/alper-design-os`  
 **Current Candidate Version**: `1.0.0-rc.1`  
-**Date**: October 14, 2026  
+**Date**: October 20, 2026  
+**Independent Audit Status**: `INDEPENDENT_AUDIT = PENDING`
 
 ---
 
@@ -17,8 +18,9 @@
 1. **Product & Domain Understanding**: Deep entity modeling, business criticality calculation, and domain workflow mapping before code generation.
 2. **Deterministic Architecture Selection**: Prohibits unjustified distributed architectures for small-scale CRUD apps while permitting microservices for proven internet-scale requirements.
 3. **Multi-Stack Code Generation**: Emits grounded production scaffolds across 4 supported stacks: React TypeScript, Laravel Blade, ASP.NET Razor, and Plain HTML/CSS/JS.
-4. **Project Intelligence & Durable Memory**: Maintains an append-only architectural knowledge graph, ADR lifecycle, and conflict detection engine in `.agents/`.
+4. **Project Intelligence & Durable Memory**: Maintains an append-only architectural knowledge graph, ADR lifecycle, and conflict detection engine in `.alper-design-os/project/`.
 5. **Quality & Release Guardrails**: 124 canonical MCP tools governed by a fail-closed policy (`NO CLAIM WITHOUT EVIDENCE`), multi-tier skill routing, secret scanning, and SPDX 2.3 SBOM generation.
+6. **Windows & Unicode Portability**: Hardened with native `fileURLToPath(import.meta.url)` path resolution, `.cmd` wrappers for restricted PowerShell environments, and automatic broken junction recovery after repository relocation.
 
 ### Strict Boundaries & Non-Goals for v1.0
 - **No APS/MES/WMS Domain Packs**: Deep domain-specific engines belong to Phase 2.
@@ -51,9 +53,10 @@
 
 - **Phase 1H.2B Closure Baseline**: `50cb2e6` (Pass)
 - **Phase 1I CI Baseline**: `5978b40` (All 7 GitHub Actions jobs PASSED, Run ID `38569682373` & `38571111441`)
-- **Phase 1J Candidate Baseline**: `1.0.0-rc.1`
-- **Total Test Files**: 20 test suites in `tests/`
-- **Automated Tests**: > 250 test cases covering adapters, governance, greenfield engine, intelligence, MCP tools, and security.
+- **Phase 1J Hardened Baseline**: `aeda13a543981cc0c58464d01cc2d7d41375e87e` (CI Run ID `38585759472` - All 7 jobs PASSED)
+- **Phase 1K Release Readiness Branch**: `fix/v1-release-readiness-1k`
+- **Total Test Files**: 25 test suites in `tests/`
+- **Automated Tests**: 538 test cases (100% PASSED) covering adapters, governance, greenfield engine, intelligence, MCP tools, portability, and security.
 
 ---
 
@@ -63,8 +66,8 @@ Detailed in `docs/THREAT-MODEL-V1.md`:
 1. **Untrusted MCP Client Input**: Zod schema validation on every call; `server.ts`.
 2. **Hostile Repository Content**: `NO_CLAIM_WITHOUT_EVIDENCE`; verbal claims in README cannot satisfy gates.
 3. **Project Intelligence Poisoning**: Strict `KnowledgeAuthorityRank` hierarchy; code comments cannot promote to `APPROVED_USER_DECISION`.
-4. **Path Traversal**: Confinement inside project roots; rejection of `../../` and Windows reserved device names (`CON`, `PRN`, `AUX`, `NUL`).
-5. **Arbitrary Command Execution**: Parameterized `execFile` calls without raw shell `eval`.
+4. **Path Traversal**: Confinement inside project roots; rejection of `../../` and Windows reserved device names (`CON`, `PRN`, `AUX`, `NUL`, `COM1`–`COM9`, `LPT1`–`LPT9`).
+5. **Arbitrary Command Execution**: Parameterized execution without raw shell `eval`.
 6. **Information Disclosure**: Error envelopes scrub sensitive tokens and stack traces.
 7. **DoS / ReDoS**: Linear regex patterns and depth guards in AST traversal.
 8. **Supply Chain**: Pinned GitHub Actions, frozen pnpm lockfile with SHA-512 hashes.
@@ -93,15 +96,15 @@ Classified in `docs/MCP-SECURITY-AUDIT.md`:
 Evaluated via `scripts/verify-generated-builds.js`:
 - **PLAIN_HTML_CSS_JS**: `node --check` syntax validation and HTML structure check -> **VERIFIED**
 - **REACT_TYPESCRIPT**: Production dependency install (`npm install`) and Vite 5.x build -> **VERIFIED**
-- **ASPNET_RAZOR**: `global.json` pinned to `8.0.406` with `rollForward: latestMajor`. Real `dotnet restore` + `dotnet build` -> **VERIFIED**
-- **LARAVEL_BLADE**: Real Laravel 11 scaffold without fake fallbacks. PHP syntax + negative bootstrap guard verified locally. Full Composer install and real framework boot verified in CI Job B -> **VERIFIED_CI_ONLY**
+- **ASPNET_RAZOR**: `global.json` pinned to `8.0.406` with `rollForward: latestMajor`. Real `dotnet restore` + `dotnet build` -> **VERIFIED (in CI)** / **PARTIALLY_VERIFIED (on hosts without .NET 8 SDK)**
+- **LARAVEL_BLADE**: Real Laravel 11 scaffold without fake fallbacks. PHP syntax + negative bootstrap guard verified locally. Full Composer install and real framework boot verified in CI Job B -> **VERIFIED (in CI)** / **PARTIALLY_VERIFIED (on hosts where Composer is deferred)**
 
 ---
 
 ## 7. Supply Chain & Compliance Status
 
 - **GitHub Actions Pinning**: 100% of actions pinned to immutable commit SHAs with comments (`ACTIONS_PINNING_GATE: PASS`).
-- **Secret Scanning**: 0 unredacted secrets across 464 tracked files and 104,000+ diff lines (`SECRET_SCANNING_GATE: PASS`).
+- **Secret Scanning**: 0 unredacted secrets across 484 tracked files and git history (`SECRET_SCANNING_GATE: PASS`).
 - **License Compliance**: 100% of runtime dependencies use permissive licenses (`LICENSE_COMPLIANCE_GATE: PASS`).
 - **SPDX 2.3 SBOM**: Machine-readable SBOM output to `dist-release/sbom.spdx.json` (`SBOM_GENERATION_GATE: PASS`).
 - **Vulnerabilities**: 0 Critical, 0 Production Runtime (`DEPENDENCY_AUDIT_GATE: PASS`).
@@ -112,8 +115,9 @@ Evaluated via `scripts/verify-generated-builds.js`:
 
 Transparently documented in `KNOWN_LIMITATIONS.md`:
 1. `REAL_PROJECT_VALIDATION = DEFERRED_BY_USER` (Deferred to Phase 2).
-2. `ANTIGRAVITY_HOST_HOOK_INTEGRATION = NOT_VERIFIED` (Requires live IDE session).
-3. macOS verified in headless CI matrix; no native macOS GUI app testing.
+2. `ANTIGRAVITY_MCP_RUNTIME = VERIFIED` (Verified live with real tool invocation).
+3. `ANTIGRAVITY_HOST_HOOK_INTEGRATION = NOT_VERIFIED` (Static config verified; automated hook trigger awaits IDE feature).
+4. `INDEPENDENT_AUDIT = PENDING` (Awaiting frontier model review).
 
 ---
 
@@ -128,7 +132,7 @@ node scripts/doctor.js --json
 # Step 2: Verify Monorepo Clean Build
 npm run build
 
-# Step 3: Run Full Vitest Suite (including Adversarial & MCP Hardening)
+# Step 3: Run Full Vitest Suite (including Adversarial & Portability)
 npm test
 
 # Step 4: Run Real Secret Scanner
@@ -143,15 +147,26 @@ node scripts/verify-generated-builds.js
 # Step 7: Validate Packaging, Checksums, and SBOM
 node scripts/package-distribution.js
 
-# Step 8: Verify Clean Archive Extraction in Isolation
-mkdir -p tests/workspaces/audit-clean-room
-tar -xzf dist-release/alper-design-os-1.0.0-rc.1.tar.gz -C tests/workspaces/audit-clean-room --strip-components=1
-cd tests/workspaces/audit-clean-room
-node scripts/doctor.js --preflight
+# Step 8: Test Stdio JSON-RPC Handshake across 124 tools
+node -e "import('./benchmarks/runner/mcp-smoke-test.js').then(m => m.runMcpSmokeTest()).then(console.log)"
 ```
 
 ### Challenge Checklist for Auditor:
 1. Try passing `blueprintId: '../../etc/passwd'` to `handleRenderBlueprint` -> verify it throws path traversal error.
-2. Try scaffolding to `CON` or `PRN` on Windows -> verify it throws reserved name error.
+2. Try scaffolding to `CON`, `PRN`, or `COM1` on Windows -> verify it throws reserved name error.
 3. Try modifying `package.json` to an unpermissive license -> verify `scripts/audit-licenses.js` catches it.
 4. Try injecting a fake secret into a tracked file -> verify `scripts/scan-repository-secrets.js` halts with exit code 1.
+5. Try running `scripts/safe-update.js` on a dirty repository -> verify it aborts with code 1 and never runs destructive resets.
+6. Try running `node scripts/bootstrap.js` in a directory containing Unicode characters or spaces -> verify it executes cleanly.
+
+---
+
+## 10. Independent Model Evaluation Scope
+
+Frontier model reviewers should evaluate:
+- **Architectural Integrity**: Technology-agnostic DTCG core, adapter boundaries, and clean separation between tokens, blueprints, and concrete stack implementations.
+- **MCP Tool Registry**: Completeness, type-safety, and fail-closed nature of all 124 tools.
+- **Skill/MCP Routing Parity**: Single source of truth across 55 active skills, 0 orphaned tools, and 0 split-brain routers.
+- **Greenfield & Modernization Engine Realism**: Adherence to preservation contracts, complexity budgets, and truthful evidence.
+- **Security & Portability**: Resilience against prompt injection, hostile content, path traversal, and Windows/Unicode quirks.
+- **Release Safety**: Zero unverified claims, truthful debt documentation, and safe-update/rollback guarantees.

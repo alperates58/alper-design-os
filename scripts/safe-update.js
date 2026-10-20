@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { bootstrapSystem } from './bootstrap.js';
 
 /**
@@ -116,9 +117,12 @@ export async function safeUpdate(options = {}) {
 }
 
 // CLI Execution Entrypoint
-const isDirectRun = process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname.replace(/^\/([a-zA-Z]:)/, '$1'));
+const isDirectRun = Boolean(
+  process.argv[1] &&
+  path.resolve(process.argv[1]).toLowerCase() === path.resolve(fileURLToPath(import.meta.url)).toLowerCase()
+);
 
-if (isDirectRun) {
+if (isDirectRun || process.argv.includes('--run-direct')) {
   safeUpdate().then(res => {
     console.log('\n========================================================');
     console.log(`SAFE UPDATE RESULT: ${res.status}`);

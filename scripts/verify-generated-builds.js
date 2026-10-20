@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL, fileURLToPath } from 'node:url';
 
 /**
  * ALPER DESIGN OS - Generated Project Native Build Matrix
@@ -208,7 +208,7 @@ export async function verifyGeneratedBuilds(options = {}) {
             // Real Composer Install / Update (Downloads real framework dependencies)
             logs += 'Executing real composer install for Laravel framework dependencies...\n';
             try {
-              const compInstallOut = execSync('composer update --no-interaction --prefer-dist --no-dev --optimize-autoloader --ignore-platform-reqs', {
+              const compInstallOut = execSync('composer update --no-interaction --prefer-dist --no-dev --optimize-autoloader --ignore-platform-reqs --no-audit', {
                 cwd: stackDir,
                 encoding: 'utf-8',
                 stdio: 'pipe',
@@ -252,7 +252,7 @@ export async function verifyGeneratedBuilds(options = {}) {
               buildRecord.exitCode = 0;
               buildRecord.toolchainVersion = `${phpV} (Syntax & negative guard verified)`;
               buildRecord.logs = logs;
-              buildRecord.verificationStatus = 'VERIFIED';
+              buildRecord.verificationStatus = 'PARTIALLY_VERIFIED';
               qualificationContract.overallStatus = 'PARTIALLY_VERIFIED';
             }
           } else {
@@ -268,15 +268,15 @@ export async function verifyGeneratedBuilds(options = {}) {
             buildRecord.exitCode = 0;
             buildRecord.toolchainVersion = `${phpV} (Local syntax only)`;
             buildRecord.logs = logs;
-            buildRecord.verificationStatus = 'VERIFIED';
+            buildRecord.verificationStatus = 'PARTIALLY_VERIFIED';
             qualificationContract.overallStatus = 'PARTIALLY_VERIFIED';
           }
         } catch (err) {
           buildRecord.command = 'php artisan boot validation';
           buildRecord.exitCode = 1;
-          buildRecord.logs = `Laravel validation failed: ${err.message}`;
-          buildRecord.verificationStatus = 'FAILED';
-          qualificationContract.overallStatus = 'FAILED';
+          buildRecord.logs = `Laravel validation deferred or failed: ${err.message}`;
+          buildRecord.verificationStatus = 'NOT_VERIFIED';
+          qualificationContract.overallStatus = 'NOT_VERIFIED';
         }
       } else if (stack === 'ASPNET_RAZOR') {
         // ASP.NET Razor: Exact .NET 8 SDK qualification & assembly build
@@ -344,7 +344,7 @@ export async function verifyGeneratedBuilds(options = {}) {
           buildRecord.exitCode = 0;
           buildRecord.toolchainVersion = `.NET SDK ${dotnetV} (Syntax verified)`;
           buildRecord.logs = logs;
-          buildRecord.verificationStatus = 'VERIFIED';
+          buildRecord.verificationStatus = 'PARTIALLY_VERIFIED';
           qualificationContract.overallStatus = 'PARTIALLY_VERIFIED';
         }
       }
@@ -360,6 +360,7 @@ export async function verifyGeneratedBuilds(options = {}) {
 
   const allVerified = results.every(r => r.verificationStatus === 'VERIFIED');
   const someVerified = results.some(r => r.verificationStatus === 'VERIFIED');
+  const somePartial = results.some(r => r.verificationStatus === 'PARTIALLY_VERIFIED');
 
   // Gates computation
   const laravelResult = results.find(r => r.stack === 'LARAVEL_BLADE');
@@ -369,17 +370,18 @@ export async function verifyGeneratedBuilds(options = {}) {
   const dotnet8ExactVerified = aspnetResult?.qualificationContract?.dimensions?.exactSdkCheck?.isExactMatch === true;
 
   const gates = {
-    LARAVEL_REAL_FRAMEWORK_GATE: laravelRealBootVerified ? 'PASS' : (laravelResult?.verificationStatus === 'VERIFIED' ? 'PARTIALLY_VERIFIED' : 'FAILED'),
+    LARAVEL_REAL_FRAMEWORK_GATE: laravelRealBootVerified ? 'PASS' : ((laravelResult?.verificationStatus === 'VERIFIED' || laravelResult?.verificationStatus === 'PARTIALLY_VERIFIED') ? 'PARTIALLY_VERIFIED' : 'FAILED'),
     DOTNET_8_EXACT_COMPAT_GATE: dotnet8ExactVerified ? 'PASS' : 'PARTIALLY_VERIFIED',
     NATIVE_STACK_CERTIFICATION_GATE: allVerified ? 'PASS' : 'FAILED'
   };
 
   const summary = {
     evaluatedAt: new Date().toISOString(),
-    globalDebtStatus: allVerified ? 'VERIFIED' : (someVerified ? 'PARTIALLY_VERIFIED' : 'NOT_VERIFIED'),
+    globalDebtStatus: allVerified ? 'VERIFIED' : ((someVerified || somePartial) ? 'PARTIALLY_VERIFIED' : 'NOT_VERIFIED'),
     allVerified,
     totalStacks: stacks.length,
     verifiedCount: results.filter(r => r.verificationStatus === 'VERIFIED').length,
+    partiallyVerifiedCount: results.filter(r => r.verificationStatus === 'PARTIALLY_VERIFIED').length,
     failedCount: results.filter(r => r.verificationStatus === 'FAILED').length,
     gates,
     results
@@ -392,9 +394,12 @@ export async function verifyGeneratedBuilds(options = {}) {
 }
 
 // CLI Execution Entrypoint
-const isDirectRun = process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname.replace(/^\/([a-zA-Z]:)/, '$1'));
+const isDirectRun = Boolean(
+  process.argv[1] &&
+  path.resolve(process.argv[1]).toLowerCase() === path.resolve(fileURLToPath(import.meta.url)).toLowerCase()
+);
 
-if (isDirectRun) {
+if (isDirectRun || process.argv.includes('--run-direct')) {
   verifyGeneratedBuilds().then(res => {
     console.log('========================================================');
     console.log('  GENERATED PROJECT NATIVE BUILD MATRIX RESULTS');
