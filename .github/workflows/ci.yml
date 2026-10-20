@@ -96,6 +96,8 @@ jobs:
 
       - name: Execute Real Generated Project Native Build Matrix
         run: node scripts/verify-generated-builds.js
+        env:
+          COMPOSER_AUTH: '{"github-oauth": {"github.com": "${{ secrets.GITHUB_TOKEN }}"}}'
 
       - name: Validate Version Consistency & Release Packaging
         run: node scripts/package-distribution.js

@@ -4,7 +4,23 @@ All notable changes to **ALPER DESIGN OS** are documented in this file, adhering
 
 ---
 
-## [1.0.0-rc.1] - 2026-10-14 (Phase 1J: Release Hardening & Red-Team Readiness)
+## [1.0.0-rc.1] - 2026-10-20 (Phase 1K: One-Shot Stabilization, Installer Hardening & V1.0 Release Readiness)
+
+### Added
+- **Windows Portability with Native `fileURLToPath`**: Standardized all ESM direct-execution checks across `bootstrap.js`, `doctor.js`, `register-mcp.js`, `safe-update.js`, `verify-generated-builds.js`, `package-distribution.js`, and `install-from-repo.js` on `fileURLToPath(import.meta.url)`, resolving silent execution failures in paths containing spaces, non-ASCII characters, and Turkish Unicode (`KİŞİSEL PROJELER`).
+- **Restricted ExecutionPolicy Bypass Prevention & CMD Wrappers**: Provided native `.cmd` wrappers (`bootstrap.cmd`, `doctor.cmd`, `scripts/bootstrap.cmd`, `scripts/doctor.cmd`, `scripts/safe-update.cmd`, `scripts/install-windows.cmd`) allowing seamless execution under Windows PowerShell 5.1/7 Restricted ExecutionPolicy without requiring policy changes or administrative elevation.
+- **Automated Monorepo Junction Recovery**: Implemented `verifyNodeModulesIntegrity` in `bootstrap.js` to automatically catch stale or broken junctions after workspace relocation and execute safe frozen reinstall.
+- **Canonical 10-Stage Agent Installation Contract**: Formalized the verified agent installation lifecycle: `INSPECT → SELECT DESTINATION → CLONE/UPDATE → BOOTSTRAP → BUILD → TEST → REGISTER → DOCTOR → MCP HANDSHAKE → REPORT` in `INSTALL_AGENT.md` and `INSTALL.md`.
+- **Global Antigravity MCP Integration Hardening**: Hardened `registerMcp` to safely preserve existing third-party servers (`playwright`, `chrome-devtools`, `postgres`, `redis`, `figma`), handle UTF-8 BOM, configure `ALPER_DESIGN_OS_HOME`, and keep external tool additions strictly opt-in.
+- **Phase 1K Hardening Test Suite**: Added `tests/installer-hardening-and-safety-1k.test.ts` (16 tests) covering Unicode paths, repository relocation, idempotent installation, stdio JSON-RPC MCP handshake, token redaction, dirty worktree protection, and Windows CMD execution.
+
+### Changed
+- **Truthful Generated Build Matrix Reporting**: Refactored `verify-generated-builds.js` to report `PARTIALLY_VERIFIED` or `NOT_VERIFIED` truthfully when optional toolchains (.NET SDK / Composer) are missing on host, matching strict release gating and eliminating false PASS reporting.
+- **Antigravity Host Runtime Verification**: Verified live tool invocation dispatching from Antigravity to local MCP server (`ANTIGRAVITY_MCP_RUNTIME = VERIFIED`).
+
+---
+
+## [1.0.0-rc.0] - 2026-10-14 (Phase 1J: Release Hardening & Red-Team Readiness)
 
 ### Added
 - **14-Point Threat Model**: Complete threat surface audit in `docs/THREAT-MODEL-V1.md` covering client injection, repository poisoning, memory tampering, path traversal, RCE, supply chain attacks, and secret leaks.

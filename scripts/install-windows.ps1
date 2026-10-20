@@ -45,15 +45,10 @@ $env:ALPER_DESIGN_OS_HOME = $ProjectRoot
 # ------------------------------------------------------------------------------
 Write-Host "`n[*] Checking system prerequisites..." -ForegroundColor Yellow
 
-# Helper to run commands via git bash if direct execution has restriction
+# Helper to run commands via CMD safely without ExecutionPolicy restrictions
 function Invoke-SafeCommand {
     param([string]$Cmd)
-    $gitBash = "C:\Program Files\Git\bin\bash.exe"
-    if (Test-Path $gitBash) {
-        & $gitBash -c $Cmd
-    } else {
-        Invoke-Expression $Cmd
-    }
+    cmd.exe /d /c $Cmd
 }
 
 # Node.js check
@@ -87,9 +82,9 @@ try {
 }
 
 if (-not $pnpmInstalled) {
-    Write-Host "[!] pnpm not found globally. Installing pnpm via npm..." -ForegroundColor Yellow
-    Invoke-SafeCommand "npm install -g pnpm"
-    $pnpmVer = Invoke-SafeCommand "pnpm -v"
+    Write-Host "[!] pnpm not found globally. Installing pinned pnpm@9.15.4 via npm..." -ForegroundColor Yellow
+    Invoke-SafeCommand "npm.cmd install -g pnpm@9.15.4"
+    $pnpmVer = Invoke-SafeCommand "pnpm.cmd -v"
     Write-Host "[+] pnpm installed successfully: $pnpmVer" -ForegroundColor Green
 }
 
@@ -118,22 +113,21 @@ if (-not (Test-Path $envPath)) {
 # ------------------------------------------------------------------------------
 # 4. Install Dependencies
 # ------------------------------------------------------------------------------
-Write-Host "`n[*] Installing monorepo dependencies with pnpm..." -ForegroundColor Yellow
-Invoke-SafeCommand "cd '$ProjectRoot' && pnpm install"
-Invoke-SafeCommand "cd '$ProjectRoot' && pnpm approve-builds --all"
+Write-Host "`n[*] Installing monorepo dependencies with pnpm (frozen lockfile)..." -ForegroundColor Yellow
+Invoke-SafeCommand "cd /d `"$ProjectRoot`" && pnpm.cmd install --frozen-lockfile"
 
 # ------------------------------------------------------------------------------
 # 5. Build Workspace Packages
 # ------------------------------------------------------------------------------
 Write-Host "`n[*] Building all packages (Design Core, Adapters, Analyzer, MCP Server)..." -ForegroundColor Yellow
-Invoke-SafeCommand "cd '$ProjectRoot' && pnpm run build"
+Invoke-SafeCommand "cd /d `"$ProjectRoot`" && npm.cmd run build"
 
 # ------------------------------------------------------------------------------
 # 6. Run Test Suite
 # ------------------------------------------------------------------------------
 if (-not $SkipTests) {
     Write-Host "`n[*] Running test suite..." -ForegroundColor Yellow
-    Invoke-SafeCommand "cd '$ProjectRoot' && pnpm test"
+    Invoke-SafeCommand "cd /d `"$ProjectRoot`" && npm.cmd test"
 }
 
 # ------------------------------------------------------------------------------
@@ -141,54 +135,7 @@ if (-not $SkipTests) {
 # ------------------------------------------------------------------------------
 if (-not $SkipAntigravityConfig) {
     Write-Host "`n[*] Registering Alper Design OS MCP server in Antigravity config..." -ForegroundColor Yellow
-    $antigravityConfigDir = Join-Path $env:USERPROFILE ".gemini\config"
-    $mcpConfigFile = Join-Path $antigravityConfigDir "mcp_config.json"
-
-    if (-not (Test-Path $antigravityConfigDir)) {
-        New-Item -ItemType Directory -Path $antigravityConfigDir -Force | Out-Null
-    }
-
-    $mcpServerEntry = @{
-        command = "node"
-        args = @((Join-Path $ProjectRoot "packages\mcp-server\dist\index.js"))
-        env = @{
-            NODE_ENV = "production"
-            ALPER_DESIGN_OS_HOME = $ProjectRoot
-        }
-    }
-
-    $servers = @{}
-    if ((Test-Path $mcpConfigFile) -and ((Get-Item $mcpConfigFile).Length -gt 2)) {
-        try {
-            $rawJson = Get-Content $mcpConfigFile -Raw
-            $parsed = $rawJson | ConvertFrom-Json
-            if ($parsed -and $parsed.mcpServers) {
-                foreach ($prop in $parsed.mcpServers.PSObject.Properties) {
-                    $servers[$prop.Name] = $prop.Value
-                }
-            }
-            $backupFile = "$mcpConfigFile.bak." + (Get-Date -Format "yyyyMMddHHmmss")
-            Copy-Item -Path $mcpConfigFile -Destination $backupFile -Force
-            Write-Host "[+] Backed up existing Antigravity MCP config to: $backupFile" -ForegroundColor DarkGray
-        } catch {
-            Write-Warning "Could not parse existing mcp_config.json. Initializing clean structure."
-        }
-    }
-
-    $servers["alper-design-os"] = $mcpServerEntry
-    $servers["chrome-devtools"] = @{
-        command = "npx"
-        args = @("-y", "chrome-devtools-mcp@latest")
-    }
-    $servers["playwright"] = @{
-        command = "npx"
-        args = @("-y", "@playwright/mcp@latest")
-    }
-
-    $finalConfig = @{ mcpServers = $servers }
-    $jsonOutput = $finalConfig | ConvertTo-Json -Depth 10
-    Set-Content -Path $mcpConfigFile -Value $jsonOutput -Encoding UTF8
-    Write-Host "[+] Successfully registered 'alper-design-os', 'chrome-devtools', and 'playwright' MCP servers in $mcpConfigFile" -ForegroundColor Green
+    & node "$ProjectRoot\scripts\register-mcp.js" --global
 }
 
 Write-Host "`n========================================================" -ForegroundColor Cyan

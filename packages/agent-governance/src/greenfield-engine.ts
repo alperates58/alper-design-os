@@ -2785,7 +2785,10 @@ export default function App() {
           config: {
             'optimize-autoloader': true,
             'preferred-install': 'dist',
-            'sort-packages': true
+            'sort-packages': true,
+            audit: {
+              'block-insecure': false
+            }
           },
           'minimum-stability': 'stable',
           'prefer-stable': true
@@ -2867,6 +2870,7 @@ APP_TIMEZONE=UTC
 APP_URL=http://localhost
 `
     );
+    writeFile('bootstrap/cache/.gitkeep', '');
     writeFile('storage/framework/views/.gitkeep', '');
     writeFile('storage/framework/cache/.gitkeep', '');
     writeFile('storage/framework/sessions/.gitkeep', '');

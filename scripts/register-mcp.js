@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import { fileURLToPath } from 'node:url';
 
 /**
  * ALPER DESIGN OS - Antigravity MCP Registration
@@ -13,7 +14,7 @@ import os from 'node:os';
  */
 
 export function registerMcp(options = {}) {
-  const projectRoot = options.projectRoot ? path.resolve(options.projectRoot) : path.resolve('.');
+  const projectRoot = options.projectRoot ? path.resolve(options.repoRoot || options.projectRoot) : path.resolve('.');
   const args = options.args || process.argv.slice(2);
   const isGlobal = options.global ?? args.includes('--global');
   const withDevtools = options.withDevtools ?? args.includes('--with-devtools');
@@ -30,26 +31,26 @@ export function registerMcp(options = {}) {
   }
 
   let config = { mcpServers: {} };
+  let originalRaw = null;
   if (fs.existsSync(configFile)) {
     try {
-      const raw = fs.readFileSync(configFile, 'utf-8');
+      const raw = fs.readFileSync(configFile, 'utf-8').replace(/^\uFEFF/, '');
+      originalRaw = raw;
       config = JSON.parse(raw);
-      if (!config.mcpServers) config.mcpServers = {};
-
-      // Backup existing config
-      const backupFile = `${configFile}.bak.${Date.now()}`;
-      fs.writeFileSync(backupFile, raw, 'utf-8');
-      console.log(`[+] Backed up existing Antigravity MCP config to: ${backupFile}`);
+      if (!config.mcpServers || typeof config.mcpServers !== 'object') {
+        config.mcpServers = {};
+      }
     } catch {
       console.warn('[!] Failed to parse existing config, creating fresh structure.');
       config = { mcpServers: {} };
     }
   }
 
-  // Register CANONICAL ALPER DESIGN OS server
+  // Register CANONICAL ALPER DESIGN OS server ONLY
+  const mcpServerPath = path.join(projectRoot, 'packages', 'mcp-server', 'dist', 'index.js');
   config.mcpServers['alper-design-os'] = {
     command: 'node',
-    args: [path.join(projectRoot, 'packages', 'mcp-server', 'dist', 'index.js')],
+    args: [mcpServerPath],
     env: {
       NODE_ENV: 'production',
       ALPER_DESIGN_OS_HOME: projectRoot
@@ -73,7 +74,16 @@ export function registerMcp(options = {}) {
     console.log('[+] Registered optional @playwright/mcp (pinned v0.0.6)');
   }
 
-  fs.writeFileSync(configFile, JSON.stringify(config, null, 2), 'utf-8');
+  const newContent = JSON.stringify(config, null, 2);
+
+  // Backup existing config only if meaningful changes were made
+  if (originalRaw && originalRaw !== newContent) {
+    const backupFile = `${configFile}.bak.${Date.now()}`;
+    fs.writeFileSync(backupFile, originalRaw, 'utf-8');
+    console.log(`[+] Backed up existing Antigravity MCP config to: ${backupFile}`);
+  }
+
+  fs.writeFileSync(configFile, newContent, 'utf-8');
   console.log(`[+] Successfully registered 'alper-design-os' in: ${configFile}`);
 
   return {
@@ -84,9 +94,12 @@ export function registerMcp(options = {}) {
 }
 
 // CLI Execution Entrypoint
-const isDirectRun = process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname.replace(/^\/([a-zA-Z]:)/, '$1'));
+const isDirectRun = Boolean(
+  process.argv[1] &&
+  path.resolve(process.argv[1]).toLowerCase() === path.resolve(fileURLToPath(import.meta.url)).toLowerCase()
+);
 
-if (isDirectRun) {
+if (isDirectRun || process.argv.includes('--run-direct')) {
   try {
     registerMcp();
   } catch (err) {
