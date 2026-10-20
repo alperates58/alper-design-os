@@ -32,7 +32,8 @@ describe('ALPER DESIGN OS - Phase 1K: Installer Hardening, Windows Portability &
   // 1. Windows Portability & Unicode Path Robustness
   describe('1. Windows Portability & Unicode Path Robustness', () => {
     it('accurately resolves fileURLToPath across ASCII, spaces, Turkish Unicode, and Cyrillic paths', () => {
-      const testCases = [
+      const isWin = process.platform === 'win32';
+      const testCases = isWin ? [
         {
           name: 'ASCII Path',
           fileUrl: 'file:///C:/dev/projects/alper-design-os/scripts/bootstrap.js',
@@ -53,6 +54,27 @@ describe('ALPER DESIGN OS - Phase 1K: Installer Hardening, Windows Portability &
           fileUrl: 'file:///C:/Users/Jos%C3%A9%20M%C3%BCller/%D0%9F%D1%80%D0%BE%D0%B5%D0%BA%D1%82%D1%8B/alper-design-os/scripts/bootstrap.js',
           expectedEnd: path.normalize('C:/Users/José Müller/Проекты/alper-design-os/scripts/bootstrap.js')
         }
+      ] : [
+        {
+          name: 'ASCII Path',
+          fileUrl: 'file:///dev/projects/alper-design-os/scripts/bootstrap.js',
+          expectedEnd: path.normalize('/dev/projects/alper-design-os/scripts/bootstrap.js')
+        },
+        {
+          name: 'Path with Spaces',
+          fileUrl: 'file:///home/user/My%20Work/Alper%20Design%20OS/scripts/bootstrap.js',
+          expectedEnd: path.normalize('/home/user/My Work/Alper Design OS/scripts/bootstrap.js')
+        },
+        {
+          name: 'Turkish Unicode Path (KİŞİSEL PROJELER)',
+          fileUrl: 'file:///home/user/PROJELER/K%C4%B0%C5%9E%C4%B0SEL%20PROJELER/alper-design-os/scripts/bootstrap.js',
+          expectedEnd: path.normalize('/home/user/PROJELER/KİŞİSEL PROJELER/alper-design-os/scripts/bootstrap.js')
+        },
+        {
+          name: 'Cyrillic & Accented Unicode Path',
+          fileUrl: 'file:///home/Jos%C3%A9%20M%C3%BCller/%D0%9F%D1%80%D0%BE%D0%B5%D0%BA%D1%82%D1%8B/alper-design-os/scripts/bootstrap.js',
+          expectedEnd: path.normalize('/home/José Müller/Проекты/alper-design-os/scripts/bootstrap.js')
+        }
       ];
 
       for (const tc of testCases) {
@@ -62,11 +84,18 @@ describe('ALPER DESIGN OS - Phase 1K: Installer Hardening, Windows Portability &
     });
 
     it('proves that URL.pathname replace fails on spaces and Unicode, whereas fileURLToPath succeeds', () => {
-      const turkishUrl = 'file:///C:/Users/alper/Desktop/PROJELER/K%C4%B0%C5%9E%C4%B0SEL%20PROJELER/alper-design-os/scripts/bootstrap.js';
-      const actualDiskPath = 'C:\\Users\\alper\\Desktop\\PROJELER\\KİŞİSEL PROJELER\\alper-design-os\\scripts\\bootstrap.js';
+      const isWin = process.platform === 'win32';
+      const turkishUrl = isWin
+        ? 'file:///C:/Users/alper/Desktop/PROJELER/K%C4%B0%C5%9E%C4%B0SEL%20PROJELER/alper-design-os/scripts/bootstrap.js'
+        : 'file:///home/alper/Desktop/PROJELER/K%C4%B0%C5%9E%C4%B0SEL%20PROJELER/alper-design-os/scripts/bootstrap.js';
+      const actualDiskPath = isWin
+        ? 'C:\\Users\\alper\\Desktop\\PROJELER\\KİŞİSEL PROJELER\\alper-design-os\\scripts\\bootstrap.js'
+        : '/home/alper/Desktop/PROJELER/KİŞİSEL PROJELER/alper-design-os/scripts/bootstrap.js';
 
       // Old flawed approach: pathname replace does NOT decode URI components
-      const flawedResolved = path.resolve(new URL(turkishUrl).pathname.replace(/^\/([a-zA-Z]:)/, '$1'));
+      const flawedResolved = isWin
+        ? path.resolve(new URL(turkishUrl).pathname.replace(/^\/([a-zA-Z]:)/, '$1'))
+        : path.resolve(new URL(turkishUrl).pathname);
       expect(flawedResolved).toContain('%20'); // Flawed: still encoded!
       expect(flawedResolved).not.toBe(path.resolve(actualDiskPath)); // Does NOT match!
 
@@ -353,7 +382,12 @@ describe('ALPER DESIGN OS - Phase 1K: Installer Hardening, Windows Portability &
       expect(fs.existsSync(path.join(repoRoot, 'scripts', 'install-windows.cmd'))).toBe(true);
     });
 
-    it('verifies that doctor.cmd executes cleanly via CMD returning status 0', () => {
+    it('verifies that doctor.cmd executes cleanly via CMD returning status 0 on Windows', () => {
+      if (process.platform !== 'win32') {
+        // cmd.exe is specific to Windows environments
+        expect(true).toBe(true);
+        return;
+      }
       const output = execSync('cmd.exe /c doctor.cmd --preflight', {
         cwd: repoRoot,
         encoding: 'utf-8'
