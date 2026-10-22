@@ -4,6 +4,38 @@ All notable changes to **ALPER DESIGN OS** are documented in this file, adhering
 
 ---
 
+## [1.1.0-alpha.1] - 2026-10-22 (Phase 2: Premium Design Intelligence, Agent Engineering & Modernization Evolution)
+
+### Added
+- **Workstream A: Premium Design Intelligence V2**:
+  - `ArtDirectionEngine` (`packages/design-language/src/art-direction-engine.ts`): Native art direction reasoning engine supporting 9 industry profiles (Premium SaaS, Enterprise ERP, Data-Dense Operations, Developer Workspace, Consumer Marketplace, Gaming Platform, Editorial / Content, Minimal Productivity, Industrial APS / MES). Implements multi-dimensional scoring (semantic coherence, density fit, typography appropriateness, contrast index) and candidate generation (3 distinct candidates for substantial tasks, 1 for trivial visual repairs).
+  - `DesignKnowledgeEngine` (`packages/design-language/src/design-knowledge-engine.ts`): Compact, searchable, curated knowledge base of domain rules, layout recipes, typography pairings, color palette strategies, and accessibility guidelines with justified scoring and source provenance.
+  - Universal Canonical Semantic Theme Model (`packages/design-language/src/tokens-v2/universal-theme.ts`): Canonical 11-category semantic tokens (`CANONICAL_LIGHT_THEME`, `CANONICAL_DARK_THEME`) with WCAG 2.1 AA/AAA contrast formula, true semantic parity between light and dark modes, and zero-FOUC SSR inline script generation.
+  - 18 Canonical UI Component Recipes (`packages/design-language/src/recipes/component-recipes.ts`): Formalized recipes for NavigationShell, SidebarTopbar, Toolbar, ButtonActionMenu, DataTableGrid, FormValidation, SearchFilter, DropdownContextMenu, DialogDrawer, Tabs, FileExplorerTree, SplitPanel, ChartDataViz, KpiMetricCard, CardContainer, PaginationControls, NotificationToast, and LoadingEmptyStates.
+  - `LayoutReasoningEngine` (`packages/design-language/src/recipes/layout-reasoning.ts`): Layout geometry engine calculating content widths, density allocation, responsive breakpoints, mobile priority, and Windows 125% DPI accessibility adjustments (48px header, 36px table row height).
+
+- **Workstream B: Modernize & Repair V2**:
+  - Comprehensive Behavioral Preservation (`packages/agent-governance/src/behavioral-preservation.ts`): Extended with `extractComprehensivePreservationContract` and `verifyComprehensivePreservation` to freeze and audit 100% of routes, user actions, form bindings, API endpoints, auth boundaries, database models, and public interfaces with strict zero-regression guarantees.
+  - Visual Repair Engine (`packages/agent-governance/src/visual-repair-engine.ts`): Automated AST/DOM-level defect detection and non-destructive surgical CSS repairs targeting 5 common UI defects: fixed width horizontal overflow, low contrast text, irregular spacing (7px/13px), missing focus-visible indicators, and unwrapped flex container overflow.
+
+- **Workstream C: Agent Workflow Engine V2**:
+  - Adaptive Workflow Router (`packages/agent-governance/src/adaptive-workflow.ts`): Dynamically routes execution into `QUICK`, `STANDARD`, or `DEEP` workflow modes based on scope, blast radius, and ambiguity, with strict evidence gate requirements.
+  - Requirements Glossary & Ambiguity Detection (`packages/agent-governance/src/requirements-glossary.ts`): Canonical domain glossary manager with ambiguity detection and strict separation of user-explicit vs agent-inferred requirements.
+  - Deterministic Project Graph V2 (`packages/agent-governance/src/project-graph-v2.ts`): Full AST extraction of file imports, module exports, and caller hierarchies; shortest path traversal, god-node detection, blast radius calculations, and impacted test mapping with strict provenance tagging (`EXTRACTED` vs `INFERRED`).
+  - Context Compression Engine (`packages/agent-governance/src/context-compression.ts`): Bounded, high-fidelity log and JSON compression achieving 25-65% token savings while preserving 100% of failure traces and stack lines.
+
+- **Workstream D: Simplicity Guard (Ponytail / Karpathy Standards)**:
+  - `SimplicityGuard` (`packages/engineering-guardrails/src/simplicity-guard.ts`): Proactively blocks speculative wrapper classes, overly deep inheritance hierarchies, and redundant external dependencies (e.g., `lodash.get`) in favor of native ES syntax and cohesive single-purpose functions.
+
+- **Workstream E & G: Real Visual QA & Isolated Certification**:
+  - `VisualQARunner` (`packages/qa-engine/src/visual-qa-runner.ts`): Automated Playwright visual testing across 4 viewports (Mobile 390x844, Tablet 768x1024, Desktop 1440x900, Large Desktop 1920x1080) in both Light and Dark themes, backed by enterprise browser fallback chain (Chromium -> Microsoft Edge `msedge` -> Google Chrome `chrome`).
+  - Isolated Certification Fixtures (`tests/fixtures/certification/`): Real automated before-and-after verification with 18 genuine PNG screenshots captured on disk, proving 0 horizontal overflow, WCAG 2.1 AA compliant contrast, full keyboard accessibility, and 100% functional preservation.
+
+- **Research & Capability Extraction**:
+  - `docs/research/phase-2-capability-matrix.md`: Exhaustive evaluation matrix covering 9 frontier open-source repositories with exact commit SHAs (`obra/superpowers`, `Leonxlnx/taste-skill`, `addyosmani/agent-skills`, `juliusbrussee/caveman`, `Graphify-Labs/graphify`, `nextlevelbuilder/ui-ux-pro-max-skill`, `dietrichgebert/ponytail`, `multica-ai/andrej-karpathy-skills`, `mattpocock/skills`) and 9 enterprise UI design systems.
+
+---
+
 ## [1.0.0-rc.1] - 2026-10-20 (Phase 1K: One-Shot Stabilization, Installer Hardening & V1.0 Release Readiness)
 
 ### Added

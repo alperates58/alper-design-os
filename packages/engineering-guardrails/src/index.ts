@@ -6,3 +6,4 @@ export * from './scanners/contract.js';
 export * from './scanners/builtin-auditor.js';
 export * from './scanners/detector.js';
 export * from './scanners/safe-scanner.js';
+export * from './simplicity-guard.js';

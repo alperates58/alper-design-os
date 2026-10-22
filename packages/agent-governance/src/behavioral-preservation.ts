@@ -138,3 +138,175 @@ export function verifyBehavioralPreservation(
     allowedUpdates
   };
 }
+
+// ============================================================================
+// Phase 2: Comprehensive Functional Preservation Extension
+// ============================================================================
+
+export interface UserActionContract {
+  id: string;
+  type: 'SUBMIT' | 'CLICK' | 'DELETE' | 'EDIT' | 'EXPORT' | 'FILTER';
+  targetSelector: string;
+  sourceFile: string;
+}
+
+export interface ApiCallContract {
+  endpoint: string;
+  method: string;
+  sourceFile: string;
+}
+
+export interface ComprehensivePreservationContract {
+  routes: Array<{ method: string; path: string; expectedStatus?: number }>;
+  apiEndpoints: ApiCallContract[];
+  userActions: UserActionContract[];
+  formIdentifiers: string[];
+  authGuards: string[];
+  databaseInvariants: string[];
+}
+
+export interface ComprehensivePreservationReport {
+  preserved: boolean;
+  score: number; // 0 - 100
+  routePreservationRate: number;
+  actionPreservationRate: number;
+  apiPreservationRate: number;
+  criticalViolations: string[];
+  warnings: string[];
+}
+
+export function extractComprehensivePreservationContract(
+  files: Array<{ path: string; content?: string }>
+): ComprehensivePreservationContract {
+  const baseContract = extractBehavioralContract(files);
+
+  const apiEndpoints: ApiCallContract[] = [];
+  const userActions: UserActionContract[] = [];
+  const formIdentifiers = new Set<string>();
+  const authGuards = new Set<string>();
+
+  for (const file of files) {
+    const content = file.content || '';
+
+    // Extract Client-side / HTML routes: <a data-route="/orders" ...>
+    const dataRouteMatches = content.matchAll(/data-route=['"]([^'"]+)['"]/gi);
+    for (const match of dataRouteMatches) {
+      if (match[1]) {
+        baseContract.routes.push({
+          method: 'GET',
+          path: match[1],
+          expectedStatus: 200
+        });
+      }
+    }
+
+    // Extract API calls (fetch, axios, $.ajax)
+    const fetchMatches = content.matchAll(/(?:fetch|\$\.(?:ajax|get|post)|axios\.(?:get|post|put|delete))\(\s*['"`]([^'"`]+)['"`]/g);
+    for (const match of fetchMatches) {
+      apiEndpoints.push({
+        endpoint: match[1],
+        method: 'ANY',
+        sourceFile: file.path
+      });
+    }
+
+    // Extract User Actions (form submit, click buttons, delete triggers)
+    const formMatches = content.matchAll(/<form[^>]+(?:id|name)=['"]([^'"]+)['"]/gi);
+    for (const match of formMatches) {
+      formIdentifiers.add(match[1]);
+      userActions.push({
+        id: `ACT-FORM-${match[1]}`,
+        type: 'SUBMIT',
+        targetSelector: `form#${match[1]}`,
+        sourceFile: file.path
+      });
+    }
+
+    const actionMatches = content.matchAll(/(?:onclick|data-action)=['"]([^'"]+)['"]/gi);
+    for (const match of actionMatches) {
+      userActions.push({
+        id: `ACT-EVT-${match[1]}`,
+        type: match[1].toLowerCase().includes('delete') ? 'DELETE' : match[1].toLowerCase().includes('edit') ? 'EDIT' : 'CLICK',
+        targetSelector: `[data-action="${match[1]}"]`,
+        sourceFile: file.path
+      });
+    }
+
+    // Extract Auth guards
+    if (/isAuthenticated|requireAuth|checkSession|useAuth|ProtectedRoute/i.test(content)) {
+      authGuards.add(`AuthGuard:${file.path}`);
+    }
+  }
+
+  return {
+    routes: baseContract.routes,
+    apiEndpoints,
+    userActions,
+    formIdentifiers: Array.from(formIdentifiers),
+    authGuards: Array.from(authGuards),
+    databaseInvariants: baseContract.databaseBehaviors.flatMap((db) => db.invariants || [])
+  };
+}
+
+export function verifyComprehensivePreservation(
+  baseline: ComprehensivePreservationContract,
+  candidate: ComprehensivePreservationContract
+): ComprehensivePreservationReport {
+  const criticalViolations: string[] = [];
+  const warnings: string[] = [];
+
+  // 1. Verify Routes
+  let preservedRoutes = 0;
+  for (const r of baseline.routes) {
+    const exists = candidate.routes.some((c) => c.path === r.path && c.method === r.method);
+    if (exists) {
+      preservedRoutes++;
+    } else {
+      criticalViolations.push(`CRITICAL: Baseline route missing in modernized app: [${r.method}] ${r.path}`);
+    }
+  }
+  const routeRate = baseline.routes.length > 0 ? (preservedRoutes / baseline.routes.length) * 100 : 100;
+
+  // 2. Verify Actions
+  let preservedActions = 0;
+  for (const a of baseline.userActions) {
+    const exists = candidate.userActions.some((c) => c.id === a.id || c.targetSelector === a.targetSelector);
+    if (exists) {
+      preservedActions++;
+    } else {
+      criticalViolations.push(`CRITICAL: User interaction action missing: ${a.type} on ${a.targetSelector}`);
+    }
+  }
+  const actionRate = baseline.userActions.length > 0 ? (preservedActions / baseline.userActions.length) * 100 : 100;
+
+  // 3. Verify API calls
+  let preservedApis = 0;
+  for (const api of baseline.apiEndpoints) {
+    const exists = candidate.apiEndpoints.some((c) => c.endpoint === api.endpoint);
+    if (exists) {
+      preservedApis++;
+    } else {
+      warnings.push(`WARNING: Outbound API call not found in modernized source: ${api.endpoint}`);
+    }
+  }
+  const apiRate = baseline.apiEndpoints.length > 0 ? (preservedApis / baseline.apiEndpoints.length) * 100 : 100;
+
+  // 4. Verify Auth guards
+  for (const guard of baseline.authGuards) {
+    if (!candidate.authGuards.includes(guard)) {
+      criticalViolations.push(`SECURITY: Authentication guard removed or bypassed: ${guard}`);
+    }
+  }
+
+  const score = Math.round(routeRate * 0.4 + actionRate * 0.4 + apiRate * 0.2);
+
+  return {
+    preserved: criticalViolations.length === 0,
+    score,
+    routePreservationRate: Math.round(routeRate),
+    actionPreservationRate: Math.round(actionRate),
+    apiPreservationRate: Math.round(apiRate),
+    criticalViolations,
+    warnings
+  };
+}

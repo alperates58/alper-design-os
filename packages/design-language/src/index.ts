@@ -14,6 +14,14 @@ export * from './contracts/responsive-contract.js';
 export * from './contracts/accessibility-contract.js';
 export * from './contracts/data-dense-profile.js';
 export * from './contracts/icon-profile.js';
+export * from './contracts/design-direction.js';
+
+// Phase 2 Design Intelligence V2
+export * from './art-direction-engine.js';
+export * from './design-knowledge-engine.js';
+export * from './tokens-v2/universal-theme.js';
+export * from './recipes/component-recipes.js';
+export * from './recipes/layout-reasoning.js';
 
 // Blueprints
 export * from './blueprints/component-blueprint.js';

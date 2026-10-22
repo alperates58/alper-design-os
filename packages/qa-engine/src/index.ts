@@ -6,3 +6,4 @@ export * from './visual-regression.js';
 export * from './performance-correlator.js';
 export * from './test-strategy.js';
 export * from './qa-reporter.js';
+export * from './visual-qa-runner.js';

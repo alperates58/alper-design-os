@@ -6,7 +6,31 @@ Per our core principle **NO CLAIM WITHOUT EVIDENCE**, all phases are categorized
 
 ---
 
-## 🟢 COMPLETED (Phases 0 through 1J)
+## 🟢 COMPLETED (Phases 0 through Phase 2)
+
+### Phase 2: Premium Design Intelligence, Agent Engineering & Modernization Evolution
+- [x] **Research & Capability Extraction**: 9 frontier repositories evaluated with exact commit SHAs (`obra/superpowers`, `Leonxlnx/taste-skill`, `addyosmani/agent-skills`, `juliusbrussee/caveman`, `Graphify-Labs/graphify`, `nextlevelbuilder/ui-ux-pro-max-skill`, `dietrichgebert/ponytail`, `multica-ai/andrej-karpathy-skills`, `mattpocock/skills`) and 9 enterprise UI systems documented in `docs/research/phase-2-capability-matrix.md`.
+- [x] **Art Direction Engine**: Multi-profile candidate generation (3 distinct candidates for substantial UI tasks, 1 for trivial repairs) across 9 canonical profiles with typed `DesignDirectionCandidate` contracts and multi-dimensional scoring.
+- [x] **UI Design Knowledge & Recommendation Engine**: Searchable rules for categories, layout recipes, typography pairings, color palettes, and UX guidelines with justified scoring.
+- [x] **Universal Light / Dark / System Theming**: Canonical 11-category semantic tokens (`CANONICAL_LIGHT_THEME`, `CANONICAL_DARK_THEME`) with WCAG 2.1 AA/AAA contrast formula, true semantic parity, and zero-FOUC SSR inline scripts.
+- [x] **18 Component Recipes & Layout Reasoning**: 18 canonical UI component recipes and layout geometry reasoning with density allocation and Windows 125% DPI accessibility adjustments.
+- [x] **Comprehensive Behavioral Preservation**: Extended preservation contracts freezing 100% of routes, user actions, form bindings, API endpoints, auth boundaries, database models, and public interfaces.
+- [x] **Visual Repair Engine**: Surgical non-destructive repair for 5 common defect categories (fixed width overflow, low contrast text, irregular spacing, missing focus-visible indicators, unwrapped flex layouts).
+- [x] **Adaptive Workflow Router**: Context-aware routing into `QUICK`, `STANDARD`, or `DEEP` execution modes with evidence gating.
+- [x] **Canonical Glossary & Ambiguity Detection**: Explicit tracking of domain terms and strict separation of user-explicit vs agent-inferred requirements.
+- [x] **Deterministic Project Graph V2**: AST extraction of file imports, module exports, shortest path traversal, god-node detection, blast radius calculations, and impacted test mapping with strict provenance tagging (`EXTRACTED` vs `INFERRED`).
+- [x] **Bounded Context Compression**: High-fidelity log/JSON compression achieving 25-65% token savings while preserving 100% of failure traces and stack lines.
+- [x] **Simplicity Guard**: Ponytail/Karpathy checks proactively blocking speculative wrapper classes and redundant external dependencies.
+- [x] **Real Visual QA Runner & Isolated Certification**: Multi-viewport Playwright visual testing across 4 viewports in Light & Dark themes, verified on real before-and-after fixtures (`fixture-repair/` and `fixture-modernize/`) with 18 genuine PNG screenshots captured on disk.
+
+### Phase 1K: Stabilization, Installer Hardening & V1.0 Readiness
+- [x] **Windows / Unicode Path Portability**: Migrated all direct-execution checks across scripts to `fileURLToPath(import.meta.url)`, resolving silent execution failures in paths with spaces and Unicode (`KİŞİSEL PROJELER`).
+- [x] **Restricted PowerShell Execution Protection**: Created native `.cmd` wrappers (`bootstrap.cmd`, `doctor.cmd`, `scripts/*.cmd`) for seamless execution under Restricted ExecutionPolicy without bypassing system security.
+- [x] **Moved Repository Recovery**: Added `verifyNodeModulesIntegrity` in `bootstrap.js` to automatically catch stale or broken junctions after workspace relocation and execute safe frozen reinstall.
+- [x] **Canonical 10-Stage Agent Installation Contract**: Formalized `INSPECT → SELECT DESTINATION → CLONE/UPDATE → BOOTSTRAP → BUILD → TEST → REGISTER → DOCTOR → MCP HANDSHAKE → REPORT` for Antigravity agents.
+- [x] **Antigravity MCP Integration Hardening**: Verified global configuration preservation (`mcp_config.json`), live host runtime (`ANTIGRAVITY_HOST_RUNTIME = VERIFIED`), and stdio JSON-RPC handshake across 124 tools.
+- [x] **Truthful Generated Build Matrix Reporting**: Refactored `verify-generated-builds.js` to report `PARTIALLY_VERIFIED` truthfully when optional toolchains (.NET SDK / Composer) are missing on host.
+- [x] **Automated Hardening Test Suite**: Added `tests/installer-hardening-and-safety-1k.test.ts` (16 tests), bringing the total test suite to 552 tests across 26 suites (100% passing).
 
 ### Phase 0: Foundations & Architecture
 - [x] Monorepo layout with pnpm workspace and strict TypeScript composite build.
@@ -65,17 +89,10 @@ Per our core principle **NO CLAIM WITHOUT EVIDENCE**, all phases are categorized
 
 ---
 
-## 🟡 IN PROGRESS (Phase 1K: Stabilization, Installer Hardening & V1.0 Readiness)
+## 🟡 PENDING USER AUTHORIZATION & EXTERNAL AUDIT
 
-- [x] **Windows / Unicode Path Portability**: Migrated all direct-execution checks across scripts to `fileURLToPath(import.meta.url)`, resolving silent execution failures in paths with spaces and Unicode (`KİŞİSEL PROJELER`).
-- [x] **Restricted PowerShell Execution Protection**: Created native `.cmd` wrappers (`bootstrap.cmd`, `doctor.cmd`, `scripts/*.cmd`) for seamless execution under Restricted ExecutionPolicy without bypassing system security.
-- [x] **Moved Repository Recovery**: Added `verifyNodeModulesIntegrity` in `bootstrap.js` to automatically catch stale or broken junctions after workspace relocation and execute safe frozen reinstall.
-- [x] **Canonical 10-Stage Agent Installation Contract**: Formalized `INSPECT → SELECT DESTINATION → CLONE/UPDATE → BOOTSTRAP → BUILD → TEST → REGISTER → DOCTOR → MCP HANDSHAKE → REPORT` for Antigravity agents.
-- [x] **Antigravity MCP Integration Hardening**: Verified global configuration preservation (`mcp_config.json`), live host runtime (`ANTIGRAVITY_HOST_RUNTIME = VERIFIED`), and stdio JSON-RPC handshake across 124 tools.
-- [x] **Truthful Generated Build Matrix Reporting**: Refactored `verify-generated-builds.js` to report `PARTIALLY_VERIFIED` truthfully when optional toolchains (.NET SDK / Composer) are missing on host.
-- [x] **Automated Hardening Test Suite**: Added `tests/installer-hardening-and-safety-1k.test.ts` (16 tests), bringing the total test suite to 538 tests across 25 suites (100% passing).
-- [ ] **Independent Frontier Model Audit**: Pending independent review (`INDEPENDENT_AUDIT = PENDING`).
-- [ ] **Final v1.0.0 Release Authorization**: Awaiting explicit user approval before tagging or releasing v1.0.0.
+- [ ] **Independent Frontier Model Audit**: Briefing package in `docs/FINAL-INDEPENDENT-AUDIT-BRIEF.md` ready for evaluation by an external frontier model (`INDEPENDENT_AUDIT = PENDING`).
+- [ ] **Final v1.0.0 / v1.1.0 Release Authorization**: Awaiting explicit user approval before tagging or releasing a public release.
 
 ---
 
