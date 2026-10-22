@@ -1,0 +1,124 @@
+/* Defective Stylesheet for Repair Fixture 1 */
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  background-color: #f3f4f6;
+  color: #111827;
+}
+
+/* DEFECT 1: Fixed rigid width causes mobile overflow */
+.fixed-container {
+  max-width: min(100%, 1200px); width: 100%;
+  margin: 20px auto;
+  background: #ffffff;
+  /* DEFECT 2: Inconsistent weird padding */
+  padding: 16px;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.app-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 7px;
+}
+
+.portal-title {
+  font-size: 20px;
+  margin: 0;
+}
+
+/* DEFECT 3: Low contrast text (#999 on white is 2.8:1 - fails WCAG AA) */
+.low-contrast-text {
+  color: var(--alper-text-primary, #0f172a);
+  font-size: 13px;
+  margin-top: 7px;
+  margin-bottom: 13px;
+}
+
+.toolbar {
+  display: flex;
+  gap: 7px;
+  margin-bottom: 13px;
+}
+
+.toolbar input {
+  padding: 8px 11px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+}
+
+/* DEFECT 4: Outline none with no focus indicator */
+.defective-btn {
+  background-color: #2563eb;
+  color: var(--alper-text-primary, #0f172a);
+  border: none;
+  padding: 8px 13px;
+  border-radius: 4px;
+  cursor: pointer;
+  outline: 2px solid transparent; &:focus-visible { outline: 2px solid var(--alper-interactive-focus-ring, #2563eb); outline-offset: 2px; }
+}
+
+.defective-btn.secondary {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th, .data-table td {
+  padding: 8px 11px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+.status-badge.running {
+  background: #dcfce7;
+  color: #15803d;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.status-badge.warning {
+  background: #fef3c7;
+  color: #b45309;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.row-act {
+  background: none;
+  border: 1px solid #d1d5db;
+  padding: 2px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  outline: none;
+}
+
+.footer-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 13px;
+  padding-top: 7px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 12px;
+  color: #6b7280;
+}

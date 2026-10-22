@@ -39,3 +39,8 @@ export * from './project-intelligence-types.js';
 export * from './project-intelligence-engine.js';
 export * from './skill-registry.js';
 
+export * from './visual-repair-engine.js';
+export * from './adaptive-workflow.js';
+export * from './requirements-glossary.js';
+export * from './project-graph-v2.js';
+export * from './context-compression.js';

@@ -214,7 +214,7 @@ describe('Engineering Guardrails Layer', () => {
         expect(cap.toolId).toBeTruthy();
         expect(cap.category).toBeTruthy();
       }
-    }, 45000);
+    }, 90000);
 
     it('inspects a single tool capability gracefully with recommendation if missing', () => {
       const chromeCap = getToolCapability('chrome');

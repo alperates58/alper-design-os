@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/Lisans-MIT-blue.svg)](LICENSE)
 [![TypeScript: Strict](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](tsconfig.json)
 [![Antigravity Plugin Ready](https://img.shields.io/badge/Antigravity-74%20Skills%20(55%20Active)-emerald.svg)](plugin.json)
-[![Tests: 538 Passed](https://img.shields.io/badge/Tests-538%20Passed%20(25%20Suites)-brightgreen.svg)](tests/)
+[![Tests: 552 Passed](https://img.shields.io/badge/Tests-552%20Passed%20(26%20Suites)-brightgreen.svg)](tests/)
 [![MCP Server: 124 Tools](https://img.shields.io/badge/MCP%20Server-124%20Tools-purple.svg)](packages/mcp-server/)
 [![CI: Passing](https://img.shields.io/badge/CI-Passing%20(7%2F7%20Jobs%20Green)-brightgreen.svg)](.github/workflows/ci.yml)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](scripts/)
@@ -13,7 +13,7 @@
 
 **ALPER DESIGN OS**, sıradan bir bileşen veya UI kütüphanesi değildir. Yazılım alanlarını (domain) derinlemesine anlayan, kullanıcı iş akışlarını ve ergonomisini analiz eden, kurumsal seviyede mimari ve UX/UI kararları alan, sıfırdan ürün tasarlayan veya mevcut devasa sistemleri cerrahi/aşamalı olarak modernize eden **AI-Native, Teknoloji Bağımsız Tasarım ve UX Geliştirme İşletim Sistemi**'dir.
 
-Bünyesinde **74 adet Antigravity Yeteneği (55 aktif, 19 deprecated)**, **124 adet tip güvenli MCP Aracı**, **8 farklı frontend/backend adaptörü**, **Mevcut Proje Modernizasyon Motoru (Phase 1F)**, **Sıfırdan Proje Üretim Motoru (Phase 1G)**, **Kalıcı Proje İstihbarat Motoru (Phase 1H Project Intelligence)**, **Mimari Doğruluk & Evrensel Kanıt Katmanı (Phase 1H.1)**, **Taşınabilirlik, CI/CD & Dağıtım Motoru (Phase 1I)** ve **Installer Sertleştirmesi & V1.0 Sürüm Hazırlığı (Phase 1K)** barındırır.
+Bünyesinde **74 adet Antigravity Yeteneği (55 aktif, 19 deprecated)**, **124 adet tip güvenli MCP Aracı**, **8 farklı frontend/backend adaptörü**, **Mevcut Proje Modernizasyon Motoru (Phase 1F)**, **Sıfırdan Proje Üretim Motoru (Phase 1G)**, **Kalıcı Proje İstihbarat Motoru (Phase 1H Project Intelligence)**, **Mimari Doğruluk & Evrensel Kanıt Katmanı (Phase 1H.1)**, **Taşınabilirlik, CI/CD & Dağıtım Motoru (Phase 1I)**, **Installer Sertleştirmesi & V1.0 Sürüm Hazırlığı (Phase 1K)** ve **Premium Tasarım İstihbaratı, Ajan Mühendisliği & Modernizasyon Evrimi (Phase 2)** barındırır.
 
 
 ---
@@ -121,7 +121,20 @@ Bünyesinde **74 adet Antigravity Yeteneği (55 aktif, 19 deprecated)**, **124 a
     * **Kanonik 10-Aşamalı Ajan Kurulum Sözleşmesi:** `INSPECT → SELECT DESTINATION → CLONE/UPDATE → BOOTSTRAP → BUILD → TEST → REGISTER → DOCTOR → MCP HANDSHAKE → REPORT` sözleşmesi Antigravity ajanları için net ve deterministik hale getirilmiştir.
     * **Taşınan Workspace Junction Onarımı:** Yeniden konumlandırılan pnpm junction/symlink bağlantıları otomatik yakalanıp dondurulmuş kilit dosyasıyla onarılır.
     * **MCP stdio JSON-RPC Doğrulaması:** 124 kanonik araç stdio handshake ve gerçek Antigravity IDE çağrılarıyla canlı doğrulanmıştır (`ANTIGRAVITY_MCP_RUNTIME = VERIFIED`).
-    * **538 Otomatik Test Güvencesi:** 25 test paketinde 538 test %100 yeşildir.
+    * **552 Otomatik Test Güvencesi:** 26 test paketinde 552 test %100 yeşildir.
+
+17. **Premium Tasarım İstihbaratı, Ajan Mühendisliği & Modernizasyon Evrimi (Phase 2):**
+    * **Art Direction Engine & 9 Kanonik Profil:** Sıradan ve jenerik AI arayüzlerini engelleyen, 9 farklı endüstri profiline (Premium SaaS, Enterprise ERP, Data-Dense Operations, Developer Workspace, Consumer Marketplace, Gaming Platform, Editorial / Content, Minimal Productivity, Industrial APS / MES) göre arayüz yönü üreten motor. Anlamlı görevlerde 3 farklı yön adayı üretip çok boyutlu puanlamayla (semantic coherence, density fit, typography, contrast index) birini gerekçelendirerek seçer.
+    * **Açıklanabilir Tasarım Bilgi Tabanı (UI Design Knowledge Engine):** Ürün kategorisi kuralları, layout reçeteleri, tipografi eşleşmeleri, renk paleti stratejileri ve erişilebilirlik kurallarını içeren, rastgele tema seçimini engelleyen küratörlü bilgi motoru.
+    * **Evrensel Light / Dark / System Tema Modeli:** 11 semantik token kategorisinde (`CANONICAL_LIGHT_THEME`, `CANONICAL_DARK_THEME`) WCAG 2.1 AA/AAA kontrast garantisi, gerçek semantik eşdeğerlik ve SSR inline script desteği.
+    * **18 Kanonik Bileşen Reçetesi & Layout Akıl Yürütme:** NavigationShell'den DataGrid'e, SplitPanel'den KPI kartlarına kadar 18 resmi bileşen reçetesi; ekran alanı geometrisi, yoğunluk hesaplama ve Windows %125 DPI ergonomi optimizasyonları (48px header, 36px data row).
+    * **Kapsamlı Davranış Koruma Sözleşmesi (Comprehensive Behavioral Preservation):** Modernizasyon ve onarımda rotaları, kullanıcı aksiyonlarını, form bağlantılarını, API uçlarını, yetkilendirme sınırlarını ve veri modellerini %100 dondurarak sıfır regresyon garantisi.
+    * **Cerrahi Görsel Onarım Motoru (Visual Repair Engine):** Sabit genişlik taşması, düşük kontrast, düzensiz boşluk (7px/13px), eksik focus-visible ve taşan flex konteyner gibi 5 ana arayüz kusurunu tespit eden ve çalışan yapılara zarar vermeden cerrahi CSS yamaları uygulayan motor.
+    * **Adaptif İş Akışı Yönlendiricisi (Adaptive Workflow Router):** Kapsam, etki alanı ve belirsizliğe göre görevleri dinamik olarak `QUICK`, `STANDARD` veya `DEEP` modlarına yönlendiren ve sıkı kanıt kapıları zorunlu kılan mimari.
+    * **Deterministik Proje Grafı V2 (Project Graph V2):** AST tabanlı içe/dışa aktarım analizi, en kısa bağımlılık yolu, god-node tespiti, etki alanı (blast radius) ve etkilenen test eşlemesi; net kanıt etiketi (`EXTRACTED` vs `INFERRED`).
+    * **Sınırlandırılmış Bağlam Sıkıştırması (Bounded Context Compression):** Hata izlerini ve kritik stack satırlarını %100 korurken log ve JSON verilerinde %25-65 token tasarrufu sağlayan sıkıştırma motoru.
+    * **Sadelik Kalkanı (Simplicity Guard):** Gereksiz wrapper sınıflarını, aşırı derin miras yapılarını ve gereksiz harici bağımlılıkları (`lodash.get` vb.) proaktif engelleyen Ponytail/Karpathy koruması.
+    * **Gerçek Tarayıcı Görsel QA & İzole Sertifikasyon (Real Visual QA & Isolated Certification):** 4 farklı viewport (Mobil 390x844, Tablet 768x1024, Masaüstü 1440x900, Geniş Ekran 1920x1080) ve hem Açık hem Koyu temada çalışan Playwright motoru; diskte doğrulanmış 18 gerçek PNG ekran görüntüsü ile kanıtlanmış sıfır regresyon sertifikasyonu.
 
 ---
 

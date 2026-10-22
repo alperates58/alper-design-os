@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Legacy Operations Portal [Defective Fixture 1]</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Intentionally fixed rigid width causing mobile overflow -->
+  <div class="fixed-container" id="app-root">
+    <header class="app-header">
+      <h1 class="portal-title">Inventory Operations Monitor</h1>
+      <span class="user-badge" id="current-user">Operator: ALPER-HQ</span>
+    </header>
+
+    <main class="content-body">
+      <!-- Defective low contrast sub-heading -->
+      <p class="low-contrast-text">System telemetry and active batch dispatch status.</p>
+
+      <div class="toolbar">
+        <input type="text" id="filter-input" placeholder="Filter batches..." aria-label="Filter batches">
+        <!-- Broken button without focus outline -->
+        <button id="add-batch-btn" class="defective-btn" data-action="add-batch">Add Batch</button>
+        <button id="clear-btn" class="defective-btn secondary" data-action="clear-filters">Clear</button>
+      </div>
+
+      <div class="table-wrapper">
+        <table id="batch-table" class="data-table">
+          <thead>
+            <tr>
+              <th>Batch ID</th>
+              <th>Product Line</th>
+              <th>Status</th>
+              <th>Units</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="batch-tbody">
+            <tr data-row-id="B-101">
+              <td>BATCH-101</td>
+              <td>Titanium Fasteners</td>
+              <td><span class="status-badge running">RUNNING</span></td>
+              <td>12,500</td>
+              <td><button class="row-act" data-action="inspect-B-101">Inspect</button></td>
+            </tr>
+            <tr data-row-id="B-102">
+              <td>BATCH-102</td>
+              <td>Composite Housings</td>
+              <td><span class="status-badge warning">IDLE</span></td>
+              <td>3,400</td>
+              <td><button class="row-act" data-action="inspect-B-102">Inspect</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="footer-stats">
+        <span>Active Batches: <strong id="batch-count">2</strong></span>
+        <span>Operational Queue: Verified</span>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Critical business functionality that MUST be preserved during repair
+    let count = 2;
+    document.getElementById('add-batch-btn').addEventListener('click', function() {
+      count++;
+      const tbody = document.getElementById('batch-tbody');
+      const tr = document.createElement('tr');
+      tr.setAttribute('data-row-id', 'B-10' + count);
+      tr.innerHTML = '<td>BATCH-10' + count + '</td><td>Engine Valves</td><td><span class="status-badge running">RUNNING</span></td><td>5,000</td><td><button class="row-act" data-action="inspect-B-10' + count + '">Inspect</button></td>';
+      tbody.appendChild(tr);
+      document.getElementById('batch-count').innerText = count;
+    });
+
+    document.getElementById('clear-btn').addEventListener('click', function() {
+      document.getElementById('filter-input').value = '';
+    });
+  </script>
+</body>
+</html>
