@@ -17,6 +17,7 @@
     "@alper-design-os/adapter-php": "workspace:*",
     "@alper-design-os/adapter-react": "workspace:*",
     "@alper-design-os/adapter-react-typescript": "workspace:*",
+    "@alper-design-os/adapter-winui3-xaml": "workspace:*",
     "@alper-design-os/design-core": "workspace:*"
   },
   "devDependencies": {

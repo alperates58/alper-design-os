@@ -31,7 +31,7 @@ describe('Alper Design MCP Tools Verification', () => {
 
   it('5. search_components returns adapter component paradigms', () => {
     const result = Tools.handleSearchComponents({ patternId: 'dense-datagrid' });
-    expect(result.availableInAdapters.length).toBe(7);
+    expect(result.availableInAdapters.length).toBe(8);
   });
 
   it('6. get_design_tokens compiles DTCG tokens to CSS', () => {

@@ -156,7 +156,28 @@ function collectProjectFiles(targetDir: string, maxFiles: number = 250): Project
         if (result.length >= maxFiles) break;
         const fullPath = path.join(current, entry.name);
         const ext = path.extname(entry.name).toLowerCase();
-        const shouldReadContent = ['.json', '.html', '.css', '.js', '.jsx', '.tsx', '.ts', '.php', '.cs', '.cshtml', '.yaml', '.yml', '.lock', '.example', '.sql'].includes(ext) || entry.name.startsWith('.env');
+        const shouldReadContent = [
+          '.json',
+          '.html',
+          '.css',
+          '.js',
+          '.jsx',
+          '.tsx',
+          '.ts',
+          '.php',
+          '.cs',
+          '.cshtml',
+          '.razor',
+          '.csproj',
+          '.xaml',
+          '.sln',
+          '.manifest',
+          '.yaml',
+          '.yml',
+          '.lock',
+          '.example',
+          '.sql'
+        ].includes(ext) || entry.name.startsWith('.env');
         let content: string | undefined = undefined;
 
         if (shouldReadContent) {
@@ -179,7 +200,13 @@ function collectProjectFiles(targetDir: string, maxFiles: number = 250): Project
 
       for (const entry of dirEntries) {
         if (result.length >= maxFiles) break;
-        if (entry.name === 'node_modules' || entry.name === '.git' || entry.name === 'dist') continue;
+        if (
+          entry.name === 'node_modules' ||
+          entry.name === '.git' ||
+          entry.name === 'dist' ||
+          entry.name === 'bin' ||
+          entry.name === 'obj'
+        ) continue;
         traverse(path.join(current, entry.name), depth + 1);
       }
     } catch {

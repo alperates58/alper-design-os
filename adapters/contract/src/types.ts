@@ -18,9 +18,50 @@ export interface StackDetectionMatch {
 export interface AdapterCapabilities {
   supportsTypeScript: boolean;
   templateEngine: string;
-  stylingApproaches: ('CSS_VARIABLES' | 'SCSS' | 'TAILWIND' | 'BOOTSTRAP' | 'INLINE_STYLES')[];
+  stylingApproaches: ('CSS_VARIABLES' | 'SCSS' | 'TAILWIND' | 'BOOTSTRAP' | 'INLINE_STYLES' | 'XAML_RESOURCE_DICTIONARY' | 'WINUI_STYLES' | 'FLUENT_DESIGN')[];
   serverRendered: boolean;
-  componentParadigm: 'WEB_COMPONENTS' | 'REACT_COMPONENTS' | 'SERVER_TEMPLATES' | 'RAZOR_COMPONENTS';
+  componentParadigm: 'WEB_COMPONENTS' | 'REACT_COMPONENTS' | 'SERVER_TEMPLATES' | 'RAZOR_COMPONENTS' | 'WINUI_XAML_MVVM';
+}
+
+export interface WinUI3AdapterCapabilities extends AdapterCapabilities {
+  supportsTypeScript: false;
+  templateEngine: 'XAML / WinUI 3';
+  stylingApproaches: ('XAML_RESOURCE_DICTIONARY' | 'WINUI_STYLES' | 'FLUENT_DESIGN')[];
+  serverRendered: false;
+  componentParadigm: 'WINUI_XAML_MVVM';
+  targetFrameworks: ('.NET 8.0' | '.NET 9.0' | '.NET 10.0')[];
+  windowsAppSdkVersion: string;
+  supportsUnpackaged: boolean;
+  supportsThemeDictionaries: boolean;
+  supportsDpiScaling: boolean;
+  supportsAutomationPeers: boolean;
+}
+
+export interface MvvmInspectionResult {
+  hasObservableObject: boolean;
+  hasNotifyPropertyChanged: boolean;
+  viewModelsFound: string[];
+  observablePropertiesCount: number;
+  relayCommandsCount: number;
+  hasThreadDispatching: boolean;
+  summary: string;
+}
+
+export interface XamlBindingInspectionResult {
+  compiledBindingsCount: number;
+  classicBindingsCount: number;
+  themeResourcesCount: number;
+  staticResourcesCount: number;
+  usesVirtualization: boolean;
+  summary: string;
+}
+
+export interface AutomationInspectionResult {
+  totalInteractiveElements: number;
+  elementsWithAutomationName: number;
+  elementsWithAutomationId: number;
+  complianceRate: number;
+  summary: string;
 }
 
 export interface AdapterArtifact {

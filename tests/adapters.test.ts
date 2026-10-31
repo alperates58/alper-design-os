@@ -11,7 +11,7 @@ describe('Adapters Architecture & Contracts', () => {
   });
   const testPattern = coreUXPatterns[0]!;
 
-  it('registers all 7 required adapter skeletons', () => {
+  it('registers all 8 required adapter skeletons', () => {
     const expectedIds = [
       'generic-web',
       'html-css-js',
@@ -19,10 +19,11 @@ describe('Adapters Architecture & Contracts', () => {
       'react-typescript',
       'php',
       'laravel-blade',
-      'aspnet-razor'
+      'aspnet-razor',
+      'winui3-xaml'
     ];
 
-    expect(allAdapters.length).toBe(7);
+    expect(allAdapters.length).toBe(8);
     expectedIds.forEach((id) => {
       const adapter = registry.get(id);
       expect(adapter).toBeDefined();

@@ -220,6 +220,7 @@ export async function runDoctor(options = {}) {
     'adapters/php/dist/index.js',
     'adapters/laravel-blade/dist/index.js',
     'adapters/aspnet-razor/dist/index.js',
+    'adapters/winui3-xaml/dist/index.js',
     'registry/dist/index.js',
     'packages/analyzer/dist/index.js',
     'packages/source-intelligence/dist/index.js',
@@ -232,7 +233,7 @@ export async function runDoctor(options = {}) {
   ];
   const missingDists = expectedDistTargets.filter(t => !fs.existsSync(path.join(projectRoot, t)));
   if (missingDists.length === 0) {
-    recordCheck('monorepoBuild', 'FEATURE_REQUIRED', 'PASS', 'All 18 monorepo build artifacts compiled and present', { targetsChecked: expectedDistTargets.length });
+    recordCheck('monorepoBuild', 'FEATURE_REQUIRED', 'PASS', `All ${expectedDistTargets.length} monorepo build artifacts compiled and present`, { targetsChecked: expectedDistTargets.length });
   } else {
     recordCheck('monorepoBuild', 'FEATURE_REQUIRED', 'FAIL', `Missing build artifacts (${missingDists.length}): ${missingDists.slice(0, 3).join(', ')}... Run "pnpm run build"`);
     results.recommendations.push('Build the monorepo using "pnpm run build".');

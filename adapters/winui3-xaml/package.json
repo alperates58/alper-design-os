@@ -1,0 +1,18 @@
+{
+  "name": "@alper-design-os/adapter-winui3-xaml",
+  "version": "1.0.0-rc.1",
+  "description": "Windows App SDK and WinUI 3 (XAML/C#) native desktop adapter for Alper Design OS",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@alper-design-os/adapter-contract": "workspace:*",
+    "@alper-design-os/design-core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

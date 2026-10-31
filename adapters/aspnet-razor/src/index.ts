@@ -26,23 +26,59 @@ export class AspNetRazorAdapter extends BaseAdapter {
   }
 
   detect(files: ProjectFile[]): StackDetectionMatch {
-    const hasCsproj = files.some((f) => f.path.endsWith('.csproj') || f.path.endsWith('.sln'));
-    const hasRazor = files.some((f) => f.extension === '.cshtml' || f.extension === '.razor');
+    const razorFiles = files.filter((f) => f.extension === '.cshtml' || f.extension === '.razor');
+    const hasRazor = razorFiles.length > 0;
 
-    if (hasCsproj || hasRazor) {
+    let hasWebSdkOrAspNetCore = false;
+    let isDesktopProject = false;
+    const detectedFiles: string[] = razorFiles.map((f) => f.path);
+
+    for (const f of files) {
+      if (f.path.endsWith('.csproj')) {
+        const content = f.content || '';
+        if (
+          /<UseWinUI>\s*true\s*<\/UseWinUI>/i.test(content) ||
+          /Microsoft\.WindowsAppSDK/i.test(content) ||
+          /<UseWPF>\s*true\s*<\/UseWPF>/i.test(content) ||
+          /<UseWindowsForms>\s*true\s*<\/UseWindowsForms>/i.test(content)
+        ) {
+          isDesktopProject = true;
+        }
+
+        if (
+          /Sdk=["']Microsoft\.NET\.Sdk\.Web["']/i.test(content) ||
+          /Microsoft\.AspNetCore/i.test(content)
+        ) {
+          hasWebSdkOrAspNetCore = true;
+          detectedFiles.push(f.path);
+        }
+      }
+    }
+
+    // Desktop projects (WinUI, WPF, WinForms) must not match ASP.NET Razor
+    if (isDesktopProject && !hasRazor) {
+      return {
+        matched: false,
+        confidence: 0,
+        reason: 'Detected desktop .NET project (WinUI/WPF/WinForms); ASP.NET Core Razor excluded.',
+        detectedFiles: []
+      };
+    }
+
+    if (hasRazor || hasWebSdkOrAspNetCore) {
       return {
         matched: true,
         confidence: 0.95,
         detectedFramework: 'ASP.NET Core (Razor/Blazor)',
-        reason: 'Detected .csproj/.sln files or Razor/Blazor template files (*.cshtml, *.razor).',
-        detectedFiles: files.filter((f) => f.extension === '.cshtml' || f.extension === '.razor' || f.path.endsWith('.csproj')).map((f) => f.path)
+        reason: 'Detected Razor/Blazor template files (*.cshtml, *.razor) or Microsoft.NET.Sdk.Web / Microsoft.AspNetCore markers.',
+        detectedFiles: Array.from(new Set(detectedFiles))
       };
     }
 
     return {
       matched: false,
       confidence: 0,
-      reason: 'No .NET/Razor markers detected.',
+      reason: 'No ASP.NET Core Razor or Blazor markers detected.',
       detectedFiles: []
     };
   }

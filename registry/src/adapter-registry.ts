@@ -6,6 +6,7 @@ import { ReactTypeScriptAdapter } from '@alper-design-os/adapter-react-typescrip
 import { PhpAdapter } from '@alper-design-os/adapter-php';
 import { LaravelBladeAdapter } from '@alper-design-os/adapter-laravel-blade';
 import { AspNetRazorAdapter } from '@alper-design-os/adapter-aspnet-razor';
+import { WinUI3Adapter } from '@alper-design-os/adapter-winui3-xaml';
 
 export interface AdapterMatchResult {
   adapter: AdapterContract;
@@ -58,6 +59,7 @@ export class AdapterRegistry {
     // Specific framework adapters first, generic fallback last
     this.register(new ReactTypeScriptAdapter());
     this.register(new ReactAdapter());
+    this.register(new WinUI3Adapter());
     this.register(new LaravelBladeAdapter());
     this.register(new AspNetRazorAdapter());
     this.register(new PhpAdapter());
