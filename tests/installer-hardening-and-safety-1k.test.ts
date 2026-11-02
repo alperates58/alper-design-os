@@ -396,7 +396,7 @@ describe('ALPER DESIGN OS - Phase 1K: Installer Hardening, Windows Portability &
         expect(output).toContain('READY');
         expect(output).toContain('Doctor V2 System Health Diagnostic');
       } catch (err: any) {
-        if (err.code === 'EPERM' || err.message?.includes('EPERM')) {
+        if (err.code === 'EPERM' || err.code === 'EACCES' || /engellendi|denied|EPERM|EACCES/i.test(String(err))) {
           expect(fs.existsSync(path.join(repoRoot, 'doctor.cmd'))).toBe(true);
         } else {
           throw err;

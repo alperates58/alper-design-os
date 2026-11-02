@@ -5,10 +5,11 @@ import { execSync } from 'node:child_process';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 
 /**
- * ALPER DESIGN OS - Doctor V2
- * Comprehensive repository, runtime, and ecosystem diagnostics.
+ * ALPER DESIGN OS - Doctor V3
+ * Comprehensive repository, runtime, and project quality diagnostics.
  * Supports:
  *   --preflight: validates only prerequisites before installation (Node, Git, pnpm, manifests)
+ *   --target-project <path>: runs Project Quality Doctor V3 on a target DevHub workspace
  *   --json: output raw JSON results
  */
 
@@ -33,7 +34,6 @@ export function scanSecrets(projectRoot = '.') {
   const violations = [];
 
   for (const relFile of trackedFiles) {
-    // Ignore test suites (which test secret redaction with dummy tokens) and scanner itself
     if (
       relFile.startsWith('tests/') ||
       relFile.startsWith('scripts/scan-') ||
@@ -69,6 +69,11 @@ export function scanSecrets(projectRoot = '.') {
   };
 }
 
+export async function runDoctorV3(targetProject, options = {}) {
+  const { runDoctorV3: engineDoctorV3 } = await import('../packages/qa-engine/dist/doctor-v3.js');
+  return engineDoctorV3(targetProject, options);
+}
+
 export async function runDoctor(options = {}) {
   const projectRoot = options.projectRoot ? path.resolve(options.projectRoot) : path.resolve('.');
   const isPreflight = Boolean(options.preflight ?? process.argv.includes('--preflight'));
@@ -90,8 +95,8 @@ export async function runDoctor(options = {}) {
 
   function recordCheck(name, category, status, message, details = null) {
     results.checks[name] = {
-      category, // CORE_REQUIRED | FEATURE_REQUIRED | OPTIONAL | SECURITY
-      status,   // PASS | WARN | FAIL | OPTIONAL_NOT_FOUND
+      category,
+      status,
       message,
       details
     };
@@ -180,12 +185,11 @@ export async function runDoctor(options = {}) {
     recordCheck('secretSafety', 'SECURITY', 'PASS', `Deterministic secret scan verified clean across ${secretReport.scannedFiles} tracked files`);
   } else {
     recordCheck('secretSafety', 'SECURITY', 'FAIL', `CRITICAL: Secrets or tracked .env files detected (${secretReport.violations.length} violations)!`, {
-      violations: secretReport.violations.map(v => ({ file: v.file, rule: v.rule })) // Redacted, no secrets logged!
+      violations: secretReport.violations.map(v => ({ file: v.file, rule: v.rule }))
     });
     results.recommendations.push('Remove all tracked .env and credential files from git.');
   }
 
-  // If in PREFLIGHT mode, stop here and return!
   if (isPreflight) {
     if (results.summary.failed > 0) {
       results.status = 'BLOCKED';
@@ -197,7 +201,6 @@ export async function runDoctor(options = {}) {
     return results;
   }
 
-  // FULL MODE CONTINUATION:
   // 6. Dependencies State
   const nodeModulesExists = fs.existsSync(path.join(projectRoot, 'node_modules'));
   const vitestExists = fs.existsSync(path.join(projectRoot, 'node_modules', 'vitest'));
@@ -355,50 +358,103 @@ const isDirectRun = Boolean(
 );
 
 if (isDirectRun || process.argv.includes('--run-direct')) {
-  runDoctor().then(res => {
-    if (process.argv.includes('--json')) {
-      console.log(JSON.stringify(res, null, 2));
-      process.exit(res.status === 'BLOCKED' ? 1 : 0);
-    }
+  const targetProjectIdx = process.argv.indexOf('--target-project');
+  const targetProject = targetProjectIdx !== -1 ? process.argv[targetProjectIdx + 1] : null;
 
-    console.log('========================================================');
-    console.log(`  ALPER DESIGN OS - Doctor V2 System Health Diagnostic [${res.mode}]`);
-    console.log('========================================================');
-    console.log(`Timestamp: ${res.timestamp}`);
-    console.log(`Project:   ${res.projectRoot}`);
-    console.log(`Mode:      ${res.mode}`);
-    console.log(`Status:    ${res.status}`);
-    console.log('--------------------------------------------------------\n');
-
-    for (const [key, check] of Object.entries(res.checks)) {
-      const badge =
-        check.status === 'PASS' ? '[OK]     ' :
-        check.status === 'WARN' ? '[WARN]   ' :
-        check.status === 'FAIL' ? '[FAIL]   ' :
-        '[OPT-N/A]';
-      console.log(`${badge} ${key.padEnd(24)}: ${check.message}`);
-    }
-
-    console.log('\n--------------------------------------------------------');
-    console.log(`Summary: Passed: ${res.summary.passed} | Warnings: ${res.summary.warnings} | Failed: ${res.summary.failed} | Optional N/A: ${res.summary.optionalMissing}`);
-    console.log(`Overall Health Status: ${res.status}`);
-    if (res.recommendations.length > 0) {
-      console.log('\nRecommendations:');
-      for (const rec of res.recommendations) {
-        console.log(` - ${rec}`);
+  if (targetProject) {
+    // Run Doctor V3 for external project
+    runDoctorV3(targetProject, {
+      previewUrl: process.argv.find(a => a.startsWith('--preview-url='))?.split('=')[1]
+    }).then(res => {
+      if (process.argv.includes('--json')) {
+        console.log(JSON.stringify(res, null, 2));
+        process.exit(res.canPassQualityGate ? 0 : 1);
       }
-    }
-    console.log('========================================================');
 
-    if (res.status === 'BLOCKED') {
+      console.log('========================================================');
+      console.log(`  ALPER DESIGN OS - Doctor V3 Project Quality Diagnostic`);
+      console.log('========================================================');
+      console.log(`Timestamp:      ${res.timestamp}`);
+      console.log(`Target Project: ${res.targetProject}`);
+      console.log(`Quality Status: ${res.overallStatus}`);
+      console.log(`Can Pass Gate:  ${res.canPassQualityGate ? 'YES' : 'NO (BLOCKED)'}`);
+      if (res.domainIntelligence) {
+        console.log(`Domain Profile: ${res.domainIntelligence.classifiedDomain}`);
+        console.log(`Critic Score:   ${res.domainIntelligence.antiPatternScore}/100`);
+      }
+      console.log('--------------------------------------------------------\n');
+
+      for (const [key, gate] of Object.entries(res.gates)) {
+        const badge =
+          gate.status === 'PASS' ? '[PASS]        ' :
+          gate.status === 'WARN' ? '[WARN]        ' :
+          gate.status === 'FAIL' ? '[FAIL]        ' :
+          '[NOT_VERIFIED]';
+        console.log(`${badge} ${gate.name} (${key}):`);
+        console.log(`               ${gate.message}`);
+      }
+
+      console.log('\n--------------------------------------------------------');
+      console.log(`Summary: Total: ${res.summary.total} | Passed: ${res.summary.passed} | Warnings: ${res.summary.warnings} | Failed: ${res.summary.failed} | Not Verified: ${res.summary.notVerified}`);
+      if (res.recommendations.length > 0) {
+        console.log('\nRecommendations:');
+        for (const rec of res.recommendations) {
+          console.log(` - ${rec}`);
+        }
+      }
+      console.log('========================================================');
+      process.exit(res.canPassQualityGate ? 0 : 1);
+    }).catch(err => {
+      console.error('Doctor V3 runtime error:', err);
       process.exit(1);
-    } else if (res.status === 'OPERATOR_ACTION_REQUIRED') {
-      process.exit(2);
-    } else {
-      process.exit(0);
-    }
-  }).catch(err => {
-    console.error('Doctor runtime error:', err);
-    process.exit(1);
-  });
+    });
+  } else {
+    // Run repository health Doctor V2
+    runDoctor().then(res => {
+      if (process.argv.includes('--json')) {
+        console.log(JSON.stringify(res, null, 2));
+        process.exit(res.status === 'BLOCKED' ? 1 : 0);
+      }
+
+      console.log('========================================================');
+      console.log(`  ALPER DESIGN OS - Doctor V2 System Health Diagnostic [${res.mode}]`);
+      console.log('========================================================');
+      console.log(`Timestamp: ${res.timestamp}`);
+      console.log(`Project:   ${res.projectRoot}`);
+      console.log(`Mode:      ${res.mode}`);
+      console.log(`Status:    ${res.status}`);
+      console.log('--------------------------------------------------------\n');
+
+      for (const [key, check] of Object.entries(res.checks)) {
+        const badge =
+          check.status === 'PASS' ? '[OK]     ' :
+          check.status === 'WARN' ? '[WARN]   ' :
+          check.status === 'FAIL' ? '[FAIL]   ' :
+          '[OPT-N/A]';
+        console.log(`${badge} ${key.padEnd(24)}: ${check.message}`);
+      }
+
+      console.log('\n--------------------------------------------------------');
+      console.log(`Summary: Passed: ${res.summary.passed} | Warnings: ${res.summary.warnings} | Failed: ${res.summary.failed} | Optional N/A: ${res.summary.optionalMissing}`);
+      console.log(`Overall Health Status: ${res.status}`);
+      if (res.recommendations.length > 0) {
+        console.log('\nRecommendations:');
+        for (const rec of res.recommendations) {
+          console.log(` - ${rec}`);
+        }
+      }
+      console.log('========================================================');
+
+      if (res.status === 'BLOCKED') {
+        process.exit(1);
+      } else if (res.status === 'OPERATOR_ACTION_REQUIRED') {
+        process.exit(2);
+      } else {
+        process.exit(0);
+      }
+    }).catch(err => {
+      console.error('Doctor runtime error:', err);
+      process.exit(1);
+    });
+  }
 }

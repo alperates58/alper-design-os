@@ -70,15 +70,23 @@ export class VisualQARunner {
       };
     }
 
+    const launchArgs = [
+      '--disable-gpu',
+      '--no-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-setuid-sandbox',
+      '--hide-scrollbars'
+    ];
+
     let browser: any;
     try {
-      browser = await playwright.chromium.launch({ headless: true });
+      browser = await playwright.chromium.launch({ headless: true, args: launchArgs });
     } catch {
       // Fallback chain for corporate/restricted environments: msedge -> chrome
       try {
-        browser = await playwright.chromium.launch({ headless: true, channel: 'msedge' });
+        browser = await playwright.chromium.launch({ headless: true, channel: 'msedge', args: launchArgs });
       } catch {
-        browser = await playwright.chromium.launch({ headless: true, channel: 'chrome' });
+        browser = await playwright.chromium.launch({ headless: true, channel: 'chrome', args: launchArgs });
       }
     }
 
@@ -151,12 +159,16 @@ export class VisualQARunner {
             return issues;
           });
 
-          // Capture real screenshot
+          // Capture real screenshot with safe protocol error fallback
           let screenshotPath: string | undefined;
           if (options.captureScreenshots !== false) {
             const fileName = `${options.suiteName}-${vp.name}-${theme.toLowerCase()}.png`;
             screenshotPath = path.join(outputDir, fileName);
-            await page.screenshot({ path: screenshotPath, fullPage: false });
+            try {
+              await page.screenshot({ path: screenshotPath, fullPage: false, timeout: 5000 });
+            } catch (shotErr: any) {
+              unresolvedDefects.push(`[${vp.name}-${theme}] Screenshot capture note: ${shotErr.message}`);
+            }
           }
 
           const passed = !overflowMetrics.hasOverflow && consoleErrors.length === 0 && a11yIssues.length === 0;

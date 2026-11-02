@@ -10,7 +10,11 @@ export type ProductType =
   | 'B2C_CONSUMER'
   | 'ADMIN_OPERATIONAL'
   | 'ANALYTICS_DATA'
-  | 'DEVELOPER_TOOL';
+  | 'DEVELOPER_TOOL'
+  | 'INDUSTRIAL_OPERATIONS'
+  | 'FINANCE_DATA_HEAVY'
+  | 'COMMERCE'
+  | 'MEDIA_FIRST';
 
 export type UserExpertise = 'NOVICE' | 'INTERMEDIATE' | 'EXPERT';
 export type UsageFrequency = 'RARE_SPORADIC' | 'PERIODIC' | 'DAILY_FREQUENT' | 'CONTINUOUS_INTENSIVE';
@@ -437,7 +441,15 @@ export interface AntiPatternIssue {
     | 'INCONSISTENT_SPACING'
     | 'INCONSISTENT_DENSITY'
     | 'DECEPTIVE_TELEMETRY'
-    | 'UNGROUNDED_DATA';
+    | 'UNGROUNDED_DATA'
+    | 'GENERIC_AI_GRADIENT_GLOW'
+    | 'REDUNDANT_KPI_CARDS'
+    | 'DECORATIVE_BLOAT'
+    | 'EMOJI_OVERUSE'
+    | 'MARKETING_FLUFF_IN_OPS'
+    | 'LOW_DATA_DENSITY'
+    | 'INCONSISTENT_CONTROLS'
+    | 'NON_FUNCTIONAL_EYE_CANDY';
   severity: AntiPatternSeverity;
   message: string;
   location: string;

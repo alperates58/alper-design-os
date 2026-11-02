@@ -1,6 +1,7 @@
 export * from './types.js';
 export * from './design-intent.js';
 export * from './design-personality.js';
+export * from './domain-intelligence.js';
 export * from './density.js';
 
 // Tokens V2
@@ -23,6 +24,9 @@ export * from './tokens-v2/universal-theme.js';
 export * from './recipes/component-recipes.js';
 export * from './recipes/layout-reasoning.js';
 
+// Enterprise Components
+export * from './components/enterprise-components.js';
+
 // Blueprints
 export * from './blueprints/component-blueprint.js';
 export * from './blueprints/canonical-components.js';
@@ -43,4 +47,3 @@ export * from './renderers/html-css-js-renderer.js';
 export * from './renderers/react-typescript-renderer.js';
 export * from './renderers/laravel-blade-renderer.js';
 export * from './renderers/aspnet-razor-renderer.js';
-export * from './renderers/parity-evaluator.js';

@@ -11,7 +11,10 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "paths": {
+      "@alper-design-os/design-language": ["../design-language/dist/index.d.ts"]
+    }
   },
   "include": ["src/**/*"]
 }
