@@ -17,6 +17,7 @@ export default defineConfig({
       '@alper-design-os/adapter-php': path.resolve(__dirname, 'adapters/php/src/index.ts'),
       '@alper-design-os/adapter-laravel-blade': path.resolve(__dirname, 'adapters/laravel-blade/src/index.ts'),
       '@alper-design-os/adapter-aspnet-razor': path.resolve(__dirname, 'adapters/aspnet-razor/src/index.ts'),
+      '@alper-design-os/adapter-winui3-xaml': path.resolve(__dirname, 'adapters/winui3-xaml/src/index.ts'),
       '@alper-design-os/registry': path.resolve(__dirname, 'registry/src/index.ts'),
       '@alper-design-os/analyzer': path.resolve(__dirname, 'packages/analyzer/src/index.ts'),
       '@alper-design-os/source-intelligence': path.resolve(__dirname, 'packages/source-intelligence/src/index.ts'),
