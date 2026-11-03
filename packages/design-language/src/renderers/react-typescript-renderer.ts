@@ -9,6 +9,7 @@ import {
 } from '../types.js';
 import { canonicalTokensV2 } from '../tokens-v2/definitions.js';
 import { generateCssVariables, generateTypeScriptConstants } from '../tokens-v2/generators.js';
+import { escapeJsxText, escapeJsString } from './escape-utils.js';
 
 export class ReactTypeScriptRenderer implements TargetRenderer {
   readonly stack: TargetStack = 'react-typescript';
@@ -16,8 +17,10 @@ export class ReactTypeScriptRenderer implements TargetRenderer {
   readonly description = 'Strict TypeScript React components with semantic JSX, controlled props, accessible ARIA, and zero gratuitous state/effects.';
 
   renderPageBlueprint(blueprint: PageBlueprint, options: RenderOptions = {}): RendererOutput {
-    const theme = options.theme || 'LIGHT';
-    const density = options.density || blueprint.density.mode;
+    const theme = escapeJsString((options.theme || 'LIGHT').toLowerCase());
+    const density = escapeJsString((options.density || blueprint.density.mode).toLowerCase());
+    const safeTitle = escapeJsxText(blueprint.title);
+    const safeDesc = escapeJsxText(blueprint.description);
 
     const componentCode = `import React, { useState, useCallback } from 'react';
 import './alper-tokens.css';
@@ -42,8 +45,8 @@ const mockData: RecordItem[] = [
 ];
 
 export const ${this.sanitizeComponentName(blueprint.id)}: React.FC<DataManagementWorkspaceProps> = ({
-  initialTheme = '${theme.toLowerCase()}',
-  initialDensity = '${density.toLowerCase()}'
+  initialTheme = '${theme}',
+  initialDensity = '${density}'
 }) => {
   const [theme, setTheme] = useState(initialTheme);
   const [filterQuery, setFilterQuery] = useState('');
@@ -77,8 +80,8 @@ export const ${this.sanitizeComponentName(blueprint.id)}: React.FC<DataManagemen
       {/* Main Content Viewport */}
       <main className="alper-main-content" id="main-content">
         <header className="alper-page-header">
-          <h1 className="alper-page-title">${blueprint.title}</h1>
-          <p className="alper-page-desc">${blueprint.description}</p>
+          <h1 className="alper-page-title">${safeTitle}</h1>
+          <p className="alper-page-desc">${safeDesc}</p>
         </header>
 
         {/* Filter Bar */}
@@ -253,7 +256,7 @@ export const ${this.sanitizeComponentName(blueprint.id)}: React.FC<${this.saniti
       onClick={onClick}
       aria-label="Action Button"
     >
-      {children || '${blueprint.role}'}
+      {children || '${escapeJsString(blueprint.role)}'}
     </button>
   );
 };
@@ -307,9 +310,12 @@ export const ${this.sanitizeComponentName(blueprint.id)}: React.FC<${this.saniti
   }
 
   private sanitizeComponentName(id: string): string {
-    return id
+    const cleaned = String(id)
+      .replace(/[^a-zA-Z0-9_-]/g, '')
       .split(/[-_]/)
+      .filter(Boolean)
       .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
       .join('');
+    return cleaned && /^[A-Z]/.test(cleaned) ? cleaned : 'AlperGeneratedComponent';
   }
 }

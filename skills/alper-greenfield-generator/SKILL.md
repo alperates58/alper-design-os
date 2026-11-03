@@ -102,6 +102,7 @@ If upstream discovery readiness check is `NEEDS_CLARIFICATION` or requirements a
 
 ## SOURCE / RESEARCH STRATEGY
 - Authoritative Guidance: Official production stack templates (Vite React-TS strict, Laravel 11 Blade, ASP.NET Core 8/9 Razor, Plain HTML5).
+- Local Progressive Reference: `references/stack-templates.md`.
 - Prohibit ad-hoc, unverified external advice.
 
 ## POLICY & GOVERNANCE

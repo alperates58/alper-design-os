@@ -465,6 +465,7 @@ export const ContextRoutingDecisionSchema = z.object({
   excludedSkills: z.array(z.string()),
   excludedTools: z.array(z.string()),
   rationale: z.string(),
+  routingExplanation: z.string().optional(),
   tokenBudgetReductionPercent: z.number().min(0).max(100)
 });
 export type ContextRoutingDecision = z.infer<typeof ContextRoutingDecisionSchema>;
@@ -491,6 +492,7 @@ export const ToolRoutingDecisionSchema = z.object({
   chosenTool: z.string(),
   fallbackTools: z.array(z.string()),
   rationale: z.string(),
+  routingExplanation: z.string().optional(),
   requiresApproval: z.boolean(),
   requiresNetwork: z.boolean()
 });
@@ -502,6 +504,7 @@ export type ToolRoutingDecision = z.infer<typeof ToolRoutingDecisionSchema>;
 export const PolicyLevelSchema = z.enum([
   'USER_EXPLICIT_REQUIREMENT',
   'SECURITY_DATA_SAFETY',
+  'UNIVERSAL_EVIDENCE_TRUTH',
   'PROJECT_RULES',
   'ALPER_DESIGN_OS_RULES',
   'FRAMEWORK_BEST_PRACTICES',
@@ -730,15 +733,18 @@ export const HumanVisualApprovalRecordSchema = z.object({
       responsiveFidelity: false,
       truthfulnessVisualAffordance: false
     }),
-  canRelease: z.boolean().default(false)
+  canRelease: z.boolean().default(false),
+  authorizationStatus: z.string().optional(),
+  approvalProvenance: z.string().optional()
 });
 export type HumanVisualApprovalRecord = z.infer<typeof HumanVisualApprovalRecordSchema>;
 
 export const ApprovalGateCheckResultSchema = z.object({
-  gateStatus: z.enum(['PASSED', 'PENDING', 'BLOCKED']),
+  gateStatus: z.enum(['PASSED', 'PENDING', 'BLOCKED', 'HUMAN_APPROVAL_REQUIRED']),
   status: VisualApprovalStatusSchema,
   message: z.string(),
-  requiresHumanAction: z.boolean()
+  requiresHumanAction: z.boolean(),
+  authorizationStatus: z.enum(['AUTHORIZED', 'HUMAN_APPROVAL_REQUIRED', 'REJECTED']).optional()
 });
 export type ApprovalGateCheckResult = z.infer<typeof ApprovalGateCheckResultSchema>;
 

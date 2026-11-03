@@ -9,6 +9,7 @@ import {
 } from '../types.js';
 import { canonicalTokensV2 } from '../tokens-v2/definitions.js';
 import { generateCssVariables } from '../tokens-v2/generators.js';
+import { escapeHtmlAttr, escapeRazorDoubleQuoted, escapeRazorText } from './escape-utils.js';
 
 export class AspNetRazorRenderer implements TargetRenderer {
   readonly stack: TargetStack = 'aspnet-razor';
@@ -16,16 +17,19 @@ export class AspNetRazorRenderer implements TargetRenderer {
   readonly description = 'Native ASP.NET Core Razor partials, ViewComponents, and Tag Helpers without forced JavaScript SPA overhead.';
 
   renderPageBlueprint(blueprint: PageBlueprint, options: RenderOptions = {}): RendererOutput {
-    const theme = options.theme || 'LIGHT';
-    const density = options.density || blueprint.density.mode;
+    const theme = escapeHtmlAttr((options.theme || 'LIGHT').toLowerCase());
+    const density = escapeHtmlAttr((options.density || blueprint.density.mode).toLowerCase());
+    const safeTitleCSharp = escapeRazorDoubleQuoted(blueprint.title);
+    const safeTitleText = escapeRazorText(blueprint.title);
+    const safeDescText = escapeRazorText(blueprint.description);
 
     const razorView = `@model AlperDesignOs.ViewModels.DataManagementWorkspaceViewModel
 @{
-    ViewData["Title"] = "${blueprint.title}";
+    ViewData["Title"] = "${safeTitleCSharp}";
     Layout = "_Layout";
 }
 
-<div class="alper-app-shell alper-shell-enterprise" data-theme="${theme.toLowerCase()}" data-density="${density.toLowerCase()}">
+<div class="alper-app-shell alper-shell-enterprise" data-theme="${theme}" data-density="${density}">
     <!-- Sidebar Navigation -->
     <aside class="alper-sidebar" aria-label="Main Navigation">
         <div class="alper-brand">Alper Design OS</div>
@@ -42,8 +46,8 @@ export class AspNetRazorRenderer implements TargetRenderer {
     <!-- Main Content Area -->
     <main class="alper-main-content" id="main-content">
         <header class="alper-page-header">
-            <h1 class="alper-page-title">${blueprint.title}</h1>
-            <p class="alper-page-desc">${blueprint.description}</p>
+            <h1 class="alper-page-title">${safeTitleText}</h1>
+            <p class="alper-page-desc">${safeDescText}</p>
         </header>
 
         <!-- Filter Bar -->

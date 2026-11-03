@@ -187,10 +187,15 @@ export class SourceIntelligenceEngine {
     let attr = false;
 
     if (typeof sourceOrLicense === 'string') {
-      lic = sourceOrLicense;
-      reuse = true;
-      mod = true;
-      redist = true;
+      lic = sourceOrLicense.trim() || 'UNKNOWN';
+      const lowerLic = lic.toLowerCase();
+      const permissiveStr = ['mit', 'apache', 'bsd', 'isc', 'unlicense', 'cc0'].some((p) =>
+        lowerLic.includes(p)
+      );
+      reuse = permissiveStr;
+      mod = permissiveStr;
+      redist = permissiveStr;
+      attr = lowerLic.includes('mit') || lowerLic.includes('apache') || lowerLic.includes('bsd') || lowerLic.includes('w3c');
     } else {
       lic = sourceOrLicense.license || 'UNKNOWN';
       reuse = sourceOrLicense.codeReuseAllowed ?? false;
@@ -268,8 +273,8 @@ export class SourceIntelligenceEngine {
         }
 
         const trustScore = typeof mcp.trustScore === 'number' ? mcp.trustScore : (mcp.license?.commercialUseAllowed ? 90 : 60);
-        const lic = typeof mcp.license === 'string' ? mcp.license : (mcp.license?.type || 'MIT');
-        const licenseAllowed = allowedLicenses ? allowedLicenses.includes(lic) : true;
+        const lic = typeof mcp.license === 'string' && mcp.license.trim() ? mcp.license.trim() : (mcp.license?.type || 'UNKNOWN');
+        const licenseAllowed = allowedLicenses ? allowedLicenses.includes(lic) : lic !== 'UNKNOWN';
         const pass = relevanceScore >= 70 && trustScore >= minTrust && licenseAllowed;
 
         return {
@@ -337,7 +342,7 @@ export class SourceIntelligenceEngine {
         needJustification,
         relevanceScore,
         trustScore,
-        license: typeof mcp.license === 'string' ? mcp.license : (mcp.license?.type || 'MIT'),
+        license: typeof mcp.license === 'string' && mcp.license.trim() ? mcp.license.trim() : (mcp.license?.type || 'UNKNOWN'),
         maintenance: 'ACTIVE' as const,
         security: mcp.id?.includes('filesystem') ? ('LOCAL_SYSTEM' as const) : ('SANDBOXED' as const),
         recommended

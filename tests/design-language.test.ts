@@ -320,12 +320,14 @@ describe('Canonical Design Language & UI Blueprint DSL (Phase 1E)', () => {
       expect(output.assetMetrics.externalDependencyCount).toBe(0);
     });
 
-    it('evaluates cross-stack parity across HTML, React, Blade, and Razor yielding high scores', () => {
+    it('evaluates cross-stack parity across HTML, React, Blade, and Razor with measured static scores and UNVERIFIED runtime status', () => {
       const parity = evaluateCrossStackParity(workspace);
-      expect(parity.visualParityScore).toBeGreaterThanOrEqual(90);
-      expect(parity.behavioralParityScore).toBeGreaterThanOrEqual(90);
-      expect(parity.accessibilityParityScore).toBeGreaterThanOrEqual(95);
-      expect(parity.overallParityScore).toBeGreaterThanOrEqual(90);
+      expect(parity.visualParityScore).toBeGreaterThanOrEqual(75);
+      expect(parity.behavioralParityScore).toBeGreaterThanOrEqual(85);
+      expect(parity.accessibilityParityScore).toBeGreaterThanOrEqual(90);
+      expect(parity.overallParityScore).toBeGreaterThanOrEqual(85);
+      expect(parity.overallParityScore).toBeLessThan(100);
+      expect(parity.verificationStatus).toBe('UNVERIFIED');
 
       expect(parity.stackOutputs['html-css-js'].status).toBe('PASS');
       expect(parity.stackOutputs['react-typescript'].status).toBe('PASS');

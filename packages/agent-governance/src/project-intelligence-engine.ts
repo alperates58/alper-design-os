@@ -59,6 +59,17 @@ import {
   ProjectKnowledgeHealth,
   ProjectKnowledgeHealthSchema
 } from './project-intelligence-types.js';
+import {
+  assertSafeIdentifier,
+  executeAtomicWorkspaceTransaction,
+  resolveWithinBoundary
+} from './workspace-boundary.js';
+import {
+  verifyHostHumanApproval,
+  computeApprovalTargetHash,
+  isSyntheticOrAgentIdentity,
+  TrustedHumanApprovalToken
+} from './human-approval.js';
 
 // =========================================================================
 // 1. Secret Detection & Redaction (Section 4)
@@ -185,6 +196,16 @@ function walkRepositoryFiles(baseDir: string, maxFiles: number = 400): string[] 
     for (const entry of entries) {
       if (results.length >= maxFiles) break;
       if (IGNORED_SCAN_DIRS.has(entry.name)) continue;
+      const lowerName = entry.name.toLowerCase();
+      if (
+        (lowerName.startsWith('.env') && !lowerName.endsWith('.example')) ||
+        lowerName.endsWith('.pem') ||
+        lowerName.endsWith('.key') ||
+        lowerName.endsWith('.pfx') ||
+        lowerName.endsWith('.p12')
+      ) {
+        continue;
+      }
       const fullPath = path.join(currentDir, entry.name);
       if (entry.isDirectory()) {
         walk(fullPath, depth + 1);
@@ -393,7 +414,8 @@ export function discoverRepositoryArtifacts(baseDir: string): DiscoveredReposito
 // =========================================================================
 
 export function getProjectIntelligencePath(baseDir: string, relativePath: string = ''): string {
-  return path.join(baseDir, PROJECT_INTELLIGENCE_ROOT, relativePath);
+  const relTarget = relativePath ? path.join(PROJECT_INTELLIGENCE_ROOT, relativePath) : PROJECT_INTELLIGENCE_ROOT;
+  return resolveWithinBoundary(baseDir, relTarget, 'READ');
 }
 
 export function initializeProjectIntelligence(
@@ -409,6 +431,9 @@ export function initializeProjectIntelligence(
     profile?: any;
   }
 ): { manifest: ProjectManifest; rootPath: string; createdFiles: string[] } {
+  if (options.projectId) {
+    assertSafeIdentifier(options.projectId, 'projectId');
+  }
   const rootDir = getProjectIntelligencePath(baseDir);
   const createdFiles: string[] = [];
 
@@ -421,12 +446,6 @@ export function initializeProjectIntelligence(
     'lessons',
     'indexes'
   ];
-
-  // Ensure root and subdirs exist
-  fs.mkdirSync(rootDir, { recursive: true });
-  for (const sub of subdirs) {
-    fs.mkdirSync(path.join(rootDir, sub), { recursive: true });
-  }
 
   const discovered = discoverRepositoryArtifacts(baseDir);
 
@@ -457,32 +476,18 @@ export function initializeProjectIntelligence(
     subdirectories: subdirs
   };
 
-  // Write manifest.json
-  const manifestPath = path.join(rootDir, 'manifest.json');
-  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8');
-  createdFiles.push('manifest.json');
-
-  // Write project-profile.json
   const profileData = options.profile || options.blueprint?.productProfile || {
     projectName: options.projectName,
     mode: options.mode,
     initializedAt: now
   };
-  const profilePath = path.join(rootDir, 'project-profile.json');
-  fs.writeFileSync(profilePath, JSON.stringify(profileData, null, 2), 'utf-8');
-  createdFiles.push('project-profile.json');
 
-  // Write architecture.json
   const archData = options.blueprint?.architecture || {
     selectedStyle: 'MONOLITH',
     primaryStack: identity.primaryStack,
     initializedAt: now
   };
-  const archPath = path.join(rootDir, 'architecture.json');
-  fs.writeFileSync(archPath, JSON.stringify(archData, null, 2), 'utf-8');
-  createdFiles.push('architecture.json');
 
-  // Write constraints.json
   const constraintsData = options.blueprint?.requirements?.constraints || [
     {
       id: 'CONST-001',
@@ -492,10 +497,7 @@ export function initializeProjectIntelligence(
       impact: 'All external packages must pass security vetting'
     }
   ];
-  fs.writeFileSync(path.join(rootDir, 'constraints.json'), JSON.stringify(constraintsData, null, 2), 'utf-8');
-  createdFiles.push('constraints.json');
 
-  // Write invariants.json — only link relatedTests if those test files actually exist on disk
   const authTestExists = discovered.testFiles.some(t => t.toLowerCase().includes('auth'));
   const dbTestExists = discovered.testFiles.some(t => t.toLowerCase().includes('db'));
 
@@ -521,10 +523,7 @@ export function initializeProjectIntelligence(
       source: 'Domain Data Integrity Standard'
     }
   ];
-  fs.writeFileSync(path.join(rootDir, 'invariants.json'), JSON.stringify(initialInvariants, null, 2), 'utf-8');
-  createdFiles.push('invariants.json');
 
-  // Write initial T0 snapshot — truthful inventories and fingerprints (never fake defaults)
   const blueprintRoutes: string[] = Array.isArray(options.blueprint?.pages?.pages)
     ? options.blueprint.pages.pages.map((p: any) => p.route).filter(Boolean)
     : discovered.pages;
@@ -549,11 +548,36 @@ export function initializeProjectIntelligence(
     uiTokenFingerprint: discovered.designSystemFingerprint,
     verificationStatus: 'NOT_VERIFIED'
   };
-  fs.writeFileSync(path.join(rootDir, 'snapshots', 'SNAP-T0-INIT.json'), JSON.stringify(initialSnapshot, null, 2), 'utf-8');
-  createdFiles.push('snapshots/SNAP-T0-INIT.json');
+
+  const parsedManifest = ProjectManifestSchema.parse(manifest);
+
+  executeAtomicWorkspaceTransaction(baseDir, (tx) => {
+    tx.mkdir(PROJECT_INTELLIGENCE_ROOT);
+    for (const sub of subdirs) {
+      tx.mkdir(path.join(PROJECT_INTELLIGENCE_ROOT, sub));
+    }
+
+    tx.writeFile(path.join(PROJECT_INTELLIGENCE_ROOT, 'manifest.json'), JSON.stringify(parsedManifest, null, 2));
+    createdFiles.push('manifest.json');
+
+    tx.writeFile(path.join(PROJECT_INTELLIGENCE_ROOT, 'project-profile.json'), JSON.stringify(profileData, null, 2));
+    createdFiles.push('project-profile.json');
+
+    tx.writeFile(path.join(PROJECT_INTELLIGENCE_ROOT, 'architecture.json'), JSON.stringify(archData, null, 2));
+    createdFiles.push('architecture.json');
+
+    tx.writeFile(path.join(PROJECT_INTELLIGENCE_ROOT, 'constraints.json'), JSON.stringify(constraintsData, null, 2));
+    createdFiles.push('constraints.json');
+
+    tx.writeFile(path.join(PROJECT_INTELLIGENCE_ROOT, 'invariants.json'), JSON.stringify(initialInvariants, null, 2));
+    createdFiles.push('invariants.json');
+
+    tx.writeFile(path.join(PROJECT_INTELLIGENCE_ROOT, 'snapshots', 'SNAP-T0-INIT.json'), JSON.stringify(initialSnapshot, null, 2));
+    createdFiles.push('snapshots/SNAP-T0-INIT.json');
+  });
 
   return {
-    manifest: ProjectManifestSchema.parse(manifest),
+    manifest: parsedManifest,
     rootPath: rootDir,
     createdFiles
   };
@@ -652,11 +676,16 @@ export function recordProjectDecision(
     approvedBy: string;
     confirmedByUser?: boolean;
     authoritySource?: MemoryRecordSource;
+    hostApprovalToken?: TrustedHumanApprovalToken;
   }
 ): { record: DecisionRecord; supersededRecord?: DecisionRecord } {
+  const safeId = assertSafeIdentifier(decisionInput.id, 'decision.id');
+  const safeSupersedes = decisionInput.supersedes
+    ? assertSafeIdentifier(decisionInput.supersedes, 'decision.supersedes')
+    : null;
+
   const rootDir = getProjectIntelligencePath(baseDir);
   const decisionsDir = path.join(rootDir, 'decisions');
-  fs.mkdirSync(decisionsDir, { recursive: true });
 
   // Redact secrets in input text
   const cleanTitle = redactSecrets(decisionInput.title).redactedText;
@@ -667,29 +696,40 @@ export function recordProjectDecision(
   const cleanRisks = (decisionInput.risks || []).map(r => redactSecrets(r).redactedText);
   const cleanEvidence = (decisionInput.evidence || []).map(e => redactSecrets(e).redactedText);
 
-  let supersededRecord: DecisionRecord | undefined;
+  // Verify host human authorization channel
+  // Model-provided fields (approvedBy, confirmedByUser) NEVER create trusted human authorization on their own.
+  const targetHash = computeApprovalTargetHash({
+    id: safeId,
+    title: cleanTitle,
+    context: cleanContext,
+    decision: cleanDecision
+  });
+  const approvalCheck = verifyHostHumanApproval({
+    token: decisionInput.hostApprovalToken,
+    expectedAction: 'RECORD_PROJECT_DECISION',
+    expectedTargetProject: path.resolve(baseDir),
+    expectedScope: 'PROJECT',
+    expectedTargetHash: targetHash,
+    claimedIdentity: decisionInput.approvedBy
+  });
 
-  // Handle superseding: if this decision supersedes an older decision
-  if (decisionInput.supersedes) {
-    const oldPath = path.join(decisionsDir, `${decisionInput.supersedes}.json`);
-    if (fs.existsSync(oldPath)) {
-      const oldData: DecisionRecord = JSON.parse(fs.readFileSync(oldPath, 'utf-8'));
-      oldData.status = 'SUPERSEDED';
-      oldData.supersededBy = decisionInput.id;
-      fs.writeFileSync(oldPath, JSON.stringify(oldData, null, 2), 'utf-8');
-      supersededRecord = oldData;
-    }
-  }
+  const confirmedByUser = approvalCheck.verified;
+  const authoritySource: MemoryRecordSource = confirmedByUser
+    ? 'USER_DECISION'
+    : 'SYSTEM_RECOMMENDATION';
+  const verificationStatus: 'VERIFIED' | 'PARTIALLY_VERIFIED' | 'NOT_VERIFIED' = confirmedByUser
+    ? 'VERIFIED'
+    : 'NOT_VERIFIED';
 
-  // Section 30: Do not elevate authority based on free-text substring matching like approvedBy.includes('alper').
-  // Require explicit confirmedByUser === true or explicit authoritySource === 'USER_DECISION'.
-  const confirmedByUser = decisionInput.confirmedByUser === true;
-  const authoritySource: MemoryRecordSource =
-    decisionInput.authoritySource ||
-    (confirmedByUser ? 'USER_DECISION' : 'SYSTEM_RECOMMENDATION');
+  const isSyntheticApprover = isSyntheticOrAgentIdentity(decisionInput.approvedBy);
+  const resolvedStatus: DecisionStatus =
+    decisionInput.status ||
+    (isSyntheticApprover ? 'PROPOSED' : 'ACCEPTED');
+
+  const now = new Date().toISOString();
 
   const record: DecisionRecord = {
-    id: decisionInput.id,
+    id: safeId,
     title: cleanTitle,
     context: cleanContext,
     decision: cleanDecision,
@@ -699,38 +739,71 @@ export function recordProjectDecision(
     evidence: cleanEvidence,
     requirements: decisionInput.requirements || [],
     affectedComponents: decisionInput.affectedComponents || [],
-    status: decisionInput.status || (decisionInput.approvedBy === 'SYSTEM_RECOMMENDATION' ? 'PROPOSED' : 'ACCEPTED'),
-    supersedes: decisionInput.supersedes || null,
+    status: resolvedStatus,
+    supersedes: safeSupersedes,
     supersededBy: null,
-    createdAt: new Date().toISOString(),
+    createdAt: now,
     approvedBy: decisionInput.approvedBy,
     confirmedByUser,
     authoritySource,
-    verificationStatus: confirmedByUser || authoritySource === 'USER_DECISION' ? 'VERIFIED' : 'NOT_VERIFIED'
+    verificationStatus,
+    authorizationStatus: approvalCheck.status,
+    approvalProvenance: approvalCheck.provenance
   };
 
-  const newPath = path.join(decisionsDir, `${record.id}.json`);
-  fs.writeFileSync(newPath, JSON.stringify(record, null, 2), 'utf-8');
+  const parsedRecord = DecisionRecordSchema.parse(record);
 
-  // Also register into durable project memory
-  recordProjectMemory(baseDir, {
-    id: `MEM-${record.id}`,
+  const memoryItem: ProjectMemoryRecord = ProjectMemoryRecordSchema.parse({
+    id: assertSafeIdentifier(`MEM-${parsedRecord.id}`, 'memory.id'),
     type: 'TECHNICAL_DECISION',
-    title: record.title,
-    summary: record.decision,
-    details: record.context,
+    title: parsedRecord.title,
+    summary: parsedRecord.decision,
+    details: parsedRecord.context,
     source: authoritySource,
-    sourceRefs: [`decisions/${record.id}.json`],
-    status: record.status === 'ACCEPTED' ? 'ACTIVE' : (record.status === 'SUPERSEDED' ? 'SUPERSEDED' : 'UNVERIFIED'),
+    sourceRefs: [`decisions/${parsedRecord.id}.json`],
+    createdAt: now,
+    updatedAt: now,
+    status: parsedRecord.status === 'ACCEPTED' ? 'ACTIVE' : (parsedRecord.status === 'SUPERSEDED' ? 'SUPERSEDED' : 'UNVERIFIED'),
     confidence: confirmedByUser ? 1.0 : 0.75,
     freshness: 'CURRENT',
     scope: 'PROJECT',
-    relatedEntities: record.affectedComponents,
-    tags: ['ADR', record.status, authoritySource]
+    relatedEntities: parsedRecord.affectedComponents,
+    tags: ['ADR', parsedRecord.status, authoritySource]
+  });
+
+  let supersededRecord: DecisionRecord | undefined;
+
+  executeAtomicWorkspaceTransaction(baseDir, (tx) => {
+    tx.mkdir(path.join(PROJECT_INTELLIGENCE_ROOT, 'decisions'));
+    tx.mkdir(path.join(PROJECT_INTELLIGENCE_ROOT, 'knowledge'));
+
+    if (safeSupersedes) {
+      const oldPath = path.join(decisionsDir, `${safeSupersedes}.json`);
+      if (fs.existsSync(oldPath)) {
+        const oldData: DecisionRecord = JSON.parse(fs.readFileSync(oldPath, 'utf-8'));
+        oldData.status = 'SUPERSEDED';
+        oldData.supersededBy = safeId;
+        tx.writeFile(
+          path.join(PROJECT_INTELLIGENCE_ROOT, 'decisions', `${safeSupersedes}.json`),
+          JSON.stringify(oldData, null, 2)
+        );
+        supersededRecord = oldData;
+      }
+    }
+
+    tx.writeFile(
+      path.join(PROJECT_INTELLIGENCE_ROOT, 'decisions', `${parsedRecord.id}.json`),
+      JSON.stringify(parsedRecord, null, 2)
+    );
+
+    tx.writeFile(
+      path.join(PROJECT_INTELLIGENCE_ROOT, 'knowledge', `${memoryItem.id}.json`),
+      JSON.stringify(memoryItem, null, 2)
+    );
   });
 
   return {
-    record: DecisionRecordSchema.parse(record),
+    record: parsedRecord,
     supersededRecord
   };
 }
@@ -759,9 +832,7 @@ export function recordProjectMemory(
     tags?: string[];
   }
 ): ProjectMemoryRecord {
-  const rootDir = getProjectIntelligencePath(baseDir);
-  const memoryDir = path.join(rootDir, 'knowledge');
-  fs.mkdirSync(memoryDir, { recursive: true });
+  const safeId = assertSafeIdentifier(record.id, 'memory.id');
 
   const now = new Date().toISOString();
   const cleanSummary = redactSecrets(record.summary).redactedText;
@@ -769,7 +840,7 @@ export function recordProjectMemory(
   const cleanTitle = redactSecrets(record.title).redactedText;
 
   const item: ProjectMemoryRecord = {
-    id: record.id,
+    id: safeId,
     type: record.type,
     title: cleanTitle,
     summary: cleanSummary,
@@ -787,8 +858,13 @@ export function recordProjectMemory(
   };
 
   const parsed = ProjectMemoryRecordSchema.parse(item);
-  const filePath = path.join(memoryDir, `${parsed.id}.json`);
-  fs.writeFileSync(filePath, JSON.stringify(parsed, null, 2), 'utf-8');
+  executeAtomicWorkspaceTransaction(baseDir, (tx) => {
+    tx.mkdir(path.join(PROJECT_INTELLIGENCE_ROOT, 'knowledge'));
+    tx.writeFile(
+      path.join(PROJECT_INTELLIGENCE_ROOT, 'knowledge', `${parsed.id}.json`),
+      JSON.stringify(parsed, null, 2)
+    );
+  });
 
   return parsed;
 }
@@ -829,11 +905,12 @@ export function recordBusinessRule(
     exceptions?: string[];
     requirements?: string[];
     tests?: string[];
+    hostApprovalToken?: TrustedHumanApprovalToken;
   }
 ): BusinessRuleRecord {
+  const safeRuleId = assertSafeIdentifier(ruleInput.ruleId, 'businessRule.ruleId');
   const rootDir = getProjectIntelligencePath(baseDir);
   const knowledgeDir = path.join(rootDir, 'knowledge');
-  fs.mkdirSync(knowledgeDir, { recursive: true });
   const rulesPath = path.join(knowledgeDir, 'business-rules.json');
 
   let existingRules: BusinessRuleRecord[] = [];
@@ -843,8 +920,6 @@ export function recordBusinessRule(
     } catch (_) {}
   }
 
-  // Sections 27-29: Free-text strings (e.g. "Alper", "User Brief", "Contract") are NEVER proof of authority.
-  // Require explicit typed sourceType + supporting confirmation or evidence reference.
   let resolvedSourceType: BusinessRuleSourceType = ruleInput.sourceType || 'UNKNOWN';
   if (!ruleInput.sourceType) {
     const lowerSource = (ruleInput.source || '').toLowerCase();
@@ -857,14 +932,32 @@ export function recordBusinessRule(
     }
   }
 
+  const cleanStatement = redactSecrets(ruleInput.statement).redactedText;
   const evidenceRefs = ruleInput.evidenceRefs || [];
-  const confirmedByUser = ruleInput.confirmedByUser === true;
-  const hasQualifyingEvidenceOrConfirmation =
-    confirmedByUser ||
+
+  // Host human approval check: model-supplied confirmedByUser=true is NEVER trusted without host token
+  const targetHash = computeApprovalTargetHash({
+    ruleId: safeRuleId,
+    statement: cleanStatement,
+    source: ruleInput.source,
+    sourceType: resolvedSourceType
+  });
+  const approvalCheck = verifyHostHumanApproval({
+    token: ruleInput.hostApprovalToken,
+    expectedAction: 'RECORD_BUSINESS_RULE',
+    expectedTargetProject: path.resolve(baseDir),
+    expectedScope: ruleInput.scope || 'PROJECT',
+    expectedTargetHash: targetHash
+  });
+
+  const confirmedByUser = approvalCheck.verified;
+  const hasConcreteArtifactEvidence =
     Boolean(ruleInput.sourceRef && ruleInput.sourceRef.trim().length > 0) ||
     evidenceRefs.length > 0 ||
-    (ruleInput.tests && ruleInput.tests.length > 0) ||
-    (ruleInput.requirements && ruleInput.requirements.length > 0);
+    Boolean(ruleInput.tests && ruleInput.tests.length > 0) ||
+    Boolean(ruleInput.requirements && ruleInput.requirements.length > 0);
+
+  const hasQualifyingEvidenceOrConfirmation = confirmedByUser || hasConcreteArtifactEvidence;
 
   const isVerified =
     !NON_VERIFIABLE_RULE_SOURCE_TYPES.has(resolvedSourceType) &&
@@ -872,11 +965,12 @@ export function recordBusinessRule(
     hasQualifyingEvidenceOrConfirmation;
 
   const status = isVerified ? 'VERIFIED' : 'UNVERIFIED';
-
-  const cleanStatement = redactSecrets(ruleInput.statement).redactedText;
+  const approvalProvenance = confirmedByUser
+    ? 'VERIFIED_HOST_AUTHORIZATION'
+    : (hasConcreteArtifactEvidence ? 'AUDIT_EVIDENCE' : 'AGENT_ASSERTION');
 
   const newRule: BusinessRuleRecord = {
-    ruleId: ruleInput.ruleId,
+    ruleId: safeRuleId,
     statement: cleanStatement,
     source: ruleInput.source,
     sourceType: resolvedSourceType,
@@ -891,12 +985,21 @@ export function recordBusinessRule(
     requirements: ruleInput.requirements || [],
     tests: ruleInput.tests || [],
     status,
-    verificationStatus: isVerified ? 'VERIFIED' : 'NOT_VERIFIED'
+    verificationStatus: isVerified ? 'VERIFIED' : 'NOT_VERIFIED',
+    authorizationStatus: approvalCheck.status,
+    approvalProvenance
   };
 
   const parsed = BusinessRuleRecordSchema.parse(newRule);
   const updated = existingRules.filter(r => r.ruleId !== parsed.ruleId).concat(parsed);
-  fs.writeFileSync(rulesPath, JSON.stringify(updated, null, 2), 'utf-8');
+
+  executeAtomicWorkspaceTransaction(baseDir, (tx) => {
+    tx.mkdir(path.join(PROJECT_INTELLIGENCE_ROOT, 'knowledge'));
+    tx.writeFile(
+      path.join(PROJECT_INTELLIGENCE_ROOT, 'knowledge', 'business-rules.json'),
+      JSON.stringify(updated, null, 2)
+    );
+  });
 
   return parsed;
 }
@@ -914,8 +1017,8 @@ export function recordProjectInvariant(
     source: string;
   }
 ): ProjectInvariant {
+  const safeId = assertSafeIdentifier(invariantInput.id, 'invariant.id');
   const rootDir = getProjectIntelligencePath(baseDir);
-  fs.mkdirSync(rootDir, { recursive: true });
   const invariantsPath = path.join(rootDir, 'invariants.json');
 
   let existing: ProjectInvariant[] = [];
@@ -928,7 +1031,7 @@ export function recordProjectInvariant(
   const cleanDesc = redactSecrets(invariantInput.description).redactedText;
 
   const newInv: ProjectInvariant = {
-    id: invariantInput.id,
+    id: safeId,
     description: cleanDesc,
     category: invariantInput.category,
     scope: invariantInput.scope || 'PROJECT',
@@ -940,7 +1043,14 @@ export function recordProjectInvariant(
 
   const parsed = ProjectInvariantSchema.parse(newInv);
   const updated = existing.filter(i => i.id !== parsed.id).concat(parsed);
-  fs.writeFileSync(invariantsPath, JSON.stringify(updated, null, 2), 'utf-8');
+
+  executeAtomicWorkspaceTransaction(baseDir, (tx) => {
+    tx.mkdir(PROJECT_INTELLIGENCE_ROOT);
+    tx.writeFile(
+      path.join(PROJECT_INTELLIGENCE_ROOT, 'invariants.json'),
+      JSON.stringify(updated, null, 2)
+    );
+  });
 
   return parsed;
 }
@@ -1120,7 +1230,12 @@ export function buildProjectArchitectureGraph(
 
   const rootDir = getProjectIntelligencePath(baseDir);
   if (nodes.length > 0 && fs.existsSync(rootDir)) {
-    fs.writeFileSync(path.join(rootDir, 'architecture.json'), JSON.stringify(parsedGraph, null, 2), 'utf-8');
+    executeAtomicWorkspaceTransaction(baseDir, (tx) => {
+      tx.writeFile(
+        path.join(PROJECT_INTELLIGENCE_ROOT, 'architecture.json'),
+        JSON.stringify(parsedGraph, null, 2)
+      );
+    });
   }
 
   return parsedGraph;
@@ -1135,9 +1250,8 @@ export function createProjectSnapshot(
   snapshotId: string,
   details?: Partial<ProjectSnapshot>
 ): ProjectSnapshot {
+  const safeSnapshotId = assertSafeIdentifier(snapshotId, 'snapshotId');
   const rootDir = getProjectIntelligencePath(baseDir);
-  const snapshotsDir = path.join(rootDir, 'snapshots');
-  fs.mkdirSync(snapshotsDir, { recursive: true });
 
   const now = new Date().toISOString();
   const discovered = discoverRepositoryArtifacts(baseDir);
@@ -1178,7 +1292,7 @@ export function createProjectSnapshot(
       : 'NOT_VERIFIED');
 
   const snapshot: ProjectSnapshot = {
-    snapshotId,
+    snapshotId: safeSnapshotId,
     commitSha: details?.commitSha || 'UNVERIFIED_WORKING_TREE',
     timestamp: now,
     stack: details?.stack || 'REACT_TYPESCRIPT',
@@ -1194,7 +1308,13 @@ export function createProjectSnapshot(
   };
 
   const parsed = ProjectSnapshotSchema.parse(snapshot);
-  fs.writeFileSync(path.join(snapshotsDir, `${snapshotId}.json`), JSON.stringify(parsed, null, 2), 'utf-8');
+  executeAtomicWorkspaceTransaction(baseDir, (tx) => {
+    tx.mkdir(path.join(PROJECT_INTELLIGENCE_ROOT, 'snapshots'));
+    tx.writeFile(
+      path.join(PROJECT_INTELLIGENCE_ROOT, 'snapshots', `${safeSnapshotId}.json`),
+      JSON.stringify(parsed, null, 2)
+    );
+  });
 
   return parsed;
 }
@@ -1895,12 +2015,10 @@ export function recordLessonLearned(
     confidence?: number;
   }
 ): LessonLearnedRecord {
-  const rootDir = getProjectIntelligencePath(baseDir);
-  const lessonsDir = path.join(rootDir, 'lessons');
-  fs.mkdirSync(lessonsDir, { recursive: true });
+  const safeId = assertSafeIdentifier(lesson.id, 'lesson.id');
 
   const record: LessonLearnedRecord = {
-    id: lesson.id,
+    id: safeId,
     problem: redactSecrets(lesson.problem).redactedText,
     context: redactSecrets(lesson.context).redactedText,
     attempt: redactSecrets(lesson.attempt).redactedText,
@@ -1912,7 +2030,13 @@ export function recordLessonLearned(
   };
 
   const parsed = LessonLearnedRecordSchema.parse(record);
-  fs.writeFileSync(path.join(lessonsDir, `${record.id}.json`), JSON.stringify(parsed, null, 2), 'utf-8');
+  executeAtomicWorkspaceTransaction(baseDir, (tx) => {
+    tx.mkdir(path.join(PROJECT_INTELLIGENCE_ROOT, 'lessons'));
+    tx.writeFile(
+      path.join(PROJECT_INTELLIGENCE_ROOT, 'lessons', `${safeId}.json`),
+      JSON.stringify(parsed, null, 2)
+    );
+  });
 
   return parsed;
 }
@@ -1930,12 +2054,12 @@ export function proposeImprovementCandidate(
     confidence?: number;
   }
 ): ImprovementCandidate {
+  const safeId = assertSafeIdentifier(candidate.id, 'improvementCandidate.id');
   const rootDir = getProjectIntelligencePath(baseDir);
   const improvementDir = path.join(rootDir, 'knowledge');
-  fs.mkdirSync(improvementDir, { recursive: true });
 
   const item: ImprovementCandidate = {
-    id: candidate.id,
+    id: safeId,
     observation: redactSecrets(candidate.observation).redactedText,
     evidence: redactSecrets(candidate.evidence).redactedText,
     proposedImprovement: redactSecrets(candidate.proposedImprovement).redactedText,
@@ -1957,7 +2081,13 @@ export function proposeImprovementCandidate(
   }
 
   list = list.filter(i => i.id !== parsed.id).concat(parsed);
-  fs.writeFileSync(listFile, JSON.stringify(list, null, 2), 'utf-8');
+  executeAtomicWorkspaceTransaction(baseDir, (tx) => {
+    tx.mkdir(path.join(PROJECT_INTELLIGENCE_ROOT, 'knowledge'));
+    tx.writeFile(
+      path.join(PROJECT_INTELLIGENCE_ROOT, 'knowledge', 'improvement-candidates.json'),
+      JSON.stringify(list, null, 2)
+    );
+  });
 
   return parsed;
 }
@@ -2274,9 +2404,12 @@ This document is maintained as a living projection from the durable Project Inte
   generatedFiles['INVARIANTS.md'] = invariantsText;
 
   // Write out generated files into .alper-design-os/project/
-  for (const [name, content] of Object.entries(generatedFiles)) {
-    fs.writeFileSync(path.join(rootDir, name), content, 'utf-8');
-  }
+  executeAtomicWorkspaceTransaction(baseDir, (tx) => {
+    tx.mkdir(PROJECT_INTELLIGENCE_ROOT);
+    for (const [name, content] of Object.entries(generatedFiles)) {
+      tx.writeFile(path.join(PROJECT_INTELLIGENCE_ROOT, name), content);
+    }
+  });
 
   return {
     generatedFiles,

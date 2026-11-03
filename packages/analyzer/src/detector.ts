@@ -3,6 +3,31 @@ import { AdapterRegistry } from '@alper-design-os/registry';
 import { ProjectProfile } from './types.js';
 
 export function detectStack(files: ProjectFile[], rootDir: string = '.'): ProjectProfile {
+  if (!files || files.length === 0) {
+    return {
+      rootDir,
+      primaryStack: 'UNKNOWN',
+      frameworks: [],
+      languages: [],
+      styling: {
+        approach: 'UNKNOWN',
+        usesTailwind: false,
+        usesBootstrap: false,
+        usesScss: false,
+        usesCssModules: false,
+        usesPlainCss: false
+      },
+      templateEngine: 'UNKNOWN',
+      hasTypeScript: false,
+      packageManagers: [],
+      fileCount: 0,
+      detectedFiles: [],
+      recommendedAdapterId: 'none',
+      confidence: 0,
+      summary: 'INSUFFICIENT_EVIDENCE: No project files found to detect stack.'
+    };
+  }
+
   const frameworks: string[] = [];
   const languages: Set<string> = new Set();
   const detectedFiles: string[] = [];

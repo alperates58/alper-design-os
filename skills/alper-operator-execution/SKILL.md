@@ -1,6 +1,6 @@
 ---
 name: alper-operator-execution
-description: Deterministic corporate execution fallback: manual run bundle generation (RUN.ps1), evidence verification, and browser runtime resolution. Use when running in restricted corporate or offline developer environments where automated shell/browser execution is blocked. Do not use for designing ui page layouts (use alper-ui-blueprint).
+description: "Deterministic corporate execution fallback: manual run bundle generation (RUN.ps1), evidence verification, and browser runtime resolution. Use when running in restricted corporate or offline developer environments where automated shell/browser execution is blocked. Do not use for designing ui page layouts (use alper-ui-blueprint)."
 status: ACTIVE
 capabilityFamily: OPERATOR_EXECUTION
 userFacingType: USER_ENTRYPOINT
@@ -81,6 +81,7 @@ Operates on concrete, localized technical artifacts (e.g. query plans, code diff
 
 ## SOURCE / RESEARCH STRATEGY
 - Authoritative Guidance: Local toolchain discovery (Node, dotnet, PHP, Composer, Docker), PowerShell standards, and offline run contracts.
+- Local Progressive Reference: `references/run-bundle-standard.md`.
 - Prohibit ad-hoc, unverified external advice.
 
 ## POLICY & GOVERNANCE

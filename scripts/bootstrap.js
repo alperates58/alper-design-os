@@ -163,13 +163,20 @@ export async function bootstrapSystem(options = {}) {
     console.warn(`      MCP Server notice: ${toolCheck?.message}`);
   }
 
-  // 7. Skill Inventory Validation
-  console.log('[7/7] Validating Skill Catalog & Routing Parity...');
+  // 7. Skill Inventory Validation & Host Discovery Provisioning
+  console.log('[7/7] Validating Skill Catalog & Installing Host-Discoverable Active Skills...');
   const skillCheck = doctorResults.checks.skillRegistry;
   if (skillCheck && skillCheck.status === 'PASS') {
     console.log(`      Skills verified (${skillCheck.message})`);
   } else {
     console.warn(`      Skill catalog notice: ${skillCheck?.message}`);
+  }
+  try {
+    const { installHostSkills } = await import('./install-skills.js');
+    const skillInstallRes = installHostSkills({ repoRoot, targetProjectRoot: repoRoot });
+    console.log(`      Installed ${skillInstallRes.installedActiveCount} active skills to .agents/skills (${skillInstallRes.excludedDeprecatedCount} deprecated aliases excluded).`);
+  } catch (err) {
+    console.warn(`      Host skill installation warning: ${err.message}`);
   }
 
   console.log('\n========================================================');

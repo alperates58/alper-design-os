@@ -19,9 +19,10 @@ function buildActiveSkillMarkdown(skill) {
 
   const modesList = skill.modeApplicability.map(m => `  - ${m}`).join('\n');
 
+  const rawDescription = `${skill.reason} Use when ${skill.positiveUseWhen[0].toLowerCase().replace(/\.$/, '')}. Do not use for ${skill.negativeDoNotUseWhen[0].toLowerCase().replace(/\.$/, '')}.`;
   const frontmatter = `---
 name: ${skill.name}
-description: ${skill.reason} Use when ${skill.positiveUseWhen[0].toLowerCase().replace(/\.$/, '')}. Do not use for ${skill.negativeDoNotUseWhen[0].toLowerCase().replace(/\.$/, '')}.
+description: ${JSON.stringify(rawDescription)}
 status: ACTIVE
 capabilityFamily: ${skill.capabilityFamily}
 userFacingType: ${skill.userFacingType}

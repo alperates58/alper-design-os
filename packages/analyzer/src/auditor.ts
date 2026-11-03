@@ -2,6 +2,15 @@ import { ProjectFile } from '@alper-design-os/adapter-contract';
 import { A11yAuditResult, AuditIssue, ResponsiveAuditResult, UIAuditResult } from './types.js';
 
 export function auditExistingUI(files: ProjectFile[]): UIAuditResult {
+  if (!files || files.length === 0) {
+    return {
+      totalIssues: 0,
+      score: 0,
+      issues: [],
+      summary: 'INSUFFICIENT_EVIDENCE: 0 files audited; UI health score cannot be verified on an empty or missing directory.'
+    };
+  }
+
   const issues: AuditIssue[] = [];
 
   for (const file of files) {
@@ -48,6 +57,17 @@ export function auditAccessibility(
   files: ProjectFile[],
   targetLevel: 'WCAG_2_2_AA' | 'WCAG_2_2_AAA' | 'WCAG_2_1_AA' | 'WCAG_2_1_AAA' = 'WCAG_2_2_AA'
 ): A11yAuditResult {
+  if (!files || files.length === 0) {
+    return {
+      wcagLevelTarget: targetLevel,
+      passedRatio: 0,
+      violations: [],
+      recommendations: [
+        'INSUFFICIENT_EVIDENCE: 0 files audited; accessibility pass ratio cannot be verified on an empty or missing directory.'
+      ]
+    };
+  }
+
   const violations: AuditIssue[] = [];
 
   for (const file of files) {

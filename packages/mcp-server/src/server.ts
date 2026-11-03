@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import {
   CallToolRequestSchema,
@@ -13,6 +14,32 @@ import {
 
 export { CANONICAL_TOOL_DEFINITIONS, canonicalToolRegistry, toolRegistry };
 export type { McpToolDefinition };
+
+export const SUPPORTED_MCP_PROTOCOL_VERSIONS = [
+  '2024-11-05',
+  '2025-03-26',
+  '2025-06-18',
+  '2025-11-25',
+  '2026-03-26'
+] as const;
+
+export const ServerDiscoverRequestSchema = z.object({
+  method: z.literal('server/discover'),
+  params: z
+    .object({
+      protocolVersion: z.string().optional(),
+      clientInfo: z
+        .object({
+          name: z.string().optional(),
+          version: z.string().optional()
+        })
+        .passthrough()
+        .optional(),
+      capabilities: z.record(z.unknown()).optional()
+    })
+    .passthrough()
+    .optional()
+});
 
 export const TOOL_DEFINITIONS: Tool[] = CANONICAL_TOOL_DEFINITIONS.map((def) => ({
   name: def.name,
@@ -56,6 +83,27 @@ export function createAlperDesignServer(): Server {
       }
     }
   );
+
+  server.setRequestHandler(ServerDiscoverRequestSchema, async (request) => {
+    const requestedVersion = request.params?.protocolVersion;
+    const negotiatedVersion =
+      requestedVersion && (SUPPORTED_MCP_PROTOCOL_VERSIONS as readonly string[]).includes(requestedVersion)
+        ? requestedVersion
+        : '2025-11-25';
+
+    return {
+      protocolVersion: negotiatedVersion,
+      supportedProtocolVersions: [...SUPPORTED_MCP_PROTOCOL_VERSIONS],
+      capabilities: {
+        tools: {}
+      },
+      serverInfo: {
+        name: 'alper-design-os',
+        version: '1.0.0-rc.1'
+      },
+      toolsCount: getRegisteredToolCount()
+    };
+  });
 
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     return { tools: getToolDefinitions() };

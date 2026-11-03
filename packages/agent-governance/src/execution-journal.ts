@@ -1,6 +1,10 @@
-import fs from 'node:fs';
 import path from 'node:path';
 import { redactObject, redactText } from './secret-redaction.js';
+import {
+  assertSafeIdentifier,
+  assertAuthorizedWorkspaceRoot,
+  executeAtomicWorkspaceTransaction
+} from './workspace-boundary.js';
 
 export interface ExecutionJournalData {
   runId: string;
@@ -21,85 +25,81 @@ export function writeExecutionJournal(
   filesWritten: string[];
   secretsRedactedCount: number;
 } {
-  const runDir = path.join(baseDir, '.alper-design-os', 'runs', journal.runId);
-  fs.mkdirSync(runDir, { recursive: true });
+  const safeRunId = assertSafeIdentifier(journal.runId, 'runId');
+  const authorizedBaseDir = assertAuthorizedWorkspaceRoot(baseDir, 'WRITE');
 
-  const evidenceDir = path.join(runDir, 'evidence');
-  fs.mkdirSync(evidenceDir, { recursive: true });
+  return executeAtomicWorkspaceTransaction(authorizedBaseDir, (tx) => {
+    const relRunDir = path.join('.alper-design-os', 'runs', safeRunId);
+    const runDir = tx.ensureDir(relRunDir);
+    tx.ensureDir(path.join(relRunDir, 'evidence'));
 
-  let totalRedacted = 0;
-  const filesWritten: string[] = [];
+    let totalRedacted = 0;
+    const filesWritten: string[] = [];
 
-  // 1. plan.json
-  const { sanitized: cleanPlan, count: c1 } = redactObject(journal.plan);
-  totalRedacted += c1;
-  const planPath = path.join(runDir, 'plan.json');
-  fs.writeFileSync(planPath, JSON.stringify(cleanPlan, null, 2), 'utf-8');
-  filesWritten.push(planPath);
+    // 1. plan.json
+    const { sanitized: cleanPlan, count: c1 } = redactObject(journal.plan);
+    totalRedacted += c1;
+    const planPath = tx.writeJson(path.join(relRunDir, 'plan.json'), cleanPlan);
+    filesWritten.push(planPath);
 
-  // 2. project-profile.json
-  if (journal.projectProfile) {
-    const { sanitized: cleanProfile, count: c2 } = redactObject(journal.projectProfile);
-    totalRedacted += c2;
-    const profilePath = path.join(runDir, 'project-profile.json');
-    fs.writeFileSync(profilePath, JSON.stringify(cleanProfile, null, 2), 'utf-8');
-    filesWritten.push(profilePath);
-  }
-
-  // 3. actions.json
-  if (journal.actions) {
-    const { sanitized: cleanActions, count: c3 } = redactObject(journal.actions);
-    totalRedacted += c3;
-    const actionsPath = path.join(runDir, 'actions.json');
-    fs.writeFileSync(actionsPath, JSON.stringify(cleanActions, null, 2), 'utf-8');
-    filesWritten.push(actionsPath);
-  }
-
-  // 4. verification.json
-  if (journal.verification) {
-    const { sanitized: cleanVerif, count: c4 } = redactObject(journal.verification);
-    totalRedacted += c4;
-    const verifPath = path.join(runDir, 'verification.json');
-    fs.writeFileSync(verifPath, JSON.stringify(cleanVerif, null, 2), 'utf-8');
-    filesWritten.push(verifPath);
-  }
-
-  // 5. review.json
-  if (journal.review) {
-    const { sanitized: cleanReview, count: c5 } = redactObject(journal.review);
-    totalRedacted += c5;
-    const reviewPath = path.join(runDir, 'review.json');
-    fs.writeFileSync(reviewPath, JSON.stringify(cleanReview, null, 2), 'utf-8');
-    filesWritten.push(reviewPath);
-  }
-
-  // 6. evidence/
-  if (journal.evidence && journal.evidence.length > 0) {
-    for (let i = 0; i < journal.evidence.length; i++) {
-      const item = journal.evidence[i];
-      const { sanitized: cleanEv, count: c6 } = redactObject(item);
-      totalRedacted += c6;
-      const evPath = path.join(evidenceDir, `evidence-${i + 1}.json`);
-      fs.writeFileSync(evPath, JSON.stringify(cleanEv, null, 2), 'utf-8');
-      filesWritten.push(evPath);
+    // 2. project-profile.json
+    if (journal.projectProfile) {
+      const { sanitized: cleanProfile, count: c2 } = redactObject(journal.projectProfile);
+      totalRedacted += c2;
+      const profilePath = tx.writeJson(path.join(relRunDir, 'project-profile.json'), cleanProfile);
+      filesWritten.push(profilePath);
     }
-  }
 
-  // 7. summary.md
-  const rawSummary =
-    journal.summaryMarkdown ||
-    `# Execution Journal - Run ${journal.runId}\n\n- Completed at: ${new Date().toISOString()}\n- Plan Objective: ${
-      journal.plan.objective || 'N/A'
-    }\n`;
-  const { sanitized: cleanSummary, count: c7 } = redactText(rawSummary);
-  totalRedacted += c7;
-  const summaryPath = path.join(runDir, 'summary.md');
-  fs.writeFileSync(summaryPath, cleanSummary, 'utf-8');
-  filesWritten.push(summaryPath);
+    // 3. actions.json
+    if (journal.actions) {
+      const { sanitized: cleanActions, count: c3 } = redactObject(journal.actions);
+      totalRedacted += c3;
+      const actionsPath = tx.writeJson(path.join(relRunDir, 'actions.json'), cleanActions);
+      filesWritten.push(actionsPath);
+    }
 
-  return {
-    runDir,
-    filesWritten,
-    secretsRedactedCount: totalRedacted
-  };
+    // 4. verification.json
+    if (journal.verification) {
+      const { sanitized: cleanVerif, count: c4 } = redactObject(journal.verification);
+      totalRedacted += c4;
+      const verifPath = tx.writeJson(path.join(relRunDir, 'verification.json'), cleanVerif);
+      filesWritten.push(verifPath);
+    }
+
+    // 5. review.json
+    if (journal.review) {
+      const { sanitized: cleanReview, count: c5 } = redactObject(journal.review);
+      totalRedacted += c5;
+      const reviewPath = tx.writeJson(path.join(relRunDir, 'review.json'), cleanReview);
+      filesWritten.push(reviewPath);
+    }
+
+    // 6. evidence/
+    if (journal.evidence && journal.evidence.length > 0) {
+      for (let i = 0; i < journal.evidence.length; i++) {
+        const item = journal.evidence[i];
+        const { sanitized: cleanEv, count: c6 } = redactObject(item);
+        totalRedacted += c6;
+        const evPath = tx.writeJson(path.join(relRunDir, 'evidence', `evidence-${i + 1}.json`), cleanEv);
+        filesWritten.push(evPath);
+      }
+    }
+
+    // 7. summary.md
+    const rawSummary =
+      journal.summaryMarkdown ||
+      `# Execution Journal - Run ${safeRunId}\n\n- Completed at: ${new Date().toISOString()}\n- Plan Objective: ${
+        journal.plan.objective || 'N/A'
+      }\n`;
+    const { sanitized: cleanSummary, count: c7 } = redactText(rawSummary);
+    totalRedacted += c7;
+    const summaryPath = tx.writeFile(path.join(relRunDir, 'summary.md'), cleanSummary);
+    filesWritten.push(summaryPath);
+
+    return {
+      runDir,
+      filesWritten,
+      secretsRedactedCount: totalRedacted
+    };
+  });
 }

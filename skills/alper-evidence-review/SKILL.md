@@ -1,6 +1,6 @@
 ---
 name: alper-evidence-review
-description: Universal invariant: NO CLAIM WITHOUT EVIDENCE across 13 concrete evidence kinds. Use when validating completion claims ("production ready", "100% tested", "responsive fixed"). Do not use for synthesizing product requirements (use alper-requirements-engineering).
+description: "Universal invariant: NO CLAIM WITHOUT EVIDENCE across 13 concrete evidence kinds. Use when validating completion claims (\"production ready\", \"100% tested\", \"responsive fixed\"). Do not use for synthesizing product requirements (use alper-requirements-engineering)."
 status: ACTIVE
 capabilityFamily: GOVERNANCE
 userFacingType: INTERNAL_ORCHESTRATION

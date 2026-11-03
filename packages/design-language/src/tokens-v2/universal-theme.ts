@@ -305,10 +305,12 @@ export class UniversalThemeEngine {
   }
 
   /**
-   * Generates inline script tag for SSR head to eliminate theme hydration flicker (FOUC).
+   * Generates inline script tag for SSR head to eliminate theme hydration flicker (FOUC)
+   * and dynamically synchronize with OS color-scheme changes when in SYSTEM mode.
    */
   public renderSSRThemeScript(storageKey = 'alper-theme-preference'): string {
-    return `<script>(function(){try{var m=localStorage.getItem('${storageKey}');var d=window.matchMedia('(prefers-color-scheme: dark)').matches;var t=m==='dark'||(m!=='light'&&d)?'dark':'light';document.documentElement.setAttribute('data-theme',t);if(t==='dark'){document.documentElement.classList.add('dark')}else{document.documentElement.classList.remove('dark')}}catch(e){}})();</script>`;
+    const safeKey = JSON.stringify(storageKey);
+    return `<script>(function(){try{var k=${safeKey};var mq=window.matchMedia('(prefers-color-scheme: dark)');function apply(){var m=null;try{m=localStorage.getItem(k)}catch(e){}var mode=(m==='light'||m==='dark')?m:'system';var t=mode==='dark'||(mode==='system'&&mq.matches)?'dark':'light';var el=document.documentElement;el.setAttribute('data-theme-mode',mode);el.setAttribute('data-theme',t);if(t==='dark'){el.classList.add('dark')}else{el.classList.remove('dark')}}apply();if(mq.addEventListener){mq.addEventListener('change',apply)}else if(mq.addListener){mq.addListener(apply)}window.addEventListener('storage',function(ev){if(!ev||ev.key===k||ev.key===null){apply()}})}catch(e){}})();</script>`;
   }
 
   private calculateLuminance(hex: string): number {

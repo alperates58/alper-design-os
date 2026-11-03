@@ -5,6 +5,12 @@ import {
   ApprovalGateCheckResult,
   ApprovalGateCheckResultSchema
 } from './types.js';
+import {
+  isSyntheticOrAgentIdentity,
+  TrustedHumanApprovalToken,
+  verifyHostHumanApproval,
+  computeApprovalTargetHash
+} from './human-approval.js';
 
 export function createVisualApprovalRecord(initial?: Partial<HumanVisualApprovalRecord>): HumanVisualApprovalRecord {
   const recordId = initial?.recordId || `vis-appr-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -33,6 +39,9 @@ export interface RecordVisualReviewParams {
   notes?: string;
   viewportsReviewed?: string[];
   criteriaChecked?: Partial<HumanVisualApprovalRecord['criteriaChecked']>;
+  requireHostApprovalToken?: boolean;
+  hostApprovalToken?: TrustedHumanApprovalToken;
+  targetProject?: string;
 }
 
 /**
@@ -45,19 +54,54 @@ export function recordVisualReview(
 ): HumanVisualApprovalRecord {
   const reviewerLower = (params.reviewedBy || '').trim().toLowerCase();
 
-  // Guard against synthetic auto-approvals
+  // Guard against synthetic auto-approvals or agent assertions
   const isAutomatedBot =
-    reviewerLower === '' ||
+    isSyntheticOrAgentIdentity(params.reviewedBy) ||
     reviewerLower.includes('bot') ||
     reviewerLower.includes('agent') ||
     reviewerLower.includes('automated') ||
     reviewerLower.includes('ci-runner') ||
-    reviewerLower.includes('system');
+    reviewerLower.includes('system') ||
+    reviewerLower === 'human-evaluator';
 
   if (params.status === 'APPROVED' && isAutomatedBot) {
     throw new Error(
       `Security Violation: Automated bot '${params.reviewedBy}' is prohibited from granting human visual approval. Authentic human reviewer credentials required.`
     );
+  }
+
+  if (params.status === 'APPROVED' && params.requireHostApprovalToken) {
+    const check = verifyHostHumanApproval({
+      token: params.hostApprovalToken,
+      expectedAction: 'VISUAL_APPROVAL_SIGN_OFF',
+      expectedTargetProject: params.targetProject || 'PROJECT',
+      expectedScope: 'VISUAL_RELEASE',
+      expectedTargetHash: computeApprovalTargetHash({
+        recordId: current.recordId,
+        viewportsReviewed: params.viewportsReviewed || current.viewportsReviewed
+      }),
+      claimedIdentity: params.reviewedBy
+    });
+    if (!check.verified) {
+      return HumanVisualApprovalRecordSchema.parse({
+        recordId: current.recordId,
+        status: 'IN_REVIEW',
+        reviewedBy: params.reviewedBy,
+        timestamp: new Date().toISOString(),
+        viewportsReviewed: params.viewportsReviewed || current.viewportsReviewed,
+        notes: `${params.notes ? params.notes + ' | ' : ''}HUMAN_APPROVAL_REQUIRED: ${check.reason}`,
+        criteriaChecked: {
+          layoutStability: params.criteriaChecked?.layoutStability ?? current.criteriaChecked.layoutStability,
+          typographyHierarchy: params.criteriaChecked?.typographyHierarchy ?? current.criteriaChecked.typographyHierarchy,
+          colorContrast: params.criteriaChecked?.colorContrast ?? current.criteriaChecked.colorContrast,
+          responsiveFidelity: params.criteriaChecked?.responsiveFidelity ?? current.criteriaChecked.responsiveFidelity,
+          truthfulnessVisualAffordance: params.criteriaChecked?.truthfulnessVisualAffordance ?? current.criteriaChecked.truthfulnessVisualAffordance
+        },
+        canRelease: false,
+        authorizationStatus: check.status,
+        approvalProvenance: check.provenance
+      });
+    }
   }
 
   const updatedCriteria = {
@@ -126,10 +170,21 @@ export function evaluateVisualApprovalGate(
     });
   }
 
+  if (record.notes?.includes('HUMAN_APPROVAL_REQUIRED')) {
+    return ApprovalGateCheckResultSchema.parse({
+      gateStatus: 'HUMAN_APPROVAL_REQUIRED',
+      status: record.status,
+      authorizationStatus: 'HUMAN_APPROVAL_REQUIRED',
+      message: record.notes,
+      requiresHumanAction: true
+    });
+  }
+
   // Default: NOT_REVIEWED or IN_REVIEW
   return ApprovalGateCheckResultSchema.parse({
     gateStatus: 'PENDING',
     status: record.status,
+    authorizationStatus: 'HUMAN_APPROVAL_REQUIRED',
     message: `Human Visual Approval Gate is in state '${record.status}'. Authentic human review required before production release.`,
     requiresHumanAction: true
   });

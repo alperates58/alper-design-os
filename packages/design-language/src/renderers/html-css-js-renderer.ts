@@ -9,6 +9,12 @@ import {
 } from '../types.js';
 import { canonicalTokensV2 } from '../tokens-v2/definitions.js';
 import { generateCssVariables } from '../tokens-v2/generators.js';
+import {
+  escapeHtmlText,
+  escapeHtmlAttr,
+  escapeHtmlComment,
+  sanitizeCssClassToken
+} from './escape-utils.js';
 
 export class HtmlCssJsRenderer implements TargetRenderer {
   readonly stack: TargetStack = 'html-css-js';
@@ -16,19 +22,26 @@ export class HtmlCssJsRenderer implements TargetRenderer {
   readonly description = 'Framework-free, progressive enhancement output using native HTML5, CSS variables, and accessible vanilla JS.';
 
   renderPageBlueprint(blueprint: PageBlueprint, options: RenderOptions = {}): RendererOutput {
-    const theme = options.theme || 'LIGHT';
-    const density = options.density || blueprint.density.mode;
+    const theme = sanitizeCssClassToken(options.theme || 'LIGHT');
+    const density = sanitizeCssClassToken(options.density || blueprint.density.mode);
+    const safePageTitle = escapeHtmlText(blueprint.title);
+    const safePageDesc = escapeHtmlText(blueprint.description);
+    const safeShellVariant = sanitizeCssClassToken(blueprint.shell.variant);
 
     const regionsHtml = blueprint.regions
       .map((region) => {
         const componentsHtml = region.components
           .map((c) => this.renderComponentMarkup(c))
           .join('\n        ');
+        const safeRegionComment = escapeHtmlComment(region.title || region.type);
+        const safeRegionTitle = escapeHtmlText(region.title || region.type);
+        const safeRegionType = sanitizeCssClassToken(region.type);
+        const safeRegionId = escapeHtmlAttr(region.id);
 
-        return `      <!-- Region: ${region.title || region.type} -->
-      <section class="alper-region alper-region-${region.type.toLowerCase().replace(/_/g, '-')}" data-region-id="${region.id}">
+        return `      <!-- Region: ${safeRegionComment} -->
+      <section class="alper-region alper-region-${safeRegionType}" data-region-id="${safeRegionId}">
         <header class="alper-region-header">
-          <h2 class="alper-region-title">${region.title || region.type}</h2>
+          <h2 class="alper-region-title">${safeRegionTitle}</h2>
         </header>
         <div class="alper-region-content">
         ${componentsHtml}
@@ -38,16 +51,16 @@ export class HtmlCssJsRenderer implements TargetRenderer {
       .join('\n\n');
 
     const htmlContent = `<!DOCTYPE html>
-<html lang="en" data-theme="${theme.toLowerCase()}" data-density="${density.toLowerCase()}">
+<html lang="en" data-theme="${theme}" data-density="${density}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${blueprint.title}</title>
+  <title>${safePageTitle}</title>
   <link rel="stylesheet" href="styles/alper-tokens.css">
   <link rel="stylesheet" href="styles/alper-layout.css">
 </head>
 <body class="alper-body">
-  <div class="alper-app-shell alper-shell-${blueprint.shell.variant.toLowerCase().replace(/_/g, '-')}">
+  <div class="alper-app-shell alper-shell-${safeShellVariant}">
     <!-- Shell Sidebar -->
     <aside class="alper-sidebar" aria-label="Main Navigation">
       <div class="alper-sidebar-header">
@@ -66,8 +79,8 @@ export class HtmlCssJsRenderer implements TargetRenderer {
     <!-- Main Content Area -->
     <main class="alper-main-content" id="main-content">
       <header class="alper-page-header">
-        <h1 class="alper-page-title">${blueprint.title}</h1>
-        <p class="alper-page-desc">${blueprint.description}</p>
+        <h1 class="alper-page-title">${safePageTitle}</h1>
+        <p class="alper-page-desc">${safePageDesc}</p>
       </header>
 
 ${regionsHtml}
@@ -427,22 +440,25 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   private renderComponentMarkup(comp: ComponentBlueprint): string {
+    const safeId = escapeHtmlAttr(comp.id);
+    const safeRoleText = escapeHtmlText(comp.role || 'Action');
+    const safeTypeText = escapeHtmlText(comp.type);
     switch (comp.type) {
       case 'BUTTON':
-        return `<button type="button" class="alper-btn alper-btn-primary" id="${comp.id}" aria-label="Action">${comp.role || 'Action'}</button>`;
+        return `<button type="button" class="alper-btn alper-btn-primary" id="${safeId}" aria-label="Action">${safeRoleText}</button>`;
       case 'INPUT':
-        return `<input type="text" class="alper-input" id="${comp.id}" placeholder="Search records..." aria-label="Search">`;
+        return `<input type="text" class="alper-input" id="${safeId}" placeholder="Search records..." aria-label="Search">`;
       case 'BADGE':
-        return `<span class="alper-badge" id="${comp.id}">Active</span>`;
+        return `<span class="alper-badge" id="${safeId}">Active</span>`;
       case 'ALERT':
-        return `<div class="alper-alert" role="alert" id="${comp.id}"><strong>Notice:</strong> High-density operational data ready.</div>`;
+        return `<div class="alper-alert" role="alert" id="${safeId}"><strong>Notice:</strong> High-density operational data ready.</div>`;
       case 'FILTER_BAR':
-        return `<div class="alper-filter-bar" role="search" id="${comp.id}">
+        return `<div class="alper-filter-bar" role="search" id="${safeId}">
           <input type="text" class="alper-input" placeholder="Filter by keyword..." aria-label="Filter records">
           <button type="button" class="alper-btn alper-btn-secondary">Clear</button>
         </div>`;
       case 'DATA_TABLE':
-        return `<div class="alper-table-container" id="${comp.id}">
+        return `<div class="alper-table-container" id="${safeId}">
           <table class="alper-table" aria-label="Data Table">
             <thead>
               <tr>
@@ -460,7 +476,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </table>
         </div>`;
       case 'DRAWER':
-        return `<div class="alper-drawer-backdrop" id="${comp.id}" style="display:none;" aria-label="Detail Panel">
+        return `<div class="alper-drawer-backdrop" id="${safeId}" style="display:none;" aria-label="Detail Panel">
           <aside class="alper-drawer-panel">
             <h3>Record Details</h3>
             <p>ID: REC-001</p>
@@ -468,7 +484,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </aside>
         </div>`;
       case 'MODAL_DIALOG':
-        return `<div class="alper-modal-backdrop" id="${comp.id}" style="display:none;" role="dialog" aria-modal="true">
+        return `<div class="alper-modal-backdrop" id="${safeId}" style="display:none;" role="dialog" aria-modal="true">
           <div class="alper-modal-card">
             <h3>Confirmation Required</h3>
             <p>Are you sure you want to execute bulk action?</p>
@@ -477,7 +493,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         </div>`;
       default:
-        return `<div class="alper-component" id="${comp.id}">${comp.type}</div>`;
+        return `<div class="alper-component" id="${safeId}">${safeTypeText}</div>`;
     }
   }
 }

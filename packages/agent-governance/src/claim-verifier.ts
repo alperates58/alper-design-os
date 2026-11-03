@@ -52,59 +52,169 @@ const UNVERIFIED_CLAIM_RULES: Array<{
     category: 'CROSS_BROWSER_CLAIM',
     requiredEvidenceTypes: ['TEST_RESULT'],
     minEvidenceCount: 2
+  },
+  {
+    pattern: /zero\s+defects?|bug[-\s]?free|hatasız|sıfır\s+hata|all\s+tests?\s+pass(?:ed)?|tüm\s+testler\s+geçti/i,
+    category: 'ZERO_DEFECTS_CLAIM',
+    requiredEvidenceTypes: ['TEST_RESULT', 'BUILD_OUTPUT'],
+    minEvidenceCount: 2
+  },
+  {
+    pattern: /wcag|accessible|accessibility\s+verified|erişilebilir/i,
+    category: 'ACCESSIBILITY_CLAIM',
+    requiredEvidenceTypes: ['ACCESSIBILITY_REPORT'],
+    minEvidenceCount: 1
   }
 ];
 
+export interface ClaimEvaluationOptions {
+  expectedProject?: string;
+  expectedRevision?: string;
+  maxAgeMs?: number;
+}
+
+function isEvidenceFailedOrSynthetic(e: VerificationEvidence): boolean {
+  if (!e || e.verified !== true) return true;
+  const raw = e.rawData as Record<string, any> | undefined;
+  if (raw) {
+    if (typeof raw.exitCode === 'number' && raw.exitCode !== 0) return true;
+    if (raw.passed === false || raw.status === 'FAILED' || raw.status === 'UNVERIFIED') return true;
+    if (raw.synthetic === true || raw.mock === true) return true;
+  }
+  const summary = String(e.summary || '');
+  if (
+    /\b(?:[1-9]\d*\s+(?:failed|errors?|vulnerabilities|violations)|build\s+failed|test\s+failed|exit\s+code\s+[1-9]|unverified|synthetic|mock\s+pass)\b/i.test(
+      summary
+    )
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function isEvidenceStaleOrMismatched(
+  e: VerificationEvidence,
+  options?: ClaimEvaluationOptions
+): boolean {
+  const raw = e.rawData as Record<string, any> | undefined;
+  if (options?.expectedProject && raw?.projectId && raw.projectId !== options.expectedProject) {
+    return true;
+  }
+  if (options?.expectedRevision && raw?.revision && raw.revision !== options.expectedRevision) {
+    return true;
+  }
+  if (options?.maxAgeMs && e.timestamp) {
+    const ts = Date.parse(e.timestamp);
+    if (!Number.isNaN(ts) && Date.now() - ts > options.maxAgeMs) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export function evaluateCompletionClaim(
   claim: string,
-  evidences: VerificationEvidence[] = []
+  evidences: VerificationEvidence[] = [],
+  options?: ClaimEvaluationOptions
 ): ClaimVerificationResult {
   const normClaim = claim.trim();
 
-  // Find matching rule
-  const matchedRule = UNVERIFIED_CLAIM_RULES.find(r => r.pattern.test(normClaim));
-
-  if (!matchedRule) {
-    // General claim check
-    if (evidences.length > 0) {
-      return {
-        claim: normClaim,
-        status: 'VERIFIED',
-        evidenceIds: evidences.map(e => e.id),
-        missingEvidence: [],
-        notes: 'Claim is backed by verified execution evidence.'
-      };
-    }
+  if (!normClaim) {
     return {
       claim: normClaim,
       status: 'NOT_VERIFIED',
       evidenceIds: [],
-      missingEvidence: ['TEST_RESULT or BUILD_OUTPUT'],
-      notes: 'No concrete evidence attached to support this assertion.'
+      missingEvidence: ['Non-empty claim statement'],
+      notes: 'Empty claim cannot be verified.'
     };
   }
 
-  // Check required evidence types
-  const matchingEvidences = evidences.filter(e =>
-    matchedRule.requiredEvidenceTypes.includes(e.type) && e.verified
+  // Filter for genuinely verified, non-failed, non-synthetic, scope-matching evidence
+  const validEvidences = evidences.filter(
+    (e) => !isEvidenceFailedOrSynthetic(e) && !isEvidenceStaleOrMismatched(e, options)
+  );
+  const failedEvidences = evidences.filter(
+    (e) =>
+      e.verified === false ||
+      isEvidenceFailedOrSynthetic(e) ||
+      isEvidenceStaleOrMismatched(e, options)
+  );
+
+  // Find matching rule
+  const matchedRule = UNVERIFIED_CLAIM_RULES.find((r) => r.pattern.test(normClaim));
+
+  if (!matchedRule) {
+    // Unrecognized / general claim: NEVER auto-verify from unverified, failed, or unrelated single evidence.
+    if (failedEvidences.length > 0 && validEvidences.length === 0) {
+      return {
+        claim: normClaim,
+        status: 'NOT_VERIFIED',
+        evidenceIds: [],
+        missingEvidence: ['Verified non-failing TEST_RESULT and BUILD_OUTPUT'],
+        notes: 'Supplied evidence is unverified, failed, stale, or mismatched.'
+      };
+    }
+
+    const hasVerifiedTest = validEvidences.some((e) => e.type === 'TEST_RESULT');
+    const hasVerifiedBuild = validEvidences.some((e) => e.type === 'BUILD_OUTPUT');
+
+    if (hasVerifiedTest && hasVerifiedBuild && failedEvidences.length === 0) {
+      return {
+        claim: normClaim,
+        status: 'VERIFIED',
+        evidenceIds: validEvidences.map((e) => e.id),
+        missingEvidence: [],
+        notes: 'Claim is backed by verified TEST_RESULT and BUILD_OUTPUT execution evidence.'
+      };
+    }
+
+    const missing: string[] = [];
+    if (!hasVerifiedTest) missing.push('Verified TEST_RESULT');
+    if (!hasVerifiedBuild) missing.push('Verified BUILD_OUTPUT');
+
+    return {
+      claim: normClaim,
+      status: validEvidences.length > 0 ? 'NOT_VERIFIED' : 'NOT_VERIFIED',
+      evidenceIds: validEvidences.map((e) => e.id),
+      missingEvidence: missing.length > 0 ? missing : ['TEST_RESULT and BUILD_OUTPUT'],
+      notes: 'General completion claims require both verified TEST_RESULT and BUILD_OUTPUT with zero failed evidence.'
+    };
+  }
+
+  // Check required evidence types against validEvidences only
+  const matchingEvidences = validEvidences.filter((e) =>
+    matchedRule.requiredEvidenceTypes.includes(e.type)
   );
 
   const missingTypes = matchedRule.requiredEvidenceTypes.filter(
-    t => !evidences.some(e => e.type === t && e.verified)
+    (t) => !validEvidences.some((e) => e.type === t)
   );
+
+  // If any required evidence type explicitly failed, return FAILED
+  const explicitlyFailedRequired = evidences.some(
+    (e) => matchedRule.requiredEvidenceTypes.includes(e.type) && isEvidenceFailedOrSynthetic(e)
+  );
+  if (explicitlyFailedRequired && matchingEvidences.length === 0) {
+    return {
+      claim: normClaim,
+      status: 'FAILED',
+      evidenceIds: [],
+      missingEvidence: missingTypes.map((t) => `${t} evidence artifact`),
+      notes: 'Required evidence artifact reported failure or was marked unverified.'
+    };
+  }
 
   // Special handling for responsive claim: viewport matrix check
   if (matchedRule.category === 'RESPONSIVE_CLAIM') {
-    // Check if viewports were tested
-    const hasFullViewports = evidences.some(e =>
-      e.rawData && Array.isArray(e.rawData.viewports) && e.rawData.viewports.length >= 4
+    const hasFullViewports = validEvidences.some(
+      (e) => e.rawData && Array.isArray(e.rawData.viewports) && e.rawData.viewports.length >= 4
     );
 
     if (!hasFullViewports && matchingEvidences.length < matchedRule.minEvidenceCount) {
       return {
         claim: normClaim,
         status: 'NOT_VERIFIED',
-        evidenceIds: matchingEvidences.map(e => e.id),
+        evidenceIds: matchingEvidences.map((e) => e.id),
         missingEvidence: ['Multi-viewport verification (390x844, 768x1024, 1440x900, 1920x1080)'],
         notes: 'Responsive claims require concrete multi-viewport evidence before assertion.'
       };
@@ -123,8 +233,8 @@ export function evaluateCompletionClaim(
   return {
     claim: normClaim,
     status,
-    evidenceIds: matchingEvidences.map(e => e.id),
-    missingEvidence: missingTypes.map(t => `${t} evidence artifact`),
+    evidenceIds: matchingEvidences.map((e) => e.id),
+    missingEvidence: missingTypes.map((t) => `${t} evidence artifact`),
     notes:
       status === 'VERIFIED'
         ? `Claim verified against ${matchingEvidences.length} verified evidence artifact(s).`

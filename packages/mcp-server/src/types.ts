@@ -67,7 +67,7 @@ export const CreateDesignPlanInputSchema = z.object({
   mode: z.enum(['NEW', 'REPAIR', 'MODERNIZE']),
   productName: z.string(),
   adapterId: z.string(),
-  briefOrProfile: z.union([UnderstandProductInputSchema, ProductUXProfileSchema])
+  briefOrProfile: z.record(z.any())
 });
 export type CreateDesignPlanInput = z.infer<typeof CreateDesignPlanInputSchema>;
 
@@ -189,7 +189,7 @@ export type GenerateEngineeringPolicyInput = z.infer<typeof GenerateEngineeringP
 
 // 24. evaluate_release_gates
 export const EvaluateReleaseGatesInputSchema = z.object({
-  profile: z.any().optional(),
+  profile: z.record(z.any()).optional(),
   staticIssues: z.array(z.any()).optional(),
   dynamicIssues: z.array(z.any()).optional(),
   vulnerableDependencies: z.array(z.any()).optional(),
@@ -277,8 +277,8 @@ export const GenerateADRInputSchema = z.object({
   context: z.string(),
   decision: z.string(),
   consequences: z.object({
-    positive: z.array(z.string()),
-    negative: z.array(z.string()),
+    positive: z.array(z.string()).optional().default([]),
+    negative: z.array(z.string()).optional().default([]),
     neutral: z.array(z.string()).optional()
   })
 });
@@ -409,7 +409,7 @@ export const RouteContextInputSchema = z.object({
   taskBrief: z.string(),
   detectedStack: z.string().optional(),
   domain: z.string().optional(),
-  mode: z.enum(['NEW', 'REPAIR', 'MODERNIZE']).optional().default('REPAIR')
+  mode: z.enum(['NEW', 'REPAIR', 'MODERNIZE']).optional()
 });
 export type RouteContextInput = z.infer<typeof RouteContextInputSchema>;
 
@@ -993,7 +993,7 @@ export type CreateGreenfieldProjectProfileInput = z.infer<typeof CreateGreenfiel
 
 // 99. derive_requirements
 export const DeriveRequirementsInputSchema = z.object({
-  profile: z.any().describe('GreenfieldProjectProfile object'),
+  profile: z.record(z.any()).describe('GreenfieldProjectProfile object'),
   explicitUserBrief: z.string().optional().describe('Optional raw user prompt/brief for requirement provenance')
 });
 export type DeriveRequirementsInput = z.infer<typeof DeriveRequirementsInputSchema>;
@@ -1012,70 +1012,70 @@ export type CreateRequirementTraceabilityInput = z.infer<typeof CreateRequiremen
 
 // 101. recommend_architecture
 export const RecommendArchitectureInputSchema = z.object({
-  profile: z.any().describe('GreenfieldProjectProfile object'),
-  requirements: z.any().optional().describe('Optional GreenfieldRequirementsBundle')
+  profile: z.record(z.any()).describe('GreenfieldProjectProfile object'),
+  requirements: z.record(z.any()).optional().describe('Optional GreenfieldRequirementsBundle')
 });
 export type RecommendArchitectureInput = z.infer<typeof RecommendArchitectureInputSchema>;
 
 // 102. recommend_stack
 export const RecommendStackInputSchema = z.object({
-  profile: z.any().describe('GreenfieldProjectProfile object'),
-  architecture: z.any().optional().describe('Optional ArchitectureRecommendation'),
+  profile: z.record(z.any()).describe('GreenfieldProjectProfile object'),
+  architecture: z.record(z.any()).optional().describe('Optional ArchitectureRecommendation'),
   userPreferredStack: z.enum(['REACT_TYPESCRIPT', 'LARAVEL_BLADE', 'ASPNET_RAZOR', 'PLAIN_HTML_CSS_JS']).optional()
 });
 export type RecommendStackInput = z.infer<typeof RecommendStackInputSchema>;
 
 // 103. create_database_blueprint
 export const CreateDatabaseBlueprintInputSchema = z.object({
-  profile: z.any().describe('GreenfieldProjectProfile'),
-  requirements: z.any().describe('GreenfieldRequirementsBundle'),
-  stack: z.any().describe('StackRecommendation'),
-  architecture: z.any().optional()
+  profile: z.record(z.any()).describe('GreenfieldProjectProfile'),
+  requirements: z.record(z.any()).describe('GreenfieldRequirementsBundle'),
+  stack: z.record(z.any()).describe('StackRecommendation'),
+  architecture: z.record(z.any()).optional()
 });
 export type CreateDatabaseBlueprintInput = z.infer<typeof CreateDatabaseBlueprintInputSchema>;
 
 // 104. create_api_blueprint
 export const CreateApiBlueprintInputSchema = z.object({
-  profile: z.any().describe('GreenfieldProjectProfile'),
-  requirements: z.any().describe('GreenfieldRequirementsBundle'),
-  database: z.any().describe('DatabaseBlueprint'),
-  architecture: z.any().optional()
+  profile: z.record(z.any()).describe('GreenfieldProjectProfile'),
+  requirements: z.record(z.any()).describe('GreenfieldRequirementsBundle'),
+  database: z.record(z.any()).describe('DatabaseBlueprint'),
+  architecture: z.record(z.any()).optional()
 });
 export type CreateApiBlueprintInput = z.infer<typeof CreateApiBlueprintInputSchema>;
 
 // 105. create_auth_model
 export const CreateAuthModelInputSchema = z.object({
-  profile: z.any().describe('GreenfieldProjectProfile'),
-  requirements: z.any().describe('GreenfieldRequirementsBundle')
+  profile: z.record(z.any()).describe('GreenfieldProjectProfile'),
+  requirements: z.record(z.any()).describe('GreenfieldRequirementsBundle')
 });
 export type CreateAuthModelInput = z.infer<typeof CreateAuthModelInputSchema>;
 
 // 106. create_page_inventory
 export const CreatePageInventoryInputSchema = z.object({
-  profile: z.any().describe('GreenfieldProjectProfile'),
-  requirements: z.any().describe('GreenfieldRequirementsBundle'),
-  database: z.any().optional(),
-  api: z.any().optional()
+  profile: z.record(z.any()).describe('GreenfieldProjectProfile'),
+  requirements: z.record(z.any()).describe('GreenfieldRequirementsBundle'),
+  database: z.record(z.any()).optional(),
+  api: z.record(z.any()).optional()
 });
 export type CreatePageInventoryInput = z.infer<typeof CreatePageInventoryInputSchema>;
 
 // 107. create_project_blueprint
 export const CreateProjectBlueprintInputSchema = z.object({
-  profile: z.any().describe('GreenfieldProjectProfile or input for createGreenfieldProjectProfile'),
-  requirementsBundle: z.any().optional(),
+  profile: z.record(z.any()).describe('GreenfieldProjectProfile or input for createGreenfieldProjectProfile'),
+  requirementsBundle: z.record(z.any()).optional(),
   userPreferredStack: z.enum(['REACT_TYPESCRIPT', 'LARAVEL_BLADE', 'ASPNET_RAZOR', 'PLAIN_HTML_CSS_JS']).optional()
 });
 export type CreateProjectBlueprintInput = z.infer<typeof CreateProjectBlueprintInputSchema>;
 
 // 108. create_project_implementation_plan
 export const CreateProjectImplementationPlanInputSchema = z.object({
-  blueprint: z.any().describe('NewProjectBlueprint')
+  blueprint: z.record(z.any()).describe('NewProjectBlueprint')
 });
 export type CreateProjectImplementationPlanInput = z.infer<typeof CreateProjectImplementationPlanInputSchema>;
 
 // 109. scaffold_new_project
 export const ScaffoldNewProjectInputSchema = z.object({
-  blueprint: z.any().describe('NewProjectBlueprint'),
+  blueprint: z.record(z.any()).describe('NewProjectBlueprint'),
   targetDirectory: z.string().describe('Target directory to scaffold files into'),
   verifiedBuildEvidence: z.object({
     buildPassed: z.boolean(),
@@ -1117,8 +1117,8 @@ export const InitializeProjectIntelligenceInputSchema = z.object({
   projectId: z.string().optional(),
   primaryStack: z.string().optional(),
   domains: z.array(z.string()).optional(),
-  blueprint: z.any().optional(),
-  profile: z.any().optional()
+  blueprint: z.record(z.any()).optional(),
+  profile: z.record(z.any()).optional()
 });
 export type InitializeProjectIntelligenceInput = z.infer<typeof InitializeProjectIntelligenceInputSchema>;
 
@@ -1142,7 +1142,7 @@ export const RecordProjectDecisionInputSchema = z.object({
   requirements: z.array(z.string()).optional().default([]),
   affectedComponents: z.array(z.string()).optional().default([]),
   status: z.enum(['PROPOSED', 'ACCEPTED', 'REJECTED', 'SUPERSEDED', 'DEPRECATED']).optional().default('ACCEPTED'),
-  supersedes: z.string().nullable().optional(),
+  supersedes: z.string().optional(),
   approvedBy: z.string().describe('Name of human user or system authority'),
   confirmedByUser: z.boolean().optional().default(false),
   authoritySource: z.enum(['USER_DECISION', 'SYSTEM_RECOMMENDATION', 'RESEARCH_FINDING', 'IMPLEMENTATION_FACT']).optional()
@@ -1225,8 +1225,8 @@ export type CreateProjectSnapshotInput = z.infer<typeof CreateProjectSnapshotInp
 
 // 118. detect_project_drift
 export const DetectProjectDriftInputSchema = z.object({
-  baseSnapshot: z.any().describe('Baseline ProjectSnapshot'),
-  targetSnapshot: z.any().describe('Target or current ProjectSnapshot')
+  baseSnapshot: z.record(z.any()).describe('Baseline ProjectSnapshot'),
+  targetSnapshot: z.record(z.any()).describe('Target or current ProjectSnapshot')
 });
 export type DetectProjectDriftInput = z.infer<typeof DetectProjectDriftInputSchema>;
 
