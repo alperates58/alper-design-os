@@ -1,11 +1,11 @@
 /**
- * Project Graph & Code Intelligence Engine V2 (Graphify Inspired)
- * Deterministic AST extraction, provenance tracking (EXTRACTED vs INFERRED),
- * god node identification, change impact propagation, dependency path traversal,
- * and affected test detection.
+ * Project Graph & Code Intelligence Engine V2 (Phase 3 Reconstruction)
+ * Deterministic AST/lexical extraction, strict provenance tracking (EXTRACTED vs INFERRED vs HEURISTIC),
+ * comment/string-literal immunity, path-alias & re-export resolution, dynamic route support,
+ * duplicate basename disambiguation, and scan coverage reporting.
  */
 
-export type GraphProvenance = 'EXTRACTED' | 'INFERRED';
+export type GraphProvenance = 'EXTRACTED' | 'INFERRED' | 'HEURISTIC';
 
 export interface CodeEntityNode {
   id: string;
@@ -24,7 +24,7 @@ export interface CodeEntityNode {
 export interface CodeDependencyEdge {
   source: string;
   target: string;
-  relationship: 'IMPORTS' | 'CALLS' | 'INHERITS' | 'ROUTES_TO' | 'TESTS' | 'REFERENCES_ADR';
+  relationship: 'IMPORTS' | 'RE_EXPORTS' | 'CALLS' | 'INHERITS' | 'ROUTES_TO' | 'TESTS' | 'REFERENCES_ADR';
   provenance: GraphProvenance;
   evidence: string;
 }
@@ -51,55 +51,254 @@ export interface GodNodeMetric {
   architecturalWarning?: string;
 }
 
+export interface GraphBuildReport {
+  nodeCount: number;
+  edgeCount: number;
+  extractedCount: number;
+  inferredCount: number;
+  heuristicCount: number;
+  totalInputFiles: number;
+  supportedFileCount: number;
+  unsupportedFiles: string[];
+  coveragePercent: number;
+  buildDurationMs: number;
+}
+
+const SUPPORTED_EXTENSIONS = new Set([
+  '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs',
+  '.php', '.cs', '.razor', '.cshtml', '.html', '.css', '.scss', '.json'
+]);
+
+/**
+ * Strips comments and masks string literals EXCEPT module specifier strings in genuine
+ * import/export/require statements so imports inside comments or string constants are ignored.
+ */
+function stripCommentsAndMaskNonImportStrings(source: string): {
+  codeWithoutComments: string;
+  commentsOnly: string;
+} {
+  let codeOut = '';
+  let commentsOut = '';
+  let i = 0;
+  const len = source.length;
+
+  while (i < len) {
+    const ch = source[i];
+    const next = source[i + 1];
+
+    // Single-line comment
+    if (ch === '/' && next === '/') {
+      const start = i;
+      i += 2;
+      while (i < len && source[i] !== '\n') i++;
+      commentsOut += source.slice(start, i) + '\n';
+      codeOut += ' ';
+      continue;
+    }
+
+    // Multi-line comment
+    if (ch === '/' && next === '*') {
+      const start = i;
+      i += 2;
+      while (i < len && !(source[i] === '*' && source[i + 1] === '/')) i++;
+      i += 2;
+      commentsOut += source.slice(start, i) + '\n';
+      codeOut += ' ';
+      continue;
+    }
+
+    // String literal ('...', "...", `...`)
+    if (ch === "'" || ch === '"' || ch === '`') {
+      const quote = ch;
+      const start = i;
+      i++;
+      while (i < len && source[i] !== quote) {
+        if (source[i] === '\\') i += 2;
+        else i++;
+      }
+      if (i < len) i++;
+      const literal = source.slice(start, i);
+
+      // Check preceding code token on the current statement to see if this string is a module specifier or route path
+      const lookbehind = codeOut.slice(Math.max(0, codeOut.length - 120));
+      const isModuleOrRouteSpecifier =
+        /(?:^|[;\n{}])\s*(?:import|export)\s+(?:type\s+)?(?:[\w*{}\s,$]+\s+from\s+)?$/m.test(lookbehind) ||
+        /\b(?:from|import|require)\s*\(?\s*$/m.test(lookbehind) ||
+        /(?:router|app|Route)\s*(?:\.|::)\s*(?:get|post|put|delete|patch|use|all)\s*\(\s*$/i.test(lookbehind);
+
+      if (isModuleOrRouteSpecifier && quote !== '`') {
+        codeOut += literal;
+      } else if (
+        quote === '`' &&
+        /(?:router|app|Route)\s*(?:\.|::)\s*(?:get|post|put|delete|patch|use|all)\s*\(\s*$/i.test(lookbehind)
+      ) {
+        codeOut += literal;
+      } else {
+        // Mask arbitrary string literal content so "import './fake'" inside a string constant is never parsed as an import
+        codeOut += `${quote}__STRING_LITERAL__${quote}`;
+      }
+      continue;
+    }
+
+    codeOut += ch;
+    i++;
+  }
+
+  return { codeWithoutComments: codeOut, commentsOnly: commentsOut };
+}
+
 export class ProjectGraphV2 {
   private nodes: Map<string, CodeEntityNode> = new Map();
   private edges: CodeDependencyEdge[] = [];
   private adjacencyList: Map<string, Set<string>> = new Map();
   private reverseAdjacencyList: Map<string, Set<string>> = new Map();
 
+  public getNodes(): CodeEntityNode[] {
+    return Array.from(this.nodes.values());
+  }
+
+  public getEdges(): CodeDependencyEdge[] {
+    return [...this.edges];
+  }
+
   /**
    * Builds code intelligence graph from an array of workspace files via deterministic static extraction.
    */
-  public buildGraph(files: Array<{ path: string; content?: string }>): {
-    nodeCount: number;
-    edgeCount: number;
-    extractedCount: number;
-    inferredCount: number;
-    buildDurationMs: number;
-  } {
+  public buildGraph(files: Array<{ path: string; content?: string }>): GraphBuildReport {
     const startTime = Date.now();
     this.nodes.clear();
     this.edges = [];
     this.adjacencyList.clear();
     this.reverseAdjacencyList.clear();
 
-    // Pass 1: Extract File, Route, Component and Test entities
-    for (const file of files) {
-      const p = file.path.replace(/\\/g, '/');
-      const content = file.content || '';
-      const isTest = p.includes('test') || p.includes('spec');
+    const normalizedFiles = files.map(f => ({
+      path: f.path.replace(/\\/g, '/').replace(/^\.\//, ''),
+      content: f.content || ''
+    }));
+
+    const knownFileSet = new Set(normalizedFiles.map(f => f.path));
+
+    // Count basenames to disambiguate duplicate basenames
+    const basenameCounts = new Map<string, number>();
+    for (const f of normalizedFiles) {
+      const base = f.path.split('/').pop() || f.path;
+      basenameCounts.set(base, (basenameCounts.get(base) || 0) + 1);
+    }
+
+    // Parse tsconfig.json path aliases if present
+    const pathAliases: Array<{ prefix: string; targetPrefix: string }> = [
+      { prefix: '@/', targetPrefix: 'src/' },
+      { prefix: '~/', targetPrefix: 'src/' }
+    ];
+    const tsconfigFile = normalizedFiles.find(f => f.path === 'tsconfig.json' || f.path.endsWith('/tsconfig.json'));
+    if (tsconfigFile && tsconfigFile.content) {
+      try {
+        const cleanedJson = tsconfigFile.content.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+        const parsed = JSON.parse(cleanedJson);
+        const pathsObj = parsed?.compilerOptions?.paths;
+        if (pathsObj && typeof pathsObj === 'object') {
+          for (const [aliasPattern, targets] of Object.entries(pathsObj)) {
+            if (Array.isArray(targets) && typeof targets[0] === 'string') {
+              const prefix = aliasPattern.replace(/\*$/, '');
+              const targetPrefix = String(targets[0]).replace(/^\.\//, '').replace(/\*$/, '');
+              pathAliases.unshift({ prefix, targetPrefix });
+            }
+          }
+        }
+      } catch {
+        // ignore malformed tsconfig
+      }
+    }
+
+    const unsupportedFiles: string[] = [];
+    let supportedFileCount = 0;
+
+    // Pass 1: Extract File, Route, Component, and Test nodes
+    for (const file of normalizedFiles) {
+      const p = file.path;
+      const extMatch = p.match(/(\.[a-z0-9]+)$/i);
+      const ext = extMatch ? extMatch[1].toLowerCase() : '';
+
+      if (!SUPPORTED_EXTENSIONS.has(ext)) {
+        unsupportedFiles.push(p);
+        continue;
+      }
+      supportedFileCount++;
+
+      const baseName = p.split('/').pop() || p;
+      const isDuplicateBasename = (basenameCounts.get(baseName) || 0) > 1;
+      const displayName = isDuplicateBasename ? p : baseName;
+
+      const isTest = /(?:^|\/)(?:tests?|__tests__|specs?)\/|\.(?:test|spec)\.[a-z0-9]+$/i.test(p);
       const isComponent = p.includes('components') || p.includes('blueprints') || p.endsWith('.tsx') || p.endsWith('.blade.php');
 
       const fileNode: CodeEntityNode = {
         id: p,
-        name: p.split('/').pop() || p,
+        name: displayName,
         kind: isTest ? 'TEST' : isComponent ? 'COMPONENT' : 'FILE',
         filePath: p,
         provenance: 'EXTRACTED',
-        provenanceEvidence: `AST File inspection of ${p}`,
+        provenanceEvidence: `Static file inspection of ${p}`,
         inDegree: 0,
-        outDegree: 0
+        outDegree: 0,
+        metadata: {
+          baseName,
+          disambiguated: isDuplicateBasename
+        }
       };
       this.addNode(fileNode);
 
-      // Extract exported functions / classes (AST heuristic)
-      const exportMatches = content.matchAll(/export\s+(?:async\s+)?(?:function|class|const)\s+([A-Za-z0-9_]+)/g);
+      // File-based dynamic routes (Next.js / Remix / Astro style: pages/users/[id].tsx, app/orders/[orderId]/route.ts)
+      const fileRouteMatch = p.match(/^(?:src\/)?(?:pages|app)\/(.+)\.(?:tsx|ts|jsx|js)$/i);
+      if (fileRouteMatch && !isTest) {
+        const rawSeg = fileRouteMatch[1]
+          .replace(/\/(?:index|page|route)$/i, '')
+          .replace(/\[\.\.\.([^\]]+)\]/g, ':$1*')
+          .replace(/\[([^\]]+)\]/g, ':$1');
+        const routePath = '/' + (rawSeg === 'index' ? '' : rawSeg);
+        const routeId = `ROUTE:ALL:${routePath}`;
+        this.addNode({
+          id: routeId,
+          name: `ALL ${routePath}`,
+          kind: 'ROUTE',
+          filePath: p,
+          provenance: 'EXTRACTED',
+          provenanceEvidence: `File-system route convention in ${p}`,
+          inDegree: 0,
+          outDegree: 0
+        });
+        this.addEdge({
+          source: p,
+          target: routeId,
+          relationship: 'ROUTES_TO',
+          provenance: 'EXTRACTED',
+          evidence: `File-system dynamic/static route ${routePath}`
+        });
+      }
+    }
+
+    // Pass 2: Extract symbols, imports, re-exports, routes, ADR references, and test mappings
+    for (const file of normalizedFiles) {
+      const p = file.path;
+      if (!this.nodes.has(p)) continue;
+
+      const rawContent = file.content;
+      const { codeWithoutComments, commentsOnly } = stripCommentsAndMaskNonImportStrings(rawContent);
+      const isTest = this.nodes.get(p)?.kind === 'TEST';
+      const explicitlyImportedFiles = new Set<string>();
+
+      // 1. Extract exported functions / classes / interfaces (only from uncommented code)
+      const exportMatches = codeWithoutComments.matchAll(
+        /\bexport\s+(?:default\s+)?(?:async\s+)?(function|class|interface|const|let|var)\s+([A-Za-z0-9_]+)/g
+      );
       for (const m of exportMatches) {
-        const symbolId = `${p}#${m[1]}`;
+        const declKind = m[1];
+        const symName = m[2];
+        const symbolId = `${p}#${symName}`;
         this.addNode({
           id: symbolId,
-          name: m[1],
-          kind: 'FUNCTION',
+          name: symName,
+          kind: declKind === 'class' ? 'CLASS' : declKind === 'interface' ? 'INTERFACE' : 'FUNCTION',
           filePath: p,
           provenance: 'EXTRACTED',
           provenanceEvidence: `Export declaration in ${p}`,
@@ -111,34 +310,70 @@ export class ProjectGraphV2 {
           target: symbolId,
           relationship: 'IMPORTS',
           provenance: 'EXTRACTED',
-          evidence: `File exports symbol ${m[1]}`
+          evidence: `File exports symbol ${symName}`
         });
       }
 
-      // Extract imports
-      const importMatches = content.matchAll(/(?:import|from)\s+['"]([^'"]+)['"]/g);
-      for (const m of importMatches) {
+      // 2. Extract static imports & dynamic import() / require() from uncommented, string-masked code
+      const importRegexes = [
+        /(?:^|[;\n{}])\s*import\s+(?:type\s+)?(?:[\w*{}\s,$]+\s+from\s+)?['"]([^'"]+)['"]/gm,
+        /\b(?:import|require)\s*\(\s*['"]([^'"]+)['"]\s*\)/g
+      ];
+      for (const rx of importRegexes) {
+        for (const m of codeWithoutComments.matchAll(rx)) {
+          const rawTarget = m[1];
+          if (!rawTarget || rawTarget === '__STRING_LITERAL__') continue;
+          const resolvedPath = this.resolveImportSpecifier(p, rawTarget, knownFileSet, pathAliases);
+          if (resolvedPath) {
+            explicitlyImportedFiles.add(resolvedPath);
+            this.addEdge({
+              source: p,
+              target: resolvedPath,
+              relationship: 'IMPORTS',
+              provenance: 'EXTRACTED',
+              evidence: `Static import '${rawTarget}' in ${p}`
+            });
+          }
+        }
+      }
+
+      // 3. Extract re-exports: export * from '...' and export { a, b } from '...'
+      const reExportRegex = /(?:^|[;\n{}])\s*export\s+(?:type\s+)?(?:\*|\{[^}]*\})\s+from\s+['"]([^'"]+)['"]/gm;
+      for (const m of codeWithoutComments.matchAll(reExportRegex)) {
         const rawTarget = m[1];
-        if (rawTarget.startsWith('.')) {
-          // Resolved local file path heuristic
-          const resolvedPath = this.resolveRelativeImport(p, rawTarget);
+        if (!rawTarget || rawTarget === '__STRING_LITERAL__') continue;
+        const resolvedPath = this.resolveImportSpecifier(p, rawTarget, knownFileSet, pathAliases);
+        if (resolvedPath) {
+          explicitlyImportedFiles.add(resolvedPath);
+          this.addEdge({
+            source: p,
+            target: resolvedPath,
+            relationship: 'RE_EXPORTS',
+            provenance: 'EXTRACTED',
+            evidence: `Re-export statement from '${rawTarget}' in ${p}`
+          });
           this.addEdge({
             source: p,
             target: resolvedPath,
             relationship: 'IMPORTS',
             provenance: 'EXTRACTED',
-            evidence: `Static import statement from ${p} to ${rawTarget}`
+            evidence: `Module re-exports '${rawTarget}' in ${p}`
           });
         }
       }
 
-      // Extract Express/Router routes
-      const routeMatches = content.matchAll(/(?:router|app)\.(get|post|put|delete)\(\s*['"]([^'"]+)['"]/gi);
+      // 4. Extract Express / Fastify / Laravel HTTP routes (static and dynamic e.g. /users/:id, /orders/{id}, `/items/${id}`)
+      const routeMatches = codeWithoutComments.matchAll(
+        /(?:router|app|Route)\s*(?:\.|::)\s*(get|post|put|delete|patch)\s*\(\s*(['"`])([^'"`]+)\2/gi
+      );
       for (const m of routeMatches) {
-        const routeId = `ROUTE:${m[1].toUpperCase()}:${m[2]}`;
+        const method = m[1].toUpperCase();
+        const rawRoute = m[3].replace(/\$\{([^}]+)\}/g, ':$1');
+        if (rawRoute === '__STRING_LITERAL__') continue;
+        const routeId = `ROUTE:${method}:${rawRoute}`;
         this.addNode({
           id: routeId,
-          name: `${m[1].toUpperCase()} ${m[2]}`,
+          name: `${method} ${rawRoute}`,
           kind: 'ROUTE',
           filePath: p,
           provenance: 'EXTRACTED',
@@ -151,12 +386,12 @@ export class ProjectGraphV2 {
           target: routeId,
           relationship: 'ROUTES_TO',
           provenance: 'EXTRACTED',
-          evidence: `Controller routes to ${m[2]}`
+          evidence: `Controller routes to ${method} ${rawRoute}`
         });
       }
 
-      // Extract ADR references
-      const adrMatches = content.matchAll(/ADR-(\d+)/g);
+      // 5. Extract ADR references (labeled INFERRED when from code/comments)
+      const adrMatches = (codeWithoutComments + '\n' + commentsOnly).matchAll(/\bADR-(\d+)\b/g);
       for (const m of adrMatches) {
         const adrId = `ADR-${m[1]}`;
         if (!this.nodes.has(adrId)) {
@@ -166,7 +401,7 @@ export class ProjectGraphV2 {
             kind: 'ADR',
             filePath: `docs/adr/ADR-${m[1]}.md`,
             provenance: 'INFERRED',
-            provenanceEvidence: `Code comment reference in ${p}`,
+            provenanceEvidence: `Reference in ${p}`,
             inDegree: 0,
             outDegree: 0
           });
@@ -176,23 +411,52 @@ export class ProjectGraphV2 {
           target: adrId,
           relationship: 'REFERENCES_ADR',
           provenance: 'INFERRED',
-          evidence: `Symbol references decision ADR-${m[1]}`
+          evidence: `File references decision ADR-${m[1]}`
         });
       }
 
-      // If test file, link to tested modules
+      // 6. Link test files to tested modules:
+      //    - EXTRACTED when the test file explicitly imports the target module
+      //    - HEURISTIC when inferred from disambiguated naming convention (never for generic 'index' or ambiguous duplicate basenames)
       if (isTest) {
-        for (const targetFile of files) {
-          const targetNorm = targetFile.path.replace(/\\/g, '/');
-          const baseName = targetNorm.split('/').pop()?.replace(/\.(ts|js|tsx)$/, '');
-          if (baseName && p.includes(baseName) && p !== targetNorm) {
+        for (const importedTarget of explicitlyImportedFiles) {
+          if (importedTarget !== p && this.nodes.get(importedTarget)?.kind !== 'TEST') {
             this.addEdge({
               source: p,
-              target: targetNorm,
+              target: importedTarget,
               relationship: 'TESTS',
               provenance: 'EXTRACTED',
-              evidence: `Test naming convention and import mapping`
+              evidence: `Explicit import of '${importedTarget}' in test file '${p}'`
             });
+          }
+        }
+
+        const testBase = (p.split('/').pop() || '').replace(/\.(?:test|spec)\.[a-z0-9]+$/i, '');
+        if (testBase && testBase.toLowerCase() !== 'index') {
+          const matchingTargets = normalizedFiles.filter(tf => {
+            if (tf.path === p) return false;
+            if (/(?:^|\/)(?:tests?|__tests__|specs?)\/|\.(?:test|spec)\.[a-z0-9]+$/i.test(tf.path)) return false;
+            const targetBase = (tf.path.split('/').pop() || '').replace(/\.[a-z0-9]+$/i, '');
+            return targetBase === testBase;
+          });
+
+          // Only infer heuristic test link if target basename is unique OR shares relative path directory structure
+          for (const tf of matchingTargets) {
+            if (explicitlyImportedFiles.has(tf.path)) continue;
+            const isUniqueTarget = matchingTargets.length === 1;
+            const testDirStem = p.split('/').slice(0, -1).filter(seg => !/^tests?$|^__tests__$|^specs?$/i.test(seg)).join('/');
+            const targetDirStem = tf.path.split('/').slice(0, -1).filter(seg => !/^src$|^lib$/i.test(seg)).join('/');
+            const sharesDirectoryContext = Boolean(testDirStem && targetDirStem && (targetDirStem.endsWith(testDirStem) || testDirStem.endsWith(targetDirStem)));
+
+            if (isUniqueTarget || sharesDirectoryContext) {
+              this.addEdge({
+                source: p,
+                target: tf.path,
+                relationship: 'TESTS',
+                provenance: 'HEURISTIC',
+                evidence: `Heuristic test filename stem match ('${testBase}') between '${p}' and '${tf.path}'`
+              });
+            }
           }
         }
       }
@@ -201,17 +465,31 @@ export class ProjectGraphV2 {
     const duration = Date.now() - startTime;
     let extractedCount = 0;
     let inferredCount = 0;
+    let heuristicCount = 0;
 
     for (const node of this.nodes.values()) {
       if (node.provenance === 'EXTRACTED') extractedCount++;
+      else if (node.provenance === 'HEURISTIC') heuristicCount++;
       else inferredCount++;
     }
+    for (const edge of this.edges) {
+      if (edge.provenance === 'HEURISTIC') heuristicCount++;
+    }
+
+    const totalInputFiles = normalizedFiles.length;
+    const coveragePercent =
+      totalInputFiles === 0 ? 100 : Math.round((supportedFileCount / totalInputFiles) * 10000) / 100;
 
     return {
       nodeCount: this.nodes.size,
       edgeCount: this.edges.length,
       extractedCount,
       inferredCount,
+      heuristicCount,
+      totalInputFiles,
+      supportedFileCount,
+      unsupportedFiles,
+      coveragePercent,
       buildDurationMs: duration
     };
   }
@@ -225,8 +503,12 @@ export class ProjectGraphV2 {
   }
 
   public addEdge(edge: CodeDependencyEdge): void {
+    const duplicate = this.edges.some(
+      e => e.source === edge.source && e.target === edge.target && e.relationship === edge.relationship
+    );
+    if (duplicate) return;
+
     if (!this.nodes.has(edge.target)) {
-      // Create stub node if not already present
       this.addNode({
         id: edge.target,
         name: edge.target.split('/').pop() || edge.target,
@@ -395,26 +677,57 @@ export class ProjectGraphV2 {
     return `"${nodeAId}" transitively depends on "${nodeBId}" through path [${path.join(' -> ')}] with ${path.length - 1} hops.`;
   }
 
-  private resolveRelativeImport(fromFile: string, relativeTarget: string): string {
-    const parts = fromFile.split('/');
-    parts.pop(); // remove file name
-    const relParts = relativeTarget.split('/');
+  private resolveImportSpecifier(
+    fromFile: string,
+    rawTarget: string,
+    knownFiles: Set<string>,
+    pathAliases: Array<{ prefix: string; targetPrefix: string }>
+  ): string | null {
+    let candidateBase = '';
 
-    for (const r of relParts) {
-      if (r === '.') continue;
-      if (r === '..') {
-        parts.pop();
-      } else {
-        parts.push(r);
+    if (rawTarget.startsWith('.')) {
+      const parts = fromFile.split('/');
+      parts.pop();
+      for (const r of rawTarget.split('/')) {
+        if (r === '.' || r === '') continue;
+        if (r === '..') parts.pop();
+        else parts.push(r);
+      }
+      candidateBase = parts.join('/');
+    } else {
+      const matchedAlias = pathAliases.find(a => rawTarget.startsWith(a.prefix));
+      if (!matchedAlias) {
+        // Bare external package import (e.g. 'react', 'zod') -> ignore for local file graph
+        return null;
+      }
+      candidateBase = matchedAlias.targetPrefix + rawTarget.slice(matchedAlias.prefix.length);
+    }
+
+    const strippedExt = candidateBase.replace(/\.(js|jsx|mjs|cjs)$/i, '');
+    const candidates = [
+      candidateBase,
+      `${strippedExt}.ts`,
+      `${strippedExt}.tsx`,
+      `${strippedExt}.js`,
+      `${strippedExt}.jsx`,
+      `${candidateBase}/index.ts`,
+      `${candidateBase}/index.tsx`,
+      `${candidateBase}/index.js`
+    ];
+
+    for (const c of candidates) {
+      if (knownFiles.has(c)) {
+        return c;
       }
     }
 
-    let resolved = parts.join('/');
-    if (resolved.endsWith('.js')) {
-      resolved = resolved.replace(/\.js$/, '.ts');
-    } else if (!resolved.endsWith('.ts') && !resolved.endsWith('.tsx')) {
-      resolved += '.ts';
+    // Fallback deterministic normalization when target file is not in input batch
+    if (candidateBase.endsWith('.js')) {
+      return candidateBase.replace(/\.js$/, '.ts');
     }
-    return resolved;
+    if (!/\.[a-z0-9]+$/i.test(candidateBase)) {
+      return `${candidateBase}.ts`;
+    }
+    return candidateBase;
   }
 }
