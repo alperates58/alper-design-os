@@ -355,11 +355,30 @@ export function createCanonicalToolDefinitions(h: ToolHandlersMap): McpToolDefin
       inputSchema: {
         type: 'object',
         properties: {
-          type: { type: 'string' },
+          type: {
+            type: 'string',
+            enum: [
+              'DESIGN_SYSTEM',
+              'COMPONENT_LIBRARY',
+              'UX_GUIDELINE',
+              'ACCESSIBILITY_STANDARD',
+              'AI_SKILL',
+              'PROMPT_LIBRARY',
+              'MCP_SERVER',
+              'PUBLIC_API',
+              'ICON_LIBRARY',
+              'TYPOGRAPHY_RESOURCE',
+              'DESIGN_TOKEN_SYSTEM',
+              'REFERENCE_IMPLEMENTATION'
+            ]
+          },
           framework: { type: 'string' },
           domain: { type: 'string' },
-          accessibilityLevel: { type: 'string' },
-          minTrustScore: { type: 'number' },
+          accessibilityLevel: {
+            type: 'string',
+            enum: ['WCAG_2_2_AA', 'WCAG_2_2_AAA', 'WCAG_2_1_AA', 'WCAG_2_1_AAA', 'PARTIAL', 'NOT_SPECIFIED']
+          },
+          minTrustScore: { type: 'number', minimum: 0, maximum: 100 },
           searchQuery: { type: 'string' }
         }
       },
@@ -614,7 +633,14 @@ export function createCanonicalToolDefinitions(h: ToolHandlersMap): McpToolDefin
           title: { type: 'string' },
           context: { type: 'string' },
           decision: { type: 'string' },
-          consequences: { type: 'object' }
+          consequences: {
+            type: 'object',
+            properties: {
+              positive: { type: 'array', items: { type: 'string' } },
+              negative: { type: 'array', items: { type: 'string' } },
+              neutral: { type: 'array', items: { type: 'string' } }
+            }
+          }
         },
         required: ['number', 'title', 'context', 'decision', 'consequences']
       },
@@ -1312,9 +1338,34 @@ export function createCanonicalToolDefinitions(h: ToolHandlersMap): McpToolDefin
       inputSchema: {
         type: 'object',
         properties: {
-          intentType: { type: 'string' },
+          intentType: {
+            type: 'string',
+            enum: [
+              'OPERATIONAL_MONITORING',
+              'EXECUTIVE_DECISION',
+              'DATA_ENTRY_TRANSACTION',
+              'EXPLORATORY_ANALYTICS',
+              'CONFIGURATION_ADMIN',
+              'DIAGNOSTIC_INVESTIGATION',
+              'DEMO_SHOWCASE'
+            ]
+          },
           primaryGoal: { type: 'string' },
-          elements: { type: 'array' }
+          elements: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'string' },
+                title: { type: 'string' },
+                role: { type: 'string' },
+                isDeceptive: { type: 'boolean' },
+                isContradictory: { type: 'boolean' },
+                isFiller: { type: 'boolean' }
+              },
+              required: ['id', 'title', 'role']
+            }
+          }
         },
         required: ['intentType', 'primaryGoal', 'elements']
       },

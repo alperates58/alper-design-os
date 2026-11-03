@@ -111,7 +111,9 @@ import {
   recordLessonLearned,
   proposeImprovementCandidate,
   evaluateProjectKnowledgeHealth,
-  DomainIntelligenceV2Engine
+  DomainIntelligenceV2Engine,
+  containsSecrets,
+  redactText
 } from '@alper-design-os/agent-governance';
 import {
   createDesignIntent,
@@ -136,24 +138,84 @@ import * as T from '../types.js';
 import { McpToolDefinition, createCanonicalToolDefinitions } from './definitions.js';
 
 export type { McpToolDefinition };
+export { createCanonicalToolDefinitions };
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Helper to safely collect files from a directory (shallow or limited depth)
-function collectProjectFiles(targetDir: string, maxFiles: number = 250): ProjectFile[] {
+interface CollectedProjectScan {
+  exists: boolean;
+  files: ProjectFile[];
+  truncated: boolean;
+  excludedSecretFilesCount: number;
+  scanStatus: 'NON_EXISTENT' | 'EMPTY' | 'PARTIAL_TRUNCATED' | 'COMPLETE';
+}
+
+function isSensitiveSecretFile(fileName: string): boolean {
+  const lower = fileName.toLowerCase();
+  if (lower.startsWith('.env')) {
+    return !(
+      lower.endsWith('.example') ||
+      lower.endsWith('.sample') ||
+      lower.endsWith('.template')
+    );
+  }
+  if (
+    lower.endsWith('.pem') ||
+    lower.endsWith('.key') ||
+    lower.endsWith('.pfx') ||
+    lower.endsWith('.p12') ||
+    lower === 'id_rsa' ||
+    lower === 'id_ed25519' ||
+    lower === '.npmrc' ||
+    lower === '.pypirc' ||
+    lower === 'credentials.json' ||
+    lower === 'secrets.json'
+  ) {
+    return true;
+  }
+  return false;
+}
+
+// Helper to safely collect files from a directory (shallow or limited depth) while excluding secrets
+function collectProjectFilesDetailed(targetDir: string, maxFiles: number = 250): CollectedProjectScan {
   const result: ProjectFile[] = [];
-  if (!fs.existsSync(targetDir)) return result;
+  if (!targetDir || !fs.existsSync(targetDir)) {
+    return {
+      exists: false,
+      files: [],
+      truncated: false,
+      excludedSecretFilesCount: 0,
+      scanStatus: 'NON_EXISTENT'
+    };
+  }
+
+  let truncated = false;
+  let excludedSecretFilesCount = 0;
 
   function traverse(current: string, depth: number = 0) {
-    if (depth > 4 || result.length >= maxFiles) return;
+    if (depth > 4) {
+      truncated = true;
+      return;
+    }
+    if (result.length >= maxFiles) {
+      truncated = true;
+      return;
+    }
     try {
       const entries = fs.readdirSync(current, { withFileTypes: true });
       const fileEntries = entries.filter((e) => e.isFile());
       const dirEntries = entries.filter((e) => e.isDirectory());
 
       for (const entry of fileEntries) {
-        if (result.length >= maxFiles) break;
+        if (isSensitiveSecretFile(entry.name)) {
+          excludedSecretFilesCount++;
+          continue;
+        }
+        if (result.length >= maxFiles) {
+          truncated = true;
+          break;
+        }
         const fullPath = path.join(current, entry.name);
         const ext = path.extname(entry.name).toLowerCase();
         const shouldReadContent = [
@@ -177,14 +239,15 @@ function collectProjectFiles(targetDir: string, maxFiles: number = 250): Project
           '.lock',
           '.example',
           '.sql'
-        ].includes(ext) || entry.name.startsWith('.env');
+        ].includes(ext);
         let content: string | undefined = undefined;
 
         if (shouldReadContent) {
           try {
             const stat = fs.statSync(fullPath);
             if (stat.size < 250000) {
-              content = fs.readFileSync(fullPath, 'utf-8');
+              const rawContent = fs.readFileSync(fullPath, 'utf-8');
+              content = containsSecrets(rawContent) ? redactText(rawContent).sanitized : rawContent;
             }
           } catch {
             // Ignore read errors
@@ -199,7 +262,10 @@ function collectProjectFiles(targetDir: string, maxFiles: number = 250): Project
       }
 
       for (const entry of dirEntries) {
-        if (result.length >= maxFiles) break;
+        if (result.length >= maxFiles) {
+          truncated = true;
+          break;
+        }
         if (
           entry.name === 'node_modules' ||
           entry.name === '.git' ||
@@ -215,25 +281,60 @@ function collectProjectFiles(targetDir: string, maxFiles: number = 250): Project
   }
 
   traverse(targetDir, 0);
-  return result;
+  const scanStatus: CollectedProjectScan['scanStatus'] =
+    result.length === 0
+      ? 'EMPTY'
+      : truncated
+        ? 'PARTIAL_TRUNCATED'
+        : 'COMPLETE';
+
+  return {
+    exists: true,
+    files: result,
+    truncated,
+    excludedSecretFilesCount,
+    scanStatus
+  };
+}
+
+function collectProjectFiles(targetDir: string, maxFiles: number = 250): ProjectFile[] {
+  return collectProjectFilesDetailed(targetDir, maxFiles).files;
 }
 
 // 1. analyze_project
 export function handleAnalyzeProject(input: T.AnalyzeProjectInput) {
-  const files = collectProjectFiles(input.projectPath);
+  const scan = collectProjectFilesDetailed(input.projectPath);
+  const files = scan.files;
   const profile = detectStack(files, input.projectPath);
   const uiAudit = auditExistingUI(files);
   const a11yAudit = auditAccessibility(files);
   const responsiveAudit = auditResponsive(files);
 
+  const verificationStatus =
+    scan.scanStatus === 'NON_EXISTENT' || scan.scanStatus === 'EMPTY'
+      ? 'INSUFFICIENT_EVIDENCE'
+      : scan.scanStatus === 'PARTIAL_TRUNCATED'
+        ? 'UNVERIFIED'
+        : 'VERIFIED';
+
   return {
+    verificationStatus,
+    scanStatus: scan.scanStatus,
+    directoryExists: scan.exists,
+    truncatedScan: scan.truncated,
+    excludedSecretFilesCount: scan.excludedSecretFilesCount,
     projectProfile: profile,
-    uiHealthScore: uiAudit.score,
-    a11yPassRatio: a11yAudit.passedRatio,
+    uiHealthScore: files.length === 0 ? 0 : uiAudit.score,
+    a11yPassRatio: files.length === 0 ? 0 : a11yAudit.passedRatio,
+    responsiveReady: files.length === 0 ? false : responsiveAudit.mobileReady,
     totalAuditedFiles: files.length,
     uiIssuesCount: uiAudit.totalIssues,
     a11yViolationsCount: a11yAudit.violations.length,
-    summary: `Analyzed ${files.length} files. Primary stack: ${profile.primaryStack}. Recommended adapter: ${profile.recommendedAdapterId}.`
+    summary: !scan.exists
+      ? `INSUFFICIENT_EVIDENCE: Target directory '${input.projectPath}' does not exist.`
+      : files.length === 0
+        ? `INSUFFICIENT_EVIDENCE: Target directory '${input.projectPath}' contains 0 auditable project files.`
+        : `Analyzed ${files.length} files (${scan.scanStatus}). Primary stack: ${profile.primaryStack}. Recommended adapter: ${profile.recommendedAdapterId}.`
   };
 }
 
@@ -406,24 +507,88 @@ export function handleRecommendModernization(input: T.RecommendModernizationInpu
   return adapter.recommendModernization(files);
 }
 
-// Helper to resolve catalog paths
-function loadCatalog(catalogRelativePath: string) {
+function isUnsafeCatalogText(text: string): boolean {
+  return /(?:ignore\s+(?:all\s+)?previous\s+instructions|system\s+prompt|you\s+are\s+now\s+|invoke-expression|\biex\b|curl\s+https?:\/\/|wget\s+https?:\/\/|rm\s+-rf|<script\b|javascript:|data:text\/html)/i.test(
+    text
+  );
+}
+
+function sanitizeCatalogItems(items: any[], trustTier: 'AUTHORITATIVE_PACKAGED' | 'WORKSPACE_OVERRIDE'): any[] {
+  if (!Array.isArray(items)) return [];
+  const safeItems: any[] = [];
+  for (const item of items) {
+    if (!item || typeof item !== 'object') continue;
+    const name = String(item.name || '').trim();
+    const description = String(item.description || '').trim();
+    const url = item.url ? String(item.url).trim() : undefined;
+    if (!name || isUnsafeCatalogText(name) || isUnsafeCatalogText(description)) {
+      continue;
+    }
+    if (url && !/^https?:\/\//i.test(url)) {
+      continue;
+    }
+    safeItems.push({
+      ...item,
+      name,
+      description,
+      ...(url ? { url } : {}),
+      _provenance: {
+        trustClassification: trustTier,
+        treatedAsDataOnly: true
+      }
+    });
+  }
+  return safeItems;
+}
+
+// Helper to resolve catalog paths strictly from the trusted package installation root by default.
+// Untrusted process.cwd() files never silently override authoritative packaged catalogs.
+export function loadCatalog(
+  catalogRelativePath: string,
+  options?: { allowWorkspaceOverride?: boolean; workspaceDir?: string }
+) {
   try {
-    const candidates = [
-      path.resolve(process.cwd(), catalogRelativePath),
-      path.resolve(process.env.ALPER_DESIGN_OS_HOME || '', catalogRelativePath),
-      path.resolve(__dirname, '../../../', catalogRelativePath)
+    const trustedInstallCandidates = [
+      path.resolve(__dirname, '../../../', catalogRelativePath),
+      path.resolve(__dirname, '../../../../', catalogRelativePath)
     ];
 
-    for (const c of candidates) {
+    if (
+      options?.allowWorkspaceOverride === true &&
+      process.env.ALPER_DESIGN_OS_ALLOW_WORKSPACE_CATALOG_OVERRIDE === 'true'
+    ) {
+      const wsDir = options.workspaceDir || process.cwd();
+      const wsCandidate = path.resolve(wsDir, catalogRelativePath);
+      if (fs.existsSync(wsCandidate)) {
+        const parsed = JSON.parse(fs.readFileSync(wsCandidate, 'utf-8'));
+        return {
+          ...parsed,
+          items: sanitizeCatalogItems(parsed.items || [], 'WORKSPACE_OVERRIDE'),
+          sourceProvenance: wsCandidate,
+          trustClassification: 'WORKSPACE_OVERRIDE'
+        };
+      }
+    }
+
+    for (const c of trustedInstallCandidates) {
       if (fs.existsSync(c)) {
-        return JSON.parse(fs.readFileSync(c, 'utf-8'));
+        const parsed = JSON.parse(fs.readFileSync(c, 'utf-8'));
+        return {
+          ...parsed,
+          items: sanitizeCatalogItems(parsed.items || [], 'AUTHORITATIVE_PACKAGED'),
+          sourceProvenance: c,
+          trustClassification: 'AUTHORITATIVE_PACKAGED'
+        };
       }
     }
   } catch {
     // Ignore fallback errors
   }
-  return { items: [] };
+  return {
+    items: [],
+    sourceProvenance: 'NONE',
+    trustClassification: 'UNVERIFIED'
+  };
 }
 
 // 14. search_public_apis
@@ -442,6 +607,8 @@ export function handleSearchPublicApis(input: T.SearchPublicApisInput) {
   return {
     query: input.query,
     totalResults: results.length,
+    sourceProvenance: catalog.sourceProvenance,
+    trustClassification: catalog.trustClassification,
     results
   };
 }
@@ -462,6 +629,8 @@ export function handleSearchMcpServers(input: T.SearchMcpServersInput) {
   return {
     query: input.query,
     totalResults: results.length,
+    sourceProvenance: catalog.sourceProvenance,
+    trustClassification: catalog.trustClassification,
     results
   };
 }
@@ -1337,13 +1506,6 @@ export function handleRenderBlueprint(input: T.RenderBlueprintInput) {
     density: input.density
   });
 
-  if (input.customPageTitle && result?.primaryFile?.content) {
-    result.primaryFile.content = result.primaryFile.content.replace(
-      new RegExp(rawBp.title, 'g'),
-      input.customPageTitle
-    );
-  }
-
   return result;
 }
 
@@ -1492,10 +1654,12 @@ export function handleManageHumanVisualApproval(input: T.ManageHumanVisualApprov
   if (input.action === 'RECORD_REVIEW' && input.status) {
     record = recordVisualReview(record, {
       status: input.status,
-      reviewedBy: input.reviewedBy || 'human-evaluator',
+      reviewedBy: input.reviewedBy || '',
       notes: input.notes,
       viewportsReviewed: input.viewports,
-      criteriaChecked: input.criteriaChecked
+      criteriaChecked: input.criteriaChecked,
+      requireHostApprovalToken: true,
+      hostApprovalToken: (input as any).hostApprovalToken
     });
   }
 
@@ -1674,12 +1838,12 @@ export function handleCreateGreenfieldProjectProfile(input: T.CreateGreenfieldPr
 
 // 99. derive_requirements
 export function handleDeriveRequirements(input: T.DeriveRequirementsInput) {
-  return deriveRequirements(input.profile, input.explicitUserBrief);
+  return deriveRequirements(input.profile as any, input.explicitUserBrief);
 }
 
 // 100. create_requirement_traceability
 export function handleCreateRequirementTraceability(input: T.CreateRequirementTraceabilityInput) {
-  return createRequirementTraceability(input.requirements, {
+  return createRequirementTraceability(input.requirements as any, {
     architecturalDecisions: input.architecturalDecisions,
     databaseEntities: input.databaseEntities,
     apiEndpoints: input.apiEndpoints,
@@ -1691,50 +1855,50 @@ export function handleCreateRequirementTraceability(input: T.CreateRequirementTr
 
 // 101. recommend_architecture
 export function handleRecommendArchitecture(input: T.RecommendArchitectureInput) {
-  return recommendArchitecture(input.profile, input.requirements);
+  return recommendArchitecture(input.profile as any, input.requirements as any);
 }
 
 // 102. recommend_stack
 export function handleRecommendStack(input: T.RecommendStackInput) {
-  return recommendStack(input.profile, input.architecture, input.userPreferredStack);
+  return recommendStack(input.profile as any, input.architecture as any, input.userPreferredStack);
 }
 
 // 103. create_database_blueprint
 export function handleCreateDatabaseBlueprint(input: T.CreateDatabaseBlueprintInput) {
-  return createDatabaseBlueprint(input.profile, input.requirements, input.stack, input.architecture);
+  return createDatabaseBlueprint(input.profile as any, input.requirements as any, input.stack as any, input.architecture as any);
 }
 
 // 104. create_api_blueprint
 export function handleCreateApiBlueprint(input: T.CreateApiBlueprintInput) {
-  return createApiBlueprint(input.profile, input.requirements, input.database, input.architecture);
+  return createApiBlueprint(input.profile as any, input.requirements as any, input.database as any, input.architecture as any);
 }
 
 // 105. create_auth_model
 export function handleCreateAuthModel(input: T.CreateAuthModelInput) {
-  return createAuthModel(input.profile, input.requirements);
+  return createAuthModel(input.profile as any, input.requirements as any);
 }
 
 // 106. create_page_inventory
 export function handleCreatePageInventory(input: T.CreatePageInventoryInput) {
-  return createPageInventory(input.profile, input.requirements, input.database, input.api);
+  return createPageInventory(input.profile as any, input.requirements as any, input.database as any, input.api as any);
 }
 
 // 107. create_project_blueprint
 export function handleCreateProjectBlueprint(input: T.CreateProjectBlueprintInput) {
-  return createNewProjectBlueprint(input.profile, {
-    requirementsBundle: input.requirementsBundle,
+  return createNewProjectBlueprint(input.profile as any, {
+    requirementsBundle: input.requirementsBundle as any,
     userPreferredStack: input.userPreferredStack
   });
 }
 
 // 108. create_project_implementation_plan
 export function handleCreateProjectImplementationPlan(input: T.CreateProjectImplementationPlanInput) {
-  return createProjectImplementationPlan(input.blueprint);
+  return createProjectImplementationPlan(input.blueprint as any);
 }
 
 // 109. scaffold_new_project
 export function handleScaffoldNewProject(input: T.ScaffoldNewProjectInput) {
-  return scaffoldNewProject(input.blueprint, input.targetDirectory, input.verifiedBuildEvidence ? {
+  return scaffoldNewProject(input.blueprint as any, input.targetDirectory, input.verifiedBuildEvidence ? {
     verifiedBuildEvidence: {
       buildable: input.verifiedBuildEvidence.buildPassed,
       syntaxValid: input.verifiedBuildEvidence.syntaxValid,
@@ -1745,7 +1909,7 @@ export function handleScaffoldNewProject(input: T.ScaffoldNewProjectInput) {
 
 // 110. evaluate_new_project_completion
 export function handleEvaluateNewProjectCompletion(input: T.EvaluateNewProjectCompletionInput) {
-  return evaluateNewProjectCompletion(input);
+  return evaluateNewProjectCompletion(input as any);
 }
 
 // 111. initialize_project_intelligence
@@ -1785,7 +1949,7 @@ export function handleCreateProjectSnapshot(input: T.CreateProjectSnapshotInput)
 
 // 118. detect_project_drift
 export function handleDetectProjectDrift(input: T.DetectProjectDriftInput) {
-  return detectProjectDrift(input.baseSnapshot, input.targetSnapshot);
+  return detectProjectDrift(input.baseSnapshot as any, input.targetSnapshot as any);
 }
 
 // 119. analyze_change_impact
@@ -1958,6 +2122,7 @@ export const canonicalToolRegistry = new Map<string, McpToolDefinition>(
 export const toolRegistry = new Map<string, Function>(
   Array.from(canonicalToolRegistry.entries()).map(([name, def]) => [name, def.handler])
 );
+
 
 
 

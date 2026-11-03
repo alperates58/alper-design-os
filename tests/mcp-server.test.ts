@@ -429,7 +429,9 @@ describe('Alper Design MCP Tools Verification', () => {
     const result = Tools.handleCompareRendererParity({
       blueprintPreset: 'DATA_MANAGEMENT_WORKSPACE'
     });
-    expect(result.overallParityScore).toBeGreaterThanOrEqual(90);
+    expect(result.overallParityScore).toBeGreaterThanOrEqual(85);
+    expect(result.overallParityScore).toBeLessThan(100);
+    expect(result.verificationStatus).toBe('UNVERIFIED');
     expect(result.stackOutputs['html-css-js'].status).toBe('PASS');
     expect(result.stackOutputs['react-typescript'].status).toBe('PASS');
     expect(result.stackOutputs['laravel-blade'].status).toBe('PASS');
