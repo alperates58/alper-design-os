@@ -41,6 +41,7 @@ export * from './recipes/recipes.js';
 export * from './anti-patterns/detector.js';
 
 // Parity & Registry
+export * from './renderers/escape-utils.js';
 export * from './renderers/parity-evaluator.js';
 export * from './registry.js';
 export * from './renderers/html-css-js-renderer.js';

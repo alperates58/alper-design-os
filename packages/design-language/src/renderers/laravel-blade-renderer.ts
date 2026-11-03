@@ -9,6 +9,7 @@ import {
 } from '../types.js';
 import { canonicalTokensV2 } from '../tokens-v2/definitions.js';
 import { generateCssVariables } from '../tokens-v2/generators.js';
+import { escapeBladeSingleQuoted, escapeBladeText, escapeHtmlAttr, sanitizeCssClassToken } from './escape-utils.js';
 
 export class LaravelBladeRenderer implements TargetRenderer {
   readonly stack: TargetStack = 'laravel-blade';
@@ -16,15 +17,18 @@ export class LaravelBladeRenderer implements TargetRenderer {
   readonly description = 'Native Laravel Blade components with slots, attribute bags, CSS variables, and optional lightweight Alpine.js interactivity.';
 
   renderPageBlueprint(blueprint: PageBlueprint, options: RenderOptions = {}): RendererOutput {
-    const theme = options.theme || 'LIGHT';
-    const density = options.density || blueprint.density.mode;
+    const theme = escapeHtmlAttr((options.theme || 'LIGHT').toLowerCase());
+    const density = escapeHtmlAttr((options.density || blueprint.density.mode).toLowerCase());
+    const safeTitleSection = escapeBladeSingleQuoted(blueprint.title);
+    const safeTitleText = escapeBladeText(blueprint.title);
+    const safeDescText = escapeBladeText(blueprint.description);
 
     const bladeTemplate = `@extends('layouts.app')
 
-@section('title', '${blueprint.title}')
+@section('title', '${safeTitleSection}')
 
 @section('content')
-<div class="alper-app-shell alper-shell-enterprise" data-theme="${theme.toLowerCase()}" data-density="${density.toLowerCase()}" x-data="{ selectedRecord: null, isModalOpen: false, filterQuery: '' }">
+<div class="alper-app-shell alper-shell-enterprise" data-theme="${theme}" data-density="${density}" x-data="{ selectedRecord: null, isModalOpen: false, filterQuery: '' }">
     <!-- Sidebar Navigation -->
     <aside class="alper-sidebar" aria-label="{{ __('Main Navigation') }}">
         <div class="alper-brand">Alper Design OS</div>
@@ -41,8 +45,8 @@ export class LaravelBladeRenderer implements TargetRenderer {
     <!-- Main Content Area -->
     <main class="alper-main-content" id="main-content">
         <header class="alper-page-header">
-            <h1 class="alper-page-title">${blueprint.title}</h1>
-            <p class="alper-page-desc">${blueprint.description}</p>
+            <h1 class="alper-page-title">${safeTitleText}</h1>
+            <p class="alper-page-desc">${safeDescText}</p>
         </header>
 
         <!-- Filter Bar -->
@@ -199,6 +203,7 @@ export class LaravelBladeRenderer implements TargetRenderer {
   }
 
   renderComponentBlueprint(blueprint: ComponentBlueprint, options: RenderOptions = {}): RendererOutput {
+    const safeRole = escapeBladeSingleQuoted(blueprint.role);
     const bladeComponent = `@props(['variant' => 'primary', 'disabled' => false])
 
 <button
@@ -207,14 +212,14 @@ export class LaravelBladeRenderer implements TargetRenderer {
     {{ $attributes->merge(['class' => 'alper-btn alper-btn-' . $variant]) }}
     aria-label="Action"
 >
-    {{ $slot->isEmpty() ? '${blueprint.role}' : $slot }}
+    {{ $slot->isEmpty() ? '${safeRole}' : $slot }}
 </button>
 `;
 
     return {
       stack: this.stack,
       primaryFile: {
-        path: `resources/views/components/ui/${blueprint.type.toLowerCase().replace(/_/g, '-')}.blade.php`,
+        path: `resources/views/components/ui/${sanitizeCssClassToken(blueprint.type.toLowerCase().replace(/_/g, '-'))}.blade.php`,
         content: bladeComponent,
         language: 'php'
       },
