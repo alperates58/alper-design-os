@@ -27,7 +27,7 @@ function generateActiveSkillContent(name, meta) {
 
   const yamlFrontmatter = `---
 name: ${name}
-description: ${description}
+description: ${JSON.stringify(description)}
 status: ACTIVE
 capabilityFamily: ${capFamily}
 userFacing: true

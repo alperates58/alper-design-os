@@ -100,6 +100,7 @@ Operates on concrete, localized technical artifacts (e.g. query plans, code diff
 
 ## SOURCE / RESEARCH STRATEGY
 - Authoritative Guidance: 65+ curated design systems (Radix, Shadcn, Tailwind, MUI, Ant, Fluent), package registries, and SPDX license databases.
+- Local Progressive Reference: `references/source-ranking-weights.md`.
 - Prohibit ad-hoc, unverified external advice.
 
 ## POLICY & GOVERNANCE

@@ -1712,49 +1712,54 @@ export function getToolRoutingMetadata(name: string): ToolMetadata | undefined {
 
 export function routeTool(
   taskDescription: string,
-  options?: { isOffline?: boolean; requireLiveBrowser?: boolean }
+  options?: { isOffline?: boolean; requireLiveBrowser?: boolean; readOnly?: boolean }
 ): ToolRoutingDecision {
   const norm = taskDescription.toLowerCase();
 
-  // If inspection of local files
-  if (norm.includes('read') || norm.includes('inspect') || norm.includes('view')) {
-    return ToolRoutingDecisionSchema.parse({
-      taskDescription,
-      chosenTool: 'view_file',
-      fallbackTools: ['run_command'],
-      rationale: 'Read-only direct file access is the fastest, lowest-cost, zero-risk method.',
-      requiresApproval: false,
-      requiresNetwork: false
-    });
-  }
+  const isReadOnlyIntent =
+    Boolean(options?.readOnly) ||
+    /\b(read-only|pure\s+read|without\s+modifying|do\s+not\s+modify|salt\s+okunur|değiştirmeden|sadece\s+oku|sadece\s+incele)\b/i.test(norm) ||
+    (/\b(read|inspect|view|analyze|audit|evaluate|review|search|discover|check|compare|detect|profile|incele|analiz|denetle|ara|kontrol\s+et)\b/i.test(norm) &&
+      !/\b(edit|fix|patch|update|replace|scaffold|write|record|create_manual_run_bundle|create_execution_journal|onar|düzelt|güncelle|yaz)\b/i.test(norm));
 
-  // If browser testing is needed
-  if (norm.includes('browser') || norm.includes('e2e') || norm.includes('click') || options?.requireLiveBrowser) {
-    if (norm.includes('console') || norm.includes('runtime error') || norm.includes('network error')) {
-      return ToolRoutingDecisionSchema.parse({
+  const finalize = (decision: Omit<ToolRoutingDecision, 'routingExplanation'>): ToolRoutingDecision => {
+    return ToolRoutingDecisionSchema.parse({
+      ...decision,
+      routingExplanation: `Chosen Tool: ${decision.chosenTool} | ReadOnly Intent: ${isReadOnlyIntent} | LiveBrowser: ${Boolean(options?.requireLiveBrowser)} | Offline: ${Boolean(options?.isOffline)} | Rationale: ${decision.rationale}`
+    });
+  };
+
+  // 1. Live browser requirement MUST be evaluated before generic "inspect"/"view" file checks!
+  const hasLiveBrowserCue =
+    Boolean(options?.requireLiveBrowser) ||
+    /\b(browser|e2e|playwright|chrome-devtools|devtools|console\s+error|runtime\s+error|network\s+error|network\s+waterfall|click\s+flow|tarayıcı|konsol\s+hatası)\b/i.test(norm);
+
+  if (hasLiveBrowserCue) {
+    if (/\b(console|runtime\s+error|network\s+error|network\s+waterfall|devtools|konsol|ağ\s+hatası)\b/i.test(norm)) {
+      return finalize({
         taskDescription,
         chosenTool: 'chrome-devtools',
         fallbackTools: ['playwright'],
-        rationale: 'Chrome DevTools provides deepest runtime diagnostics for console exceptions and network waterfalls.',
+        rationale: 'Live browser runtime/console inspection requested: Chrome DevTools selected for console exceptions and network waterfalls (never static view_file).',
         requiresApproval: false,
         requiresNetwork: false
       });
     }
 
-    return ToolRoutingDecisionSchema.parse({
+    return finalize({
       taskDescription,
       chosenTool: 'playwright',
       fallbackTools: ['chrome-devtools'],
-      rationale: 'Playwright MCP selected for resilient user flow execution and multi-viewport DOM assertions.',
+      rationale: 'Live browser verification requested: Playwright MCP selected for resilient user flow execution and multi-viewport DOM assertions.',
       requiresApproval: false,
       requiresNetwork: false
     });
   }
 
-  // If external research is needed
-  if (norm.includes('search web') || norm.includes('latest docs online')) {
+  // 2. External web research
+  if (/\b(search\s+web|latest\s+docs\s+online|webde\s+ara|internette\s+ara)\b/i.test(norm)) {
     if (options?.isOffline) {
-      return ToolRoutingDecisionSchema.parse({
+      return finalize({
         taskDescription,
         chosenTool: 'view_file',
         fallbackTools: [],
@@ -1763,7 +1768,7 @@ export function routeTool(
         requiresNetwork: true
       });
     }
-    return ToolRoutingDecisionSchema.parse({
+    return finalize({
       taskDescription,
       chosenTool: 'search_web',
       fallbackTools: ['view_file'],
@@ -1773,19 +1778,94 @@ export function routeTool(
     });
   }
 
-  // Targeted single-block editing
-  if (norm.includes('edit') || norm.includes('fix') || norm.includes('update')) {
-    return ToolRoutingDecisionSchema.parse({
+  // 3. Direct local file inspection (e.g. "Read package.json file", "Inspect package.json file")
+  if (
+    /\b(read|inspect|view|oku|incele)\b/i.test(norm) &&
+    (/\b(file|dosya|package\.json|tsconfig|manifest|config|lockfile)\b/i.test(norm) || /\.[a-z0-9]{1,5}\b/i.test(norm)) &&
+    !/\b(create_environment_profile|inspect_source|inspect_design_source|inspect_pattern|inspect_registry_component|inspect_ai_skill|inspect_alper_registry)\b/i.test(norm)
+  ) {
+    return finalize({
+      taskDescription,
+      chosenTool: 'view_file',
+      fallbackTools: [],
+      rationale: 'Read-only direct file access is the fastest, lowest-cost, zero-risk method. Mutating fallback tools are excluded.',
+      requiresApproval: false,
+      requiresNetwork: false
+    });
+  }
+
+  // 4. Match canonical MCP tool capability if description closely matches a registered MCP tool
+  let bestMcpTool: ToolMetadata | undefined;
+  let bestMcpScore = 0;
+  const queryWords = norm
+    .replace(/[^a-z0-9_]+/g, ' ')
+    .split(/\s+/)
+    .filter(w => w.length >= 3);
+
+  for (const toolName of CANONICAL_MCP_TOOL_NAMES) {
+    const meta = BUILTIN_TOOL_REGISTRY[toolName];
+    if (!meta) continue;
+    if (isReadOnlyIntent && !meta.readOnly) continue;
+    if (options?.isOffline && meta.requiresInternet) continue;
+
+    const capLower = meta.capability.toLowerCase();
+    if (capLower === norm.trim()) {
+      bestMcpTool = meta;
+      bestMcpScore = 1000;
+      break;
+    }
+
+    const nameWords = toolName.split('_').filter(w => w.length >= 3);
+    let score = 0;
+    if (norm.includes(toolName)) score += 60;
+    for (const nw of nameWords) {
+      if (norm.includes(nw)) score += 10;
+    }
+    for (const qw of queryWords) {
+      if (capLower.includes(qw)) score += 4;
+    }
+    if (score > bestMcpScore) {
+      bestMcpScore = score;
+      bestMcpTool = meta;
+    }
+  }
+
+  if (bestMcpTool && bestMcpScore >= 36) {
+    return finalize({
+      taskDescription,
+      chosenTool: bestMcpTool.name,
+      fallbackTools: bestMcpTool.readOnly ? ['view_file'] : ['replace_file_content'],
+      rationale: `Matched canonical MCP capability '${bestMcpTool.name}' (${bestMcpTool.readOnly ? 'read-only' : 'write-capable'}): ${bestMcpTool.capability}`,
+      requiresApproval: bestMcpTool.requiresApproval,
+      requiresNetwork: bestMcpTool.requiresInternet
+    });
+  }
+
+  // 5. Read-only tasks must NEVER fall through to replace_file_content or run_command
+  if (isReadOnlyIntent) {
+    return finalize({
+      taskDescription,
+      chosenTool: 'view_file',
+      fallbackTools: [],
+      rationale: 'Read-only analytical/inspection intent detected: restricted to non-mutating view_file tool.',
+      requiresApproval: false,
+      requiresNetwork: false
+    });
+  }
+
+  // 6. Targeted single-block editing (only for mutating edit/fix/update tasks)
+  if (/\b(edit|fix|update|patch|replace|onar|düzelt|güncelle|değiştir)\b/i.test(norm)) {
+    return finalize({
       taskDescription,
       chosenTool: 'replace_file_content',
-      fallbackTools: ['run_command'],
+      fallbackTools: ['view_file'],
       rationale: 'Surgical single-block editing has smaller blast radius than wholesale script rewrites.',
       requiresApproval: false,
       requiresNetwork: false
     });
   }
 
-  return ToolRoutingDecisionSchema.parse({
+  return finalize({
     taskDescription,
     chosenTool: 'run_command',
     fallbackTools: ['view_file'],

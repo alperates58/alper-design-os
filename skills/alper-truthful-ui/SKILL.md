@@ -1,6 +1,6 @@
 ---
 name: alper-truthful-ui
-description: First-class truthful UI governance: data provenance, page intent, source authority, and content truth gate. Use when auditing dashboard screens to ensure kpis, charts, and progress bars have authentic data provenance. Do not use for tuning sql query execution plans (use alper-sql-performance).
+description: "First-class truthful UI governance: data provenance, page intent, source authority, and content truth gate. Use when auditing dashboard screens to ensure kpis, charts, and progress bars have authentic data provenance. Do not use for tuning sql query execution plans (use alper-sql-performance)."
 status: ACTIVE
 capabilityFamily: TRUTHFUL_UI
 userFacingType: USER_ENTRYPOINT
@@ -82,6 +82,7 @@ Operates on concrete, localized technical artifacts (e.g. query plans, code diff
 
 ## SOURCE / RESEARCH STRATEGY
 - Authoritative Guidance: Data provenance graph, database entity contracts, API schemas, and page intent definitions.
+- Local Progressive Reference: `references/provenance-evaluation-guide.md`.
 - Prohibit ad-hoc, unverified external advice.
 
 ## POLICY & GOVERNANCE

@@ -80,6 +80,7 @@ If input requirements are incomplete, contradictory, or underspecified, formulat
 
 ## SOURCE / RESEARCH STRATEGY
 - Authoritative Guidance: Target modern framework standards, Design Token Community Group (DTCG) specs, and Strangler Fig patterns.
+- Local Progressive Reference: `references/preservation-checklist.md`.
 - Prohibit ad-hoc, unverified external advice.
 
 ## POLICY & GOVERNANCE

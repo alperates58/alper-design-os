@@ -261,32 +261,18 @@ export async function runDoctor(options = {}) {
     recordCheck('mcpServer', 'FEATURE_REQUIRED', 'FAIL', 'packages/mcp-server/dist/index.js is missing');
   }
 
-  // 9. Skill Registry Parity (74 skills: 55 active + 19 deprecated)
+  // 9. Skill Registry Parity (74 skills: 55 active + 19 deprecated) & Strict YAML Validation
   const skillsDir = path.join(projectRoot, 'skills');
   if (fs.existsSync(skillsDir)) {
     try {
-      const skillDirs = fs.readdirSync(skillsDir, { withFileTypes: true })
-        .filter(d => d.isDirectory())
-        .map(d => d.name);
-      
-      let activeCount = 0;
-      let deprecatedCount = 0;
-      for (const s of skillDirs) {
-        const skillMd = path.join(skillsDir, s, 'SKILL.md');
-        if (fs.existsSync(skillMd)) {
-          const content = fs.readFileSync(skillMd, 'utf-8');
-          if (content.includes('status: DEPRECATED') || content.includes('# Status: DEPRECATED')) {
-            deprecatedCount++;
-          } else {
-            activeCount++;
-          }
-        }
-      }
-      
-      if (skillDirs.length === 74 && activeCount === 55 && deprecatedCount === 19) {
-        recordCheck('skillRegistry', 'FEATURE_REQUIRED', 'PASS', `Skill inventory verified: 74 skills (55 active, 19 deprecated)`, { total: 74, active: 55, deprecated: 19 });
+      const { validateAllRepositorySkills } = await import('./install-skills.js');
+      const validation = validateAllRepositorySkills(projectRoot);
+      const { totalCount, activeCount, deprecatedCount, errors: yamlErrors } = validation;
+
+      if (totalCount === 74 && activeCount === 55 && deprecatedCount === 19 && yamlErrors.length === 0) {
+        recordCheck('skillRegistry', 'FEATURE_REQUIRED', 'PASS', `Skill inventory & YAML verified: 74 skills (55 active, 19 deprecated, 0 YAML errors)`, { total: 74, active: 55, deprecated: 19, yamlErrors: 0 });
       } else {
-        recordCheck('skillRegistry', 'FEATURE_REQUIRED', 'WARN', `Skill inventory mismatch: total=${skillDirs.length} (expected 74), active=${activeCount} (expected 55), deprecated=${deprecatedCount} (expected 19)`, { total: skillDirs.length, active: activeCount, deprecated: deprecatedCount });
+        recordCheck('skillRegistry', 'FEATURE_REQUIRED', 'WARN', `Skill inventory or YAML mismatch: total=${totalCount} (expected 74), active=${activeCount} (expected 55), deprecated=${deprecatedCount} (expected 19), yamlErrors=${yamlErrors.length}`, { total: totalCount, active: activeCount, deprecated: deprecatedCount, errors: yamlErrors });
       }
     } catch (e) {
       recordCheck('skillRegistry', 'FEATURE_REQUIRED', 'WARN', `Failed inspecting skills directory: ${e.message}`);

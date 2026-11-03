@@ -86,6 +86,7 @@ Operates on concrete, localized technical artifacts (e.g. query plans, code diff
 
 ## SOURCE / RESEARCH STRATEGY
 - Authoritative Guidance: Version-controlled repository metadata in .alper-design-os/project/, AST analysis, and ADRs.
+- Local Progressive Reference: `references/schema-specification.md`.
 - Prohibit ad-hoc, unverified external advice.
 
 ## POLICY & GOVERNANCE
