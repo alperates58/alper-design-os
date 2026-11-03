@@ -153,7 +153,20 @@ export const DecisionRecordSchema = z.object({
   createdAt: z.string(),
   approvedBy: z.string(),
   confirmedByUser: z.boolean().default(false),
-  authoritySource: MemoryRecordSourceSchema.optional()
+  authoritySource: MemoryRecordSourceSchema.optional(),
+  verificationStatus: z.enum(['VERIFIED', 'PARTIALLY_VERIFIED', 'NOT_VERIFIED']).default('NOT_VERIFIED'),
+  authorizationStatus: z.enum([
+    'AUTHORIZED',
+    'VERIFIED_HOST_AUTHORIZATION',
+    'HUMAN_APPROVAL_REQUIRED',
+    'REJECTED',
+    'REJECTED_SYNTHETIC_IDENTITY',
+    'REJECTED_EXPIRED_APPROVAL',
+    'REJECTED_REPLAYED_APPROVAL',
+    'REJECTED_SCOPE_OR_HASH_MISMATCH',
+    'REJECTED_INVALID_SIGNATURE'
+  ]).optional(),
+  approvalProvenance: z.enum(['AGENT_ASSERTION', 'USER_AUTHORED_PROJECT_DATA', 'VERIFIED_HOST_AUTHORIZATION', 'AUDIT_EVIDENCE']).optional()
 }).passthrough();
 export type DecisionRecord = z.infer<typeof DecisionRecordSchema>;
 
@@ -227,7 +240,20 @@ export const BusinessRuleRecordSchema = z.object({
   exceptions: z.array(z.string()).default([]),
   requirements: z.array(z.string()).default([]),
   tests: z.array(z.string()).default([]),
-  status: BusinessRuleRecordStatusSchema.default('UNVERIFIED')
+  status: BusinessRuleRecordStatusSchema.default('UNVERIFIED'),
+  verificationStatus: z.enum(['VERIFIED', 'PARTIALLY_VERIFIED', 'NOT_VERIFIED']).default('NOT_VERIFIED'),
+  authorizationStatus: z.enum([
+    'AUTHORIZED',
+    'VERIFIED_HOST_AUTHORIZATION',
+    'HUMAN_APPROVAL_REQUIRED',
+    'REJECTED',
+    'REJECTED_SYNTHETIC_IDENTITY',
+    'REJECTED_EXPIRED_APPROVAL',
+    'REJECTED_REPLAYED_APPROVAL',
+    'REJECTED_SCOPE_OR_HASH_MISMATCH',
+    'REJECTED_INVALID_SIGNATURE'
+  ]).optional(),
+  approvalProvenance: z.enum(['AGENT_ASSERTION', 'USER_AUTHORED_PROJECT_DATA', 'VERIFIED_HOST_AUTHORIZATION', 'AUDIT_EVIDENCE']).optional()
 }).passthrough();
 export type BusinessRuleRecord = z.infer<typeof BusinessRuleRecordSchema>;
 
