@@ -60,7 +60,7 @@ body {
   background-color: #2563eb;
   color: var(--alper-text-primary, #0f172a);
   border: none;
-  padding: 8px 13px;
+  padding: 7px 13px;
   border-radius: 4px;
   cursor: pointer;
   outline: 2px solid transparent; &:focus-visible { outline: 2px solid var(--alper-interactive-focus-ring, #2563eb); outline-offset: 2px; }
@@ -110,11 +110,13 @@ body {
   padding: 2px 8px;
   border-radius: 3px;
   cursor: pointer;
-  outline: none;
+  outline: 2px solid transparent; &:focus-visible { outline: 2px solid var(--alper-interactive-focus-ring, #2563eb); outline-offset: 2px; }
 }
 
 .footer-stats {
   display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   justify-content: space-between;
   margin-top: 13px;
   padding-top: 7px;

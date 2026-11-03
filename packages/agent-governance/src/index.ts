@@ -1,4 +1,6 @@
 export * from './types.js';
+export * from './workspace-boundary.js';
+export * from './human-approval.js';
 export * from './secret-redaction.js';
 export * from './scope-guard.js';
 export * from './risk-evaluator.js';
