@@ -493,6 +493,8 @@ export interface RendererOutput {
 export interface CrossStackParityReport {
   runId: string;
   timestamp: string;
+  verificationStatus?: 'VERIFIED' | 'UNVERIFIED' | 'INSUFFICIENT_EVIDENCE' | 'FAILED';
+  unverifiedDimensions?: string[];
   visualParityScore: number; // 0-100
   behavioralParityScore: number; // 0-100
   accessibilityParityScore: number; // 0-100
