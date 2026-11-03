@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { executeAtomicWorkspaceTransaction } from './workspace-boundary.js';
 import {
   DiscoveryReadiness,
   DiscoveryReadinessSchema,
@@ -2511,11 +2512,20 @@ export function scaffoldNewProject(
     }
   }
 
-  if (!fs.existsSync(targetDir)) {
-    fs.mkdirSync(targetDir, { recursive: true });
+  const filesCreated: string[] = [];
+  const stagedFiles: Array<{ relPath: string; content: string }> = [];
+
+  function escapeHtml(text: string): string {
+    return String(text || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
-  const filesCreated: string[] = [];
+  const safeProductNameHtml = escapeHtml(blueprint.productProfile.productName);
+  const safeProductPurposeHtml = escapeHtml(blueprint.productProfile.productPurpose);
 
   function writeFile(relPath: string, content: string) {
     if (path.isAbsolute(relPath)) {
@@ -2535,11 +2545,7 @@ export function scaffoldNewProject(
         throw new Error(`Invalid filename: Windows reserved device name detected: ${segment}`);
       }
     }
-    const dir = path.dirname(fullPath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    fs.writeFileSync(fullPath, content.trimStart(), 'utf-8');
+    stagedFiles.push({ relPath: relPath.replace(/\\/g, '/'), content: content.trimStart() });
     filesCreated.push(relPath.replace(/\\/g, '/'));
   }
 
@@ -2620,7 +2626,7 @@ DATABASE_URL=postgres://app_user:app_password@127.0.0.1:5432/${dbSlug}
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${blueprint.productProfile.productName}</title>
+    <title>${safeProductNameHtml}</title>
   </head>
   <body>
     <div id="root"></div>
@@ -2748,8 +2754,8 @@ const DEMO_RECORDS = [
 export default function App() {
   return (
     <main style={{ padding: '1.5rem' }}>
-      <h1>${blueprint.productProfile.productName}</h1>
-      <p>${blueprint.productProfile.productPurpose}</p>
+      <h1>${safeProductNameHtml}</h1>
+      <p>${safeProductPurposeHtml}</p>
       <div role="status" aria-label="Data Provenance Notice">
         Notice: Displaying labeled [DEMO_DATA] sample records. No live backend telemetry connected.
       </div>
@@ -2785,10 +2791,7 @@ export default function App() {
           config: {
             'optimize-autoloader': true,
             'preferred-install': 'dist',
-            'sort-packages': true,
-            audit: {
-              'block-insecure': false
-            }
+            'sort-packages': true
           },
           'minimum-stability': 'stable',
           'prefer-stable': true
@@ -2939,7 +2942,7 @@ class Entity
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>${blueprint.productProfile.productName}</title>
+  <title>${safeProductNameHtml}</title>
   <link rel="stylesheet" href="/css/tokens.css">
 </head>
 <body>
@@ -2958,8 +2961,8 @@ class Entity
 
 @section('content')
 <main>
-  <h1>${blueprint.productProfile.productName}</h1>
-  <p>${blueprint.productProfile.productPurpose}</p>
+  <h1>${safeProductNameHtml}</h1>
+  <p>${safeProductPurposeHtml}</p>
   <div role="status" aria-label="Data Provenance Notice">
     Notice: Displaying labeled [DEMO_DATA] sample records. No live backend telemetry connected.
   </div>
@@ -3016,7 +3019,7 @@ app.Run();
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>${blueprint.productProfile.productName}</title>
+  <title>${safeProductNameHtml}</title>
   <link rel="stylesheet" href="~/css/tokens.css" />
 </head>
 <body>
@@ -3041,19 +3044,19 @@ app.Run();
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>${blueprint.productProfile.productName}</title>
+  <title>${safeProductNameHtml}</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header>
-    <h1>${blueprint.productProfile.productName}</h1>
-    <p>${blueprint.productProfile.productPurpose}</p>
+    <h1>${safeProductNameHtml}</h1>
+    <p>${safeProductPurposeHtml}</p>
     <div class="demo-banner">Demo Data Notice: All figures presented are simulated for testing.</div>
   </header>
   <main>
     <table id="records-table">
       <thead><tr><th>Code</th><th>Name</th></tr></thead>
-      <tbody><tr><td>REC-001</td><td>${primaryDomainEntity} 1 [DEMO_DATA]</td></tr></tbody>
+      <tbody><tr><td>REC-001</td><td>${escapeHtml(primaryDomainEntity)} 1 [DEMO_DATA]</td></tr></tbody>
     </table>
   </main>
   <script src="app.js"></script>
@@ -3062,10 +3065,16 @@ app.Run();
 `
     );
     writeFile('styles.css', `body { font-family: system-ui; }\n`);
-    writeFile('app.js', `console.log("Loaded: ${blueprint.productProfile.productName}");\n`);
+    writeFile('app.js', `console.log("Loaded: " + ${JSON.stringify(blueprint.productProfile.productName)});\n`);
   }
 
   writeFile('migrations/001_initial_schema.sql', blueprint.database?.sqlMigrations?.[0]?.sql || '-- initial migration\n');
+
+  executeAtomicWorkspaceTransaction(targetDir, (tx) => {
+    for (const item of stagedFiles) {
+      tx.writeFile(item.relPath, item.content);
+    }
+  });
 
   const hasDocker = filesCreated.includes('Dockerfile') && filesCreated.includes('docker-compose.yml');
   const hasEnv = filesCreated.includes('.env.example');
